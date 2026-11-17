@@ -121,11 +121,20 @@ export async function streamChat(
     throw new Error(
       "Trợ lý trực tuyến chưa được cấu hình. Bạn có thể dùng gợi ý mẫu trong chế độ dùng thử.",
     );
-  const {
-    data: { session },
-  } = await supabase.auth.getSession();
-  if (!session)
-    throw new Error("Bạn cần đăng nhập để trò chuyện với trợ lý trực tuyến.");
+  // Tạo phiên khách tự động khi chưa có phiên; không cần email hoặc đăng nhập.
+  const { data: existing, error: sessionError } =
+    await supabase.auth.getSession();
+  if (sessionError)
+    throw new Error("Chưa khôi phục được phiên trò chuyện. Bạn hãy thử lại.");
+  let session = existing.session;
+  if (!session) {
+    const { data, error } = await supabase.auth.signInAnonymously();
+    if (error || !data.session)
+      throw new Error(
+        "Chưa mở được phiên khách. Chủ trang cần bật Anonymous Sign-Ins trong Supabase.",
+      );
+    session = data.session;
+  }
   const preparedMessages = prepareChatMessages(messages);
   let response: Response;
   try {
