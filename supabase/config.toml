@@ -1,0 +1,3 @@
+[functions.chat]
+# Xác minh JWT trong hàm qua Auth /user; hỗ trợ khóa ký JWT mới của Supabase.
+verify_jwt = false
