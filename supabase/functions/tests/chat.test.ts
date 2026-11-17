@@ -96,7 +96,7 @@ test("xác minh phiên bằng Supabase và không tin mã người dùng do khá
     },
   );
   assert.equal(response.status, 401);
-  assert.match(await response.text(), /đăng nhập/);
+  assert.match(await response.text(), /Phiên trò chuyện không hợp lệ/);
 });
 
 test("phiên khách Supabase hợp lệ được gọi AI", async () => {
