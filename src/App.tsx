@@ -1424,7 +1424,7 @@ function ChatModal({ buddy, close }: { buddy: Buddy; close: () => void }) {
       <div className="chat-mode">
         <span className="live-dot" />
         {live
-          ? `${readiness?.model?.includes("ultra") ? "Nemotron Ultra" : "NVIDIA Nemotron"} · Mô hình miễn phí`
+          ? `${readiness?.model?.startsWith("google/") ? "Google Gemma 4" : readiness?.model?.startsWith("recursive/") ? "Recursive Flint" : readiness?.model?.includes("ultra") ? "Nemotron Ultra" : "NVIDIA Nemotron"} · Mô hình miễn phí`
           : blocked
             ? "Đang kiểm tra kết nối AI"
             : "Gợi ý ngoại tuyến · Câu trả lời được soạn sẵn"}
