@@ -44,7 +44,7 @@ describe("Trải nghiệm dùng thử bằng tiếng Việt", () => {
   it("mở không cần dịch vụ, điểm danh và lưu bạn đồng hành", async () => {
     mount();
     expect(screen.getByRole("heading", { name: "Chào Mầm Nhỏ," })).toBeTruthy();
-    expect(screen.getByText("Chế độ dùng thử")).toBeTruthy();
+    expect(screen.getByText("Lưu trên thiết bị")).toBeTruthy();
     await screen.findByRole("img", { name: /Cáo Mây đang đồng hành/ });
     fireEvent.click(screen.getByRole("button", { name: /Rất vui/ }));
     await waitFor(() => expect(saved().profile.total_xp).toBe(10));
@@ -53,8 +53,9 @@ describe("Trải nghiệm dùng thử bằng tiếng Việt", () => {
         .disabled,
     ).toBe(true);
     fireEvent.click(screen.getByRole("link", { name: "Bạn đồng hành" }));
-    fireEvent.click(screen.getByRole("button", { name: /Mèo Mít/ }));
+    fireEvent.click(await screen.findByRole("button", { name: /Mèo Mít/ }));
     await waitFor(() => expect(saved().profile.companion).toBe("cat"));
+    fireEvent.click(screen.getByRole("tab", { name: "Phong cách" }));
     fireEvent.click(screen.getByRole("button", { name: "Tím hoa cà" }));
     await waitFor(() => expect(saved().profile.color).toBe("lavender"));
     fireEvent.click(screen.getByRole("button", { name: "Nghỉ ngơi một chút" }));
@@ -121,12 +122,11 @@ describe("Trải nghiệm dùng thử bằng tiếng Việt", () => {
     expect(saved().profile.total_xp).toBe(50);
   });
 
-  it("ghi rõ dữ liệu hư cấu và câu trả lời soạn sẵn", async () => {
-    mount("/bang-xep-hang");
-    expect(screen.getByText("Bảng xếp hạng minh họa")).toBeTruthy();
+  it("bỏ bảng xếp hạng và ghi rõ câu trả lời soạn sẵn", async () => {
+    mount();
     expect(
-      screen.getByText(/không phải kết quả của học sinh thật/),
-    ).toBeTruthy();
+      screen.queryByRole("link", { name: "Cùng nhau tiến bộ" }),
+    ).toBeNull();
     fireEvent.click(
       screen.getByRole("button", { name: "Trò chuyện cùng bạn" }),
     );
@@ -142,14 +142,14 @@ describe("Trải nghiệm dùng thử bằng tiếng Việt", () => {
   });
 
   it("mở và tải lại đường dẫn HashRouter trong thư mục kho GitHub", async () => {
-    window.history.replaceState({}, "", "/focus-buddy/#/ban-dong-hanh");
+    window.history.replaceState({}, "", "/focus-buddy-/#/ban-dong-hanh");
     let app = render(
       <HashRouter>
         <App />
       </HashRouter>,
     );
     expect(
-      screen.getByRole("heading", { name: "Gặp bạn đồng hành của bạn" }),
+      await screen.findByRole("heading", { name: "Gặp bạn đồng hành của bạn" }),
     ).toBeTruthy();
     expect(
       screen
@@ -163,11 +163,71 @@ describe("Trải nghiệm dùng thử bằng tiếng Việt", () => {
       </HashRouter>,
     );
     expect(
-      screen.getByRole("heading", { name: "Gặp bạn đồng hành của bạn" }),
+      await screen.findByRole("heading", { name: "Gặp bạn đồng hành của bạn" }),
     ).toBeTruthy();
     await screen.findByRole("img", { name: "Cáo Mây đang đồng hành cùng bạn" });
     app.unmount();
     window.history.replaceState({}, "", "/");
+  });
+
+  it("lưu tên, phụ kiện và khung cảnh mới mà không đổi điểm", async () => {
+    let app = mount("/ban-dong-hanh");
+    fireEvent.click(await screen.findByRole("button", { name: /Rồng Đậu/ }));
+    await waitFor(() => expect(saved().profile.companion).toBe("dragon"));
+    fireEvent.change(
+      screen.getByRole("textbox", { name: "Đặt một cái tên thật riêng" }),
+      { target: { value: "Đậu Xanh" } },
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Lưu tên" }));
+    await waitFor(() => expect(saved().profile.buddy_name).toBe("Đậu Xanh"));
+    fireEvent.keyDown(screen.getByRole("tab", { name: "Bạn nhỏ" }), {
+      key: "ArrowRight",
+    });
+    expect(document.activeElement).toBe(
+      screen.getByRole("tab", { name: "Phong cách" }),
+    );
+    fireEvent.click(screen.getByRole("button", { name: /Vương miện/ }));
+    await waitFor(() => expect(saved().profile.accessory).toBe("crown"));
+    fireEvent.click(screen.getByRole("tab", { name: "Không gian" }));
+    fireEvent.click(screen.getByRole("button", { name: /Ngân hà/ }));
+    await waitFor(() => expect(saved().profile.scene).toBe("space"));
+    expect(saved().profile.total_xp).toBe(0);
+    app.unmount();
+    app = mount("/ban-dong-hanh");
+    expect(
+      await screen.findByRole("heading", { name: "Đậu Xanh" }),
+    ).toBeTruthy();
+    expect(
+      screen.getByRole("region", { name: /Không gian Ngân hà/ }),
+    ).toBeTruthy();
+    app.unmount();
+  });
+
+  it("tương tác với bạn nhỏ và dừng trò chơi trong phiên tập trung", async () => {
+    mount("/ban-dong-hanh");
+    fireEvent.click(await screen.findByRole("button", { name: "Ôm một cái" }));
+    expect(
+      await screen.findByText("Một cái ôm cho bạn, một cái ôm cho mình!"),
+    ).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "Mời bánh" }));
+    expect(
+      await screen.findByText("Ngon quá! Mình nạp đầy năng lượng rồi."),
+    ).toBeTruthy();
+    expect(localStorage.getItem(DEMO_STORAGE_KEY)).toBeNull();
+    fireEvent.click(screen.getByRole("link", { name: "Giờ tập trung" }));
+    fireEvent.click(
+      screen.getByRole("button", { name: "Bắt đầu phiên tập trung" }),
+    );
+    await waitFor(() => expect(saved().focus_sessions).toHaveLength(1));
+    fireEvent.click(screen.getByRole("link", { name: "Bạn đồng hành" }));
+    const play = await screen.findByRole("button", { name: "Chơi cùng" });
+    expect((play as HTMLButtonElement).disabled).toBe(true);
+    expect(
+      screen.getByText(
+        "Các trò chơi tạm nghỉ đến khi phiên tập trung kết thúc.",
+      ),
+    ).toBeTruthy();
+    expect(saved().profile.total_xp).toBe(0);
   });
 
   it("giữ vị trí nhập khi ứng dụng cập nhật đồng hồ và đóng hộp thoại bằng Escape", async () => {

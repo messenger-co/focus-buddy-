@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { Session } from "@supabase/supabase-js";
-import { EXERCISES, FICTIONAL_LEADERBOARD } from "./data";
+import { EXERCISES, COMPANIONS, COLORS } from "./data";
 import type { CompanionKind, CompanionColor, Mood } from "./data";
 import {
   apiConfigured,
@@ -12,17 +12,21 @@ import {
 
 export const DEMO_STORAGE_KEY = "focus-buddy-demo-v2";
 export const FOCUS_DURATION_MS = 20 * 60 * 1000;
+export type BuddyAccessory = "none" | "bow" | "glasses" | "crown";
+export type BuddyScene = "garden" | "space" | "sunset";
 export type Profile = {
   display_name: string;
   companion: CompanionKind;
   color: CompanionColor;
-  leaderboard_opt_in: boolean;
+  buddy_name: string;
+  accessory: BuddyAccessory;
+  scene: BuddyScene;
   total_xp: number;
   level: number;
 };
 export type Preferences = Pick<
   Profile,
-  "display_name" | "companion" | "color" | "leaderboard_opt_in"
+  "display_name" | "companion" | "color" | "buddy_name" | "accessory" | "scene"
 >;
 export type FocusSession = {
   id: string;
@@ -55,12 +59,6 @@ export type Progress = {
   achievements: Achievement[];
   missions: Mission[];
   counts?: { focus: number; exercise: number; checkin: number };
-};
-export type LeaderboardRow = {
-  display_name: string;
-  total_xp: number;
-  level: number;
-  rank: number;
 };
 export type RewardResult = {
   awarded_xp: number;
@@ -158,7 +156,9 @@ export function createDemoProgress(): Progress {
       display_name: "Mầm Nhỏ",
       companion: "fox",
       color: "mint",
-      leaderboard_opt_in: false,
+      buddy_name: "",
+      accessory: "none",
+      scene: "garden",
       total_xp: 0,
       level: 1,
     },
@@ -185,13 +185,34 @@ export function readDemoProgress(storage?: Pick<Storage, "getItem">): Progress {
       return createDemoProgress();
     const profile = data.profile;
     if (
-      !["fox", "owl", "cat"].includes(profile.companion) ||
-      !["mint", "lavender", "peach"].includes(profile.color) ||
+      !COMPANIONS.some((c) => c.id === profile.companion) ||
+      !COLORS.some((c) => c.id === profile.color) ||
       typeof profile.display_name !== "string" ||
       !Number.isFinite(profile.total_xp) ||
       profile.total_xp < 0
     )
       return createDemoProgress();
+    // Nâng cấp dữ liệu cũ tại chỗ; không mang theo tùy chọn bảng xếp hạng đã bỏ.
+    data.profile = {
+      display_name: profile.display_name,
+      companion: profile.companion,
+      color: profile.color,
+      total_xp: Math.floor(profile.total_xp),
+      level: Math.floor(profile.total_xp / 100) + 1,
+      buddy_name:
+        typeof profile.buddy_name === "string"
+          ? profile.buddy_name
+              .replace(/[\u0000-\u001f\u007f]/gu, "")
+              .trim()
+              .slice(0, 24)
+          : "",
+      accessory: ["none", "bow", "glasses", "crown"].includes(profile.accessory)
+        ? profile.accessory
+        : "none",
+      scene: ["garden", "space", "sunset"].includes(profile.scene)
+        ? profile.scene
+        : "garden",
+    };
     data.focus_sessions = data.focus_sessions.filter(
       (s) =>
         s &&
@@ -311,10 +332,29 @@ export function demoReducer(
       throw new Error(
         "Biệt danh cần có từ 3 đến 24 ký tự và không chứa ký tự điều khiển.",
       );
+    const preferences = action.preferences;
+    const buddyName = preferences.buddy_name.trim();
+    if (buddyName.length > 24 || /[\u0000-\u001f\u007f]/u.test(buddyName))
+      throw new Error(
+        "Tên bạn nhỏ cần tối đa 24 ký tự và không chứa ký tự điều khiển.",
+      );
+    if (
+      !COMPANIONS.some((c) => c.id === preferences.companion) ||
+      !COLORS.some((c) => c.id === preferences.color) ||
+      !["none", "bow", "glasses", "crown"].includes(preferences.accessory) ||
+      !["garden", "space", "sunset"].includes(preferences.scene)
+    )
+      throw new Error(
+        "Bạn chọn nhân vật, màu sắc và phụ kiện trong danh sách nhé.",
+      );
     progress.profile = {
       ...progress.profile,
-      ...action.preferences,
       display_name: name,
+      companion: preferences.companion,
+      color: preferences.color,
+      buddy_name: buddyName,
+      accessory: preferences.accessory,
+      scene: preferences.scene,
     };
     result = progress.profile;
   }
@@ -330,21 +370,19 @@ export function demoReducer(
   };
 }
 
-/** Ngày theo giờ Việt Nam, thống nhất với máy chủ Supabase. */
+/** Ngày theo giờ Việt Nam, không phụ thuộc múi giờ của thiết bị. */
 export function vietnamDay(now: number | Date = Date.now()): string {
   return new Date(Number(now) + 7 * 60 * 60 * 1000).toISOString().slice(0, 10);
 }
 
+/** Mọi tiến trình học tập ở thiết bị; tài khoản chỉ dùng xác thực cuộc gọi AI. */
 export function useBuddy() {
   const [progress, setProgress] = useState<Progress>(() => readDemoProgress());
   const progressRef = useRef(progress);
   const [session, setSession] = useState<Session | null>(null);
-  const sessionRef = useRef<Session | null>(null);
   const [loading, setLoading] = useState(Boolean(supabase));
   const [error, setError] = useState<string | null>(null);
-  const pending = useRef(0);
   const mounted = useRef(true);
-  const revision = useRef(0);
   const mode = session ? ("online" as const) : ("demo" as const);
 
   const update = useCallback((next: Progress) => {
@@ -352,23 +390,7 @@ export function useBuddy() {
     if (mounted.current) setProgress(next);
   }, []);
   const refresh = useCallback(async () => {
-    const currentSession = sessionRef.current;
-    const currentRevision = ++revision.current;
-    if (!currentSession || !supabase) {
-      update(readDemoProgress());
-      return;
-    }
-    const { data, error: rpcError } = await supabase.rpc("get_progress");
-    if (rpcError)
-      throw friendlyError(
-        rpcError,
-        "Chưa tải được tiến trình trực tuyến. Bạn thử làm mới nhé.",
-      );
-    if (
-      currentRevision === revision.current &&
-      currentSession.user.id === sessionRef.current?.user.id
-    )
-      update(data as Progress);
+    update(readDemoProgress());
   }, [update]);
 
   useEffect(() => {
@@ -378,28 +400,34 @@ export function useBuddy() {
         mounted.current = false;
       };
     let cancelled = false;
-    const receive = (next: Session | null) => {
-      if (cancelled) return;
-      sessionRef.current = next;
-      setSession(next);
-    };
+    let receivedAuthEvent = false;
     void supabase.auth
       .getSession()
       .then(({ data, error: authError }) => {
-        if (authError && !cancelled)
-          setError("Chưa khôi phục được tài khoản. Bạn đăng nhập lại nhé.");
-        receive(data.session);
-        if (!cancelled && !data.session) setLoading(false);
+        if (cancelled) return;
+        if (authError)
+          setError(
+            "Chưa khôi phục được tài khoản AI. Tiến trình trên thiết bị vẫn được giữ nguyên.",
+          );
+        if (!receivedAuthEvent) setSession(data.session);
+        setLoading(false);
       })
       .catch(() => {
         if (!cancelled) {
           setLoading(false);
-          setError("Chưa kết nối được tài khoản.");
+          setError(
+            "Chưa kết nối được tài khoản AI. Bạn vẫn có thể học và chơi cùng bạn nhỏ.",
+          );
         }
       });
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, next) => receive(next));
+    } = supabase.auth.onAuthStateChange((_event, next) => {
+      if (cancelled) return;
+      receivedAuthEvent = true;
+      setSession(next);
+      setLoading(false);
+    });
     return () => {
       cancelled = true;
       mounted.current = false;
@@ -408,37 +436,8 @@ export function useBuddy() {
   }, []);
 
   useEffect(() => {
-    let cancelled = false;
-    revision.current++;
-    if (!session || !supabase) {
-      update(readDemoProgress());
-      return;
-    }
-    update(createDemoProgress());
-    setLoading(true);
-    void (async () => {
-      const { error: ensureError } = await supabase.rpc("ensure_profile");
-      if (ensureError) throw ensureError;
-      await refresh();
-    })()
-      .catch((reason: unknown) => {
-        if (!cancelled)
-          setError(
-            friendlyError(reason, "Chưa tải được tiến trình trực tuyến.")
-              .message,
-          );
-      })
-      .finally(() => {
-        if (!cancelled) setLoading(false);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [session?.user.id, refresh, update]);
-
-  useEffect(() => {
     const sync = (event: StorageEvent) => {
-      if (event.key === DEMO_STORAGE_KEY && !sessionRef.current)
+      if (event.key === DEMO_STORAGE_KEY || event.key === null)
         update(readDemoProgress());
     };
     window.addEventListener("storage", sync);
@@ -446,19 +445,9 @@ export function useBuddy() {
   }, [update]);
 
   const mutate = useCallback(
-    async (rpc: string, args: Record<string, unknown>, action: DemoAction) => {
-      pending.current++;
-      setLoading(true);
+    async (action: DemoAction) => {
       setError(null);
       try {
-        if (sessionRef.current && supabase) {
-          const { data, error: rpcError } = await supabase.rpc(rpc, args);
-          if (rpcError) throw rpcError;
-          await refresh();
-          return rpc === "update_preferences" && Array.isArray(data)
-            ? data[0]
-            : data;
-        }
         const { progress: next, result } = demoReducer(
           progressRef.current,
           action,
@@ -467,7 +456,7 @@ export function useBuddy() {
           localStorage.setItem(DEMO_STORAGE_KEY, JSON.stringify(next));
         } catch {
           setError(
-            "Trình duyệt không cho lưu dữ liệu. Tiến trình dùng thử chỉ được giữ trong lần mở này.",
+            "Trình duyệt không cho lưu dữ liệu. Tiến trình chỉ được giữ trong lần mở này.",
           );
         }
         update(next);
@@ -475,34 +464,25 @@ export function useBuddy() {
       } catch (reason) {
         const failure = friendlyError(
           reason,
-          "Chưa lưu được thay đổi. Bạn kiểm tra kết nối rồi thử lại nhé.",
+          "Chưa lưu được thay đổi. Bạn thử lại nhé.",
         );
         if (mounted.current) setError(failure.message);
         throw failure;
-      } finally {
-        pending.current--;
-        if (mounted.current) setLoading(pending.current > 0);
       }
     },
-    [refresh, update],
+    [update],
   );
 
   const checkIn = useCallback(
-    (mood: Mood) =>
-      mutate(
-        "daily_check_in",
-        { p_mood: mood },
-        { type: "checkin", mood },
-      ) as Promise<RewardResult>,
+    (mood: Mood) => mutate({ type: "checkin", mood }) as Promise<RewardResult>,
     [mutate],
   );
   const startFocus = useCallback(
     () =>
-      mutate(
-        "start_focus_session",
-        {},
-        { type: "start", id: crypto.randomUUID() },
-      ) as Promise<FocusSession>,
+      mutate({
+        type: "start",
+        id: crypto.randomUUID(),
+      }) as Promise<FocusSession>,
     [mutate],
   );
   const completeFocus = useCallback(() => {
@@ -515,50 +495,31 @@ export function useBuddy() {
         total_xp: progressRef.current.profile.total_xp,
         level: progressRef.current.profile.level,
       });
-    return mutate(
-      "complete_focus_session",
-      { p_session_id: active.id },
-      { type: "complete", id: active.id },
-    ) as Promise<RewardResult>;
+    return mutate({ type: "complete", id: active.id }) as Promise<RewardResult>;
   }, [mutate]);
   const cancelFocus = useCallback(() => {
     const active = progressRef.current.focus_sessions.find(
       (s) => s.status === "active",
     );
     if (!active) return Promise.resolve({ cancelled: true });
-    return mutate(
-      "cancel_focus_session",
-      { p_session_id: active.id },
-      { type: "cancel", id: active.id },
-    ) as Promise<{ cancelled: boolean }>;
+    return mutate({ type: "cancel", id: active.id }) as Promise<{
+      cancelled: boolean;
+    }>;
   }, [mutate]);
   const submitExercise = useCallback(
     (id: string, answer: number) =>
-      mutate(
-        "submit_exercise",
-        { p_exercise_id: id, p_answer: answer },
-        { type: "exercise", id, answer },
-      ) as Promise<AssessmentResult>,
+      mutate({ type: "exercise", id, answer }) as Promise<AssessmentResult>,
     [mutate],
   );
   const savePreferences = useCallback(
     (preferences: Preferences) =>
-      mutate(
-        "update_preferences",
-        {
-          p_display_name: preferences.display_name,
-          p_companion: preferences.companion,
-          p_color: preferences.color,
-          p_leaderboard_opt_in: preferences.leaderboard_opt_in,
-        },
-        { type: "preferences", preferences },
-      ) as Promise<Profile>,
+      mutate({ type: "preferences", preferences }) as Promise<Profile>,
     [mutate],
   );
   const signIn = useCallback(async (email: string) => {
     if (!supabase)
       throw new Error(
-        "Tính năng đăng nhập chưa được cấu hình. Bạn vẫn có thể trải nghiệm chế độ dùng thử.",
+        "Đăng nhập AI chưa được cấu hình. Các hoạt động học tập vẫn dùng được trên thiết bị.",
       );
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim()))
       throw new Error("Bạn nhập một địa chỉ thư điện tử hợp lệ nhé.");
@@ -577,25 +538,7 @@ export function useBuddy() {
     const { error: authError } = await supabase.auth.signOut();
     if (authError)
       throw friendlyError(authError, "Chưa đăng xuất được. Bạn thử lại nhé.");
-    sessionRef.current = null;
     setSession(null);
-    update(readDemoProgress());
-  }, [update]);
-  const loadLeaderboard = useCallback(async (): Promise<LeaderboardRow[]> => {
-    if (!sessionRef.current || !supabase)
-      return FICTIONAL_LEADERBOARD.map((row, index) => ({
-        display_name: row.name,
-        total_xp: row.xp,
-        level: Math.floor(row.xp / 100) + 1,
-        rank: index + 1,
-      }));
-    const { data, error: rpcError } = await supabase.rpc("get_leaderboard");
-    if (rpcError)
-      throw friendlyError(
-        rpcError,
-        "Chưa tải được bảng xếp hạng. Bạn thử lại sau nhé.",
-      );
-    return data as LeaderboardRow[];
   }, []);
 
   return {
@@ -615,6 +558,5 @@ export function useBuddy() {
     savePreferences,
     signIn,
     signOut,
-    loadLeaderboard,
   };
 }

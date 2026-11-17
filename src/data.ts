@@ -1,5 +1,19 @@
-export type CompanionKind = "fox" | "owl" | "cat";
-export type CompanionColor = "mint" | "lavender" | "peach";
+export type CompanionKind =
+  | "fox"
+  | "owl"
+  | "cat"
+  | "rabbit"
+  | "panda"
+  | "dragon";
+export type CompanionColor =
+  | "mint"
+  | "lavender"
+  | "peach"
+  | "sky"
+  | "sunshine"
+  | "rose";
+export type BuddyAccessory = "none" | "bow" | "glasses" | "crown";
+export type BuddyScene = "garden" | "space" | "sunset";
 export type Mood = "great" | "okay" | "tired";
 
 export const COMPANIONS: {
@@ -22,12 +36,30 @@ export const COMPANIONS: {
     name: "Mèo Mít",
     description: "Dịu dàng, vui tính và rất giỏi cổ vũ.",
   },
+  {
+    id: "rabbit",
+    name: "Thỏ Bông",
+    description: "Nhẹ nhàng, thích hoa và những ý tưởng mới.",
+  },
+  {
+    id: "panda",
+    name: "Gấu Trúc",
+    description: "Một cái ôm mềm mại sau mỗi giờ học.",
+  },
+  {
+    id: "dragon",
+    name: "Rồng Đậu",
+    description: "Nhỏ xíu nhưng mang trong mình ước mơ thật lớn.",
+  },
 ];
 
 export const COLORS: { id: CompanionColor; name: string; hex: string }[] = [
   { id: "mint", name: "Xanh bạc hà", hex: "#9AC6AC" },
   { id: "lavender", name: "Tím hoa cà", hex: "#B5A4D1" },
   { id: "peach", name: "Hồng đào", hex: "#EAA690" },
+  { id: "sky", name: "Xanh trời", hex: "#87B8DE" },
+  { id: "sunshine", name: "Vàng nắng", hex: "#DBB968" },
+  { id: "rose", name: "Hồng phấn", hex: "#D895B2" },
 ];
 
 export interface Exercise {
@@ -77,13 +109,20 @@ export const EXERCISES: Exercise[] = [
   },
 ];
 
-// Đây là các nhân vật hư cấu dành riêng cho chế độ dùng thử.
-export const FICTIONAL_LEADERBOARD: { name: string; xp: number }[] = [
-  { name: "Mầm Xanh", xp: 840 },
-  { name: "Mây Nhỏ", xp: 720 },
-  { name: "Nắng Mai", xp: 610 },
-  { name: "Sao Biển", xp: 490 },
-  { name: "Lá Non", xp: 360 },
+export const ACCESSORIES: {
+  id: BuddyAccessory;
+  name: string;
+  symbol: string;
+}[] = [
+  { id: "none", name: "Tự nhiên", symbol: "✧" },
+  { id: "bow", name: "Nơ xinh", symbol: "🎀" },
+  { id: "glasses", name: "Kính tròn", symbol: "👓" },
+  { id: "crown", name: "Vương miện", symbol: "👑" },
+];
+export const SCENES: { id: BuddyScene; name: string; description: string }[] = [
+  { id: "garden", name: "Vườn nhỏ", description: "Lá xanh và chút bình yên" },
+  { id: "space", name: "Ngân hà", description: "Đi tìm những vì sao" },
+  { id: "sunset", name: "Hoàng hôn", description: "Nắng ấm cuối ngày" },
 ];
 
 export const ACHIEVEMENTS = [

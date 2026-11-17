@@ -1,7 +1,9 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
-  handleRequest,
+  handleRequest as rawHandleRequest,
+  MemoryQuota,
+  freeModelAvailable,
   LIMITS,
   validateMessages,
   type Env,
@@ -12,15 +14,30 @@ const env: Env = {
   SUPABASE_URL: "https://test-project.supabase.co",
   SUPABASE_PUBLISHABLE_KEY: "sb_publishable_test_only",
   ALLOWED_ORIGIN: "https://example.github.io",
-  OPENROUTER_MODEL: "nvidia/test-model",
+  OPENROUTER_MODEL: "nvidia/test-model:free",
   OPENROUTER_API_KEY: "private_test_key_must_not_leak",
-  RATE_LIMITER: {
-    idFromName: (name: string) => name,
-    get: () => ({
-      fetch: async () => Response.json({ allowed: true, retryAfter: 0 }),
-    }),
-  } as Env["RATE_LIMITER"],
+  QUOTA: { consume: () => ({ allowed: true, retryAfter: 0 }) },
 };
+
+type TestFetcher = NonNullable<Parameters<typeof rawHandleRequest>[2]>;
+function handleRequest(
+  request: Request,
+  env: Env,
+  fetcher: TestFetcher = fetch,
+): Promise<Response> {
+  return rawHandleRequest(request, env, async (url, init) => {
+    if (String(url) === "https://openrouter.ai/api/v1/models")
+      return Response.json({
+        data: [
+          {
+            id: env.OPENROUTER_MODEL,
+            pricing: { prompt: "0", completion: "0" },
+          },
+        ],
+      });
+    return fetcher(url, init);
+  });
+}
 
 function request(
   body: unknown = {
@@ -130,18 +147,13 @@ test("hết lượt hoặc dịch vụ giới hạn hỏng thì không gọi Ope
     let upstreamCalls = 0;
     const limited = {
       ...env,
-      RATE_LIMITER: {
-        idFromName: (name: string) => {
-          assert.equal(name, USER_ID);
-          return name;
+      QUOTA: {
+        consume: (id: string) => {
+          assert.equal(id, USER_ID);
+          if (fail) throw new Error("unavailable");
+          return { allowed: false, retryAfter: 100 };
         },
-        get: () => ({
-          fetch: async () => {
-            if (fail) throw new Error("unavailable");
-            return Response.json({ allowed: false, retryAfter: 100 });
-          },
-        }),
-      } as Env["RATE_LIMITER"],
+      },
     };
     const response = await handleRequest(request(), limited, async (url) => {
       if (String(url).includes("openrouter")) upstreamCalls++;
@@ -168,6 +180,12 @@ test("truyền SSE qua Edge Function với mô hình cấu hình và khóa chỉ
     assert.equal(body.max_tokens, LIMITS.maxOutputTokens);
     assert.match(body.messages[0].content, /tiếng Việt/);
     assert.equal(body.provider.data_collection, "deny");
+    assert.deepEqual(body.provider.max_price, {
+      prompt: 0,
+      completion: 0,
+      request: 0,
+    });
+    assert.equal(body.provider.allow_fallbacks, false);
     return new Response(chunks, {
       headers: { "Content-Type": "text/event-stream" },
     });
@@ -251,6 +269,7 @@ test("kiểm tra sức khỏe không công khai cấu hình hoặc khóa", async
   );
   assert.deepEqual(await response.json(), {
     ready: true,
+    model: env.OPENROUTER_MODEL,
     message: "Trợ lý đã sẵn sàng.",
   });
   const missing = await handleRequest(
@@ -260,3 +279,102 @@ test("kiểm tra sức khỏe không công khai cấu hình hoặc khóa", async
   assert.equal(missing.status, 503);
 });
 
+test("đường dẫn health thực tế trả mô hình công khai, không trả khóa", async () => {
+  const response = await handleRequest(
+    new Request("https://example.supabase.co/functions/v1/chat/health", {
+      headers: { Origin: env.ALLOWED_ORIGIN },
+    }),
+    env,
+  );
+  const body = await response.json();
+  assert.equal(body.ready, true);
+  assert.equal(body.model, env.OPENROUTER_MODEL);
+  assert.equal(
+    response.headers.get("Access-Control-Allow-Origin"),
+    env.ALLOWED_ORIGIN,
+  );
+  assert.ok(!JSON.stringify(body).includes(env.OPENROUTER_API_KEY));
+});
+
+test("chỉ chấp nhận mô hình NVIDIA miễn phí có giá bằng không trong danh mục", async () => {
+  let calls = 0;
+  const catalog = async () => {
+    calls++;
+    return Response.json({
+      data: [
+        {
+          id: "nvidia/free:free",
+          pricing: { prompt: "0", completion: "0", request: "0" },
+        },
+        { id: "nvidia/paid:free", pricing: { prompt: "0", completion: "0.1" } },
+        {
+          id: "nvidia/hidden:free",
+          pricing: { prompt: "0", completion: "0", request: "1" },
+        },
+        {
+          id: "nvidia/invalid:free",
+          pricing: { prompt: null, completion: "0" },
+        },
+      ],
+    });
+  };
+  assert.equal(await freeModelAvailable("nvidia/free:free", catalog), true);
+  assert.equal(await freeModelAvailable("nvidia/paid:free", catalog), false);
+  assert.equal(await freeModelAvailable("nvidia/hidden:free", catalog), false);
+  assert.equal(await freeModelAvailable("nvidia/invalid:free", catalog), false);
+  assert.equal(await freeModelAvailable("nvidia/missing:free", catalog), false);
+  assert.equal(await freeModelAvailable("nvidia/free", catalog), false);
+  assert.equal(await freeModelAvailable("other/free:free", catalog), false);
+  assert.equal(calls, 1);
+});
+
+test("không gọi hoàn thành hội thoại khi danh mục không xác nhận miễn phí", async () => {
+  for (const badCatalog of [
+    Response.json({ data: [] }),
+    Response.json({}, { status: 503 }),
+  ]) {
+    let completions = 0;
+    const response = await rawHandleRequest(request(), env, async (url) => {
+      if (String(url).includes("supabase"))
+        return Response.json({ id: USER_ID });
+      if (String(url).endsWith("/models")) return badCatalog;
+      completions++;
+      throw Error("Không được gọi");
+    });
+    assert.equal(response.status, 503);
+    assert.equal(completions, 0);
+  }
+});
+
+test("hạn mức RAM giới hạn từng người, toàn isolate và khôi phục sau một giờ", () => {
+  let now = 1_000_000;
+  const quota = new MemoryQuota(() => now);
+  for (let i = 0; i < 20; i++)
+    assert.equal(quota.consume("user-a").allowed, true);
+  assert.equal(quota.consume("user-a").allowed, false);
+  for (let i = 0; i < 180; i++)
+    assert.equal(quota.consume(`user-${i}`).allowed, true);
+  assert.equal(quota.consume("another-user").allowed, false);
+  now += 3_600_001;
+  assert.equal(quota.consume("user-a").allowed, true);
+});
+
+test("lỗi chính sách dữ liệu được giải thích an toàn, không lộ lỗi gốc", async () => {
+  const response = await handleRequest(request(), env, async (url) =>
+    String(url).includes("supabase")
+      ? Response.json({ id: USER_ID })
+      : Response.json(
+          {
+            error: {
+              message: `No endpoints found matching your data policy. debug=${env.OPENROUTER_API_KEY}`,
+            },
+          },
+          { status: 404 },
+        ),
+  );
+  assert.equal(response.status, 502);
+  const text = await response.text();
+  assert.match(text, /quyền riêng tư/);
+  assert.ok(!text.includes(env.OPENROUTER_API_KEY));
+  assert.ok(!text.includes("debug="));
+});

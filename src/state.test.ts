@@ -1,4 +1,58 @@
-import { beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { act, cleanup, renderHook, waitFor } from "@testing-library/react";
+
+const cloud = vi.hoisted(() => ({
+  session: null as null | {
+    access_token: string;
+    user: { id: string; email: string };
+  },
+  onAuth: null as null | ((event: string, session: unknown) => void),
+  rpc: vi.fn(() => {
+    throw new Error("Không được gọi cơ sở dữ liệu");
+  }),
+  from: vi.fn(() => {
+    throw new Error("Không được đọc bảng");
+  }),
+}));
+vi.mock("./cloud", () => ({
+  apiConfigured: true,
+  cloudConfigured: true,
+  authRedirectUrl: () => "https://example.github.io/focus-buddy-/",
+  friendlyError: (error: unknown, fallback: string) =>
+    error instanceof Error ? error : new Error(fallback),
+  supabase: {
+    rpc: cloud.rpc,
+    from: cloud.from,
+    auth: {
+      getSession: async () => ({
+        data: { session: cloud.session },
+        error: null,
+      }),
+      onAuthStateChange: (
+        callback: (event: string, session: unknown) => void,
+      ) => {
+        cloud.onAuth = callback;
+        return {
+          data: {
+            subscription: {
+              unsubscribe: () => {
+                cloud.onAuth = null;
+              },
+            },
+          },
+        };
+      },
+      signOut: async () => ({ error: null }),
+      signInWithOtp: async () => ({ error: null }),
+    },
+  },
+}));
+afterEach(() => {
+  cleanup();
+  cloud.session = null;
+  cloud.onAuth = null;
+  vi.clearAllMocks();
+});
 import {
   createDemoProgress,
   demoReducer,
@@ -6,6 +60,7 @@ import {
   FOCUS_DURATION_MS,
   readDemoProgress,
   vietnamDay,
+  useBuddy,
 } from "./state";
 
 describe("Tiến trình dùng thử", () => {
@@ -144,5 +199,104 @@ describe("Tiến trình dùng thử", () => {
       JSON.stringify({ profile: { total_xp: 100 } }),
     );
     expect(readDemoProgress().profile.total_xp).toBe(0);
+  });
+});
+
+describe("Tiến trình trên thiết bị và tùy chỉnh bạn nhỏ", () => {
+  beforeEach(() => localStorage.clear());
+
+  it("nâng cấp bản lưu cũ và bỏ dữ liệu bảng xếp hạng mà giữ nguyên điểm", () => {
+    const legacy = demoReducer(createDemoProgress(), {
+      type: "exercise",
+      id: "logic-1",
+      answer: 2,
+    }).progress;
+    const profile = legacy.profile as unknown as Record<string, unknown>;
+    delete profile.buddy_name;
+    delete profile.accessory;
+    delete profile.scene;
+    profile.leaderboard_opt_in = true;
+    localStorage.setItem(DEMO_STORAGE_KEY, JSON.stringify(legacy));
+    const migrated = readDemoProgress();
+    expect(migrated.profile).toMatchObject({
+      total_xp: 30,
+      buddy_name: "",
+      accessory: "none",
+      scene: "garden",
+    });
+    expect(migrated.profile).not.toHaveProperty("leaderboard_opt_in");
+    expect(migrated.completed_exercises).toEqual(["logic-1"]);
+  });
+
+  it("lưu nhân vật, màu, tên, phụ kiện và cảnh nền mới", () => {
+    const initial = createDemoProgress();
+    const preferences = {
+      ...initial.profile,
+      companion: "dragon" as const,
+      color: "sky" as const,
+      buddy_name: "  Rồng Bông  ",
+      accessory: "crown" as const,
+      scene: "space" as const,
+      total_xp: 9999,
+    };
+    const result = demoReducer(initial, { type: "preferences", preferences });
+    localStorage.setItem(DEMO_STORAGE_KEY, JSON.stringify(result.progress));
+    expect(readDemoProgress().profile).toMatchObject({
+      companion: "dragon",
+      color: "sky",
+      buddy_name: "Rồng Bông",
+      accessory: "crown",
+      scene: "space",
+      total_xp: 0,
+    });
+    expect(() =>
+      demoReducer(initial, {
+        type: "preferences",
+        preferences: { ...preferences, buddy_name: "x".repeat(25) },
+      }),
+    ).toThrow("24 ký tự");
+  });
+
+  it("giữ tiến trình khi đăng nhập, làm bài, đăng xuất và đổi tài khoản; không gọi DB", async () => {
+    const old = demoReducer(createDemoProgress(), {
+      type: "exercise",
+      id: "logic-1",
+      answer: 2,
+    }).progress;
+    localStorage.setItem(DEMO_STORAGE_KEY, JSON.stringify(old));
+    cloud.session = {
+      access_token: "test-token",
+      user: { id: "student-a", email: "a@example.test" },
+    };
+    const { result } = renderHook(() => useBuddy());
+    await waitFor(() => expect(result.current.mode).toBe("online"));
+    expect(result.current.progress.profile.total_xp).toBe(30);
+    await act(async () => {
+      await result.current.checkIn("great");
+    });
+    expect(result.current.progress.profile.total_xp).toBe(40);
+    expect(
+      JSON.parse(localStorage.getItem(DEMO_STORAGE_KEY)!).profile.total_xp,
+    ).toBe(40);
+    await act(async () => {
+      await result.current.signOut();
+    });
+    expect(result.current.mode).toBe("demo");
+    expect(result.current.progress.profile.total_xp).toBe(40);
+    act(() =>
+      cloud.onAuth?.("SIGNED_IN", {
+        access_token: "other-token",
+        user: { id: "student-b", email: "b@example.test" },
+      }),
+    );
+    expect(result.current.mode).toBe("online");
+    expect(result.current.progress.profile.total_xp).toBe(40);
+    await act(async () => {
+      await result.current.refresh();
+    });
+    expect(result.current.progress.profile.total_xp).toBe(40);
+    expect(cloud.rpc).not.toHaveBeenCalled();
+    expect(cloud.from).not.toHaveBeenCalled();
+    expect(result.current).not.toHaveProperty("loadLeaderboard");
   });
 });

@@ -1,0 +1,560 @@
+/* Một khu vườn nhẹ nhàng, có chuyển động nhưng không gây xao nhãng. */
+:root {
+  --green: #527b61;
+  --dark: #304a3c;
+  --muted: #727f6e;
+  background: #f6f8f3;
+}
+.workspace {
+  background:
+    radial-gradient(ellipse at 100% 0, #edf0fb85, transparent 42%),
+    radial-gradient(ellipse at 15% 60%, #f6f1e585, transparent 50%), #f8f9f5;
+  min-height: 100vh;
+}
+.sidebar {
+  background: linear-gradient(180deg, #fffefa 65%, #f0f5eb);
+  border-right-color: #e0e7d8;
+}
+.brand-mark {
+  background: linear-gradient(145deg, #bad7b5, #e4efc9);
+  box-shadow: 0 4px 12px #607c4920;
+}
+.topbar {
+  background: #fffefad9;
+  backdrop-filter: blur(12px);
+}
+.nav-item {
+  font-size: 13px;
+  min-height: 46px;
+}
+.nav-item.selected {
+  background: linear-gradient(110deg, #e0ecd8, #eff4e9);
+  box-shadow: inset 3px 0 #7d9d68;
+}
+.page-heading {
+  animation: garden-enter 0.55s ease both;
+}
+.page-heading h1 {
+  letter-spacing: -1px;
+  font-size: 32px;
+}
+.page-heading p {
+  font-size: 13px;
+}
+.stat-card {
+  box-shadow: 0 4px 18px #35513604;
+  border-color: #e5eadf;
+  animation: garden-enter 0.5s ease both;
+  transition:
+    transform 0.2s,
+    box-shadow 0.2s;
+}
+.stat-card:nth-child(2) {
+  animation-delay: 0.07s;
+}
+.stat-card:nth-child(3) {
+  animation-delay: 0.14s;
+}
+.stat-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 24px #3551360c;
+}
+.stat-icon.peach {
+  background: linear-gradient(145deg, #ffe9d5, #f6dac5);
+  color: #b67b50;
+}
+.stat-icon.mint {
+  background: linear-gradient(145deg, #dfecd2, #cee4cf);
+  color: #5d8964;
+}
+.stat-icon.lavender {
+  background: linear-gradient(145deg, #e8e1f9, #eee5f2);
+  color: #9274b6;
+}
+.stat-label {
+  font-size: 11px;
+}
+.stat-card strong {
+  font-size: 27px;
+}
+.stat-card small {
+  font-size: 11px;
+}
+.focus-hero {
+  background: linear-gradient(115deg, #e5efda, #f0f3d9 56%, #e0ecd9);
+  border-color: #d2dfc5;
+  box-shadow: 0 8px 25px #6b80570a;
+  animation: garden-enter 0.6s 0.08s ease both;
+}
+.hero-copy h2 {
+  font-size: 32px;
+  color: #3c5c3f;
+}
+.hero-copy p {
+  font-size: 12px;
+  line-height: 1.9;
+}
+.hero-label {
+  font-size: 10px;
+  letter-spacing: 1px;
+  line-height: 1.7;
+}
+.hero-copy .button {
+  font-size: 12px;
+  padding: 13px 17px;
+  box-shadow: 0 5px 12px #48664220;
+}
+.hero-copy .button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 7px 18px #48664230;
+}
+.hero-art .orbit-one {
+  border-style: dashed;
+  animation: slow-orbit 70s linear infinite;
+}
+.hero-art .orbit-two {
+  border-color: #cbdcb9;
+  animation: glow-breath 7s ease-in-out infinite;
+}
+.hero-clock {
+  box-shadow:
+    0 15px 30px #67815420,
+    inset 0 2px 7px #ffffff;
+  transition: box-shadow 0.3s;
+}
+.hero-clock > span {
+  font-size: 8px;
+}
+.hero-leaf {
+  animation: leaf-sway 6s ease-in-out infinite;
+  transform-origin: 50% 90%;
+}
+.hero-reward {
+  font-size: 10px;
+}
+.friend-card {
+  background: linear-gradient(170deg, #fff 55%, #f3f7ed);
+  border-color: #dfe8d4;
+  box-shadow: 0 5px 22px #42533306;
+}
+.friend-halo {
+  background: radial-gradient(circle, #f1e8c9, #e7efd9);
+  animation: glow-breath 7s ease-in-out infinite;
+}
+.friend-card h3 {
+  font-size: 15px;
+}
+.friend-card > p {
+  font-size: 11px;
+}
+.tiny-tag {
+  font-size: 10px;
+  background: #e8e6cf;
+  color: #746c45;
+}
+.friend-plant {
+  animation: leaf-sway 6s ease-in-out infinite;
+  transform-origin: bottom;
+}
+.card,
+.daily-thought {
+  animation: garden-enter 0.5s 0.1s ease both;
+}
+.card {
+  box-shadow: 0 3px 17px #344d3e04;
+}
+.card h2,
+.section-heading h2 {
+  font-size: 16px;
+}
+.mission-row strong {
+  font-size: 12px;
+}
+.mission-row > div > span {
+  font-size: 11px;
+}
+.mission-row {
+  border-radius: 9px;
+  transition: background 0.2s;
+}
+.mission-row:hover {
+  background: #f7f9f2;
+}
+.mission-icon {
+  transition: transform 0.3s;
+}
+.mission-row:hover .mission-icon {
+  transform: rotate(-7deg) scale(1.06);
+}
+.daily-thought {
+  background: linear-gradient(110deg, #faf1df, #f6f3e7);
+  border-color: #eae2cd;
+}
+.daily-thought p {
+  font-size: 12px;
+}
+.daily-thought > svg {
+  color: #b0ad77;
+  animation: leaf-sway 8s ease-in-out infinite;
+}
+.daily-thought .quote-mark {
+  color: #c3b58b;
+}
+.mood-card {
+  background: linear-gradient(140deg, #fffefa, #fcf7ef);
+}
+.mood-card h2 {
+  font-size: 15px;
+}
+.mood-card > p {
+  font-size: 11px;
+}
+.mood-face {
+  transition: transform 0.25s;
+}
+.mood-option:hover:not(:disabled) .mood-face {
+  transform: translateY(-4px) rotate(9deg);
+}
+.mood-option.chosen .mood-face {
+  box-shadow: 0 0 0 4px #e2e9cf;
+}
+.mood-option {
+  font-size: 10px;
+  min-height: 74px;
+}
+.assistant-card {
+  background: linear-gradient(120deg, #eaf0e1, #ebe9f6);
+  border-color: #dce4d3;
+}
+.assistant-card strong {
+  font-size: 12px;
+}
+.assistant-card small {
+  font-size: 10px;
+}
+.assistant-card > span {
+  color: #8d7caf;
+}
+.assistant-card:hover > span {
+  transform: rotate(12deg);
+}
+.chat-launch {
+  background: linear-gradient(120deg, #536f58, #697f57);
+  color: #fff;
+  border-color: #537354;
+  font-size: 12px;
+  box-shadow: 0 7px 23px #294a3029;
+}
+.chat-launch svg {
+  color: #e3ebc8;
+}
+.chat-launch:hover {
+  transform: translateY(-3px);
+}
+.achievement.earned {
+  background: linear-gradient(150deg, #fffff7, #eef4e1);
+  position: relative;
+  overflow: hidden;
+}
+.achievement.earned > span {
+  animation: badge-bob 5s ease-in-out infinite;
+}
+.achievement.earned:after {
+  content: "✦";
+  position: absolute;
+  right: 15px;
+  top: 15px;
+  color: #bdc38d;
+  font-size: 18px;
+  animation: glow-breath 4s ease-in-out infinite;
+}
+.achievement h3 {
+  font-size: 13px;
+}
+.achievement p {
+  font-size: 11px;
+}
+.achievement small {
+  font-size: 10px;
+}
+.exercise-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 10px 30px #45643112;
+}
+.exercise-card .exercise-art svg {
+  transition: transform 0.3s;
+}
+.exercise-card:hover .exercise-art svg {
+  transform: rotate(-8deg) scale(1.08);
+}
+.exercise-art {
+  background-image: radial-gradient(
+    circle at 80% 20%,
+    #ffffff90,
+    transparent 65%
+  );
+}
+.toast {
+  animation: toast-rise 0.3s ease both;
+}
+.toast > svg {
+  animation: badge-bob 1.2s ease 2;
+}
+.modal {
+  animation: modal-arrive 0.2s ease both;
+}
+.chat-setup {
+  display: flex;
+  gap: 12px;
+  padding: 16px;
+  background: #f8f1df;
+  border: 1px solid #e8dbb9;
+  border-radius: 12px;
+  margin-bottom: 15px;
+  color: #78663c;
+}
+.chat-setup strong {
+  font-size: 13px;
+}
+.chat-setup p {
+  font-size: 12px;
+  margin-top: 7px;
+}
+.chat-setup .button-row {
+  margin-top: 12px;
+  justify-content: flex-start;
+}
+.chat-connect {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  background: #edf2e6;
+  padding: 12px;
+  border-radius: 10px;
+  font-size: 11px;
+  color: #70815f;
+  margin-bottom: 12px;
+}
+.chat-connect button {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #526d42;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.chat-mode {
+  font-size: 11px;
+}
+.chat-message > div {
+  font-size: 13px;
+}
+.chat-disclaimer {
+  font-size: 10px;
+}
+@keyframes garden-enter {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@keyframes slow-orbit {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@keyframes glow-breath {
+  0%,
+  100% {
+    opacity: 0.65;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+@keyframes leaf-sway {
+  0%,
+  100% {
+    transform: rotate(-5deg);
+  }
+  50% {
+    transform: rotate(7deg);
+  }
+}
+@keyframes badge-bob {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-4px);
+  }
+}
+@keyframes toast-rise {
+  from {
+    opacity: 0;
+    translate: 0 12px;
+  }
+  to {
+    opacity: 1;
+    translate: 0 0;
+  }
+}
+@keyframes modal-arrive {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+.focus-active .orbit,
+.focus-active .hero-leaf,
+.focus-active .friend-halo,
+.focus-active .friend-plant,
+.focus-active .daily-thought > svg,
+.focus-active .achievement.earned > span,
+.focus-active .achievement.earned:after {
+  animation-play-state: paused !important;
+}
+.focus-active .page-heading,
+.focus-active .card,
+.focus-active .stat-card,
+.focus-active .focus-hero,
+.focus-active .daily-thought {
+  animation: none;
+}
+@media (max-width: 1200px) and (min-width: 1031px) {
+  .hero-copy {
+    width: 68%;
+  }
+  .hero-copy h2 {
+    font-size: 27px;
+  }
+  .hero-copy p {
+    font-size: 11px;
+  }
+  .hero-art {
+    right: -60px;
+    opacity: 0.45;
+  }
+  .hero-label {
+    max-width: 240px;
+  }
+  .mission-row strong {
+    font-size: 11px;
+  }
+  .mission-row > div > span {
+    font-size: 10px;
+  }
+}
+@media (max-width: 760px) {
+  .page-heading h1 {
+    font-size: 27px;
+  }
+  .hero-copy h2 {
+    font-size: 28px;
+  }
+  .hero-copy p {
+    font-size: 11px;
+  }
+  .hero-copy .button {
+    font-size: 11px;
+    padding: 11px 13px;
+  }
+  .hero-label {
+    font-size: 8px;
+  }
+  .stat-card strong {
+    font-size: 23px;
+  }
+  .stat-label {
+    font-size: 10px;
+  }
+  .mission-row strong {
+    font-size: 12px;
+  }
+  .mission-row > div > span {
+    font-size: 10px;
+  }
+  .hero-art {
+    opacity: 0.65;
+    right: -18px;
+  }
+  .hero-copy {
+    width: 72%;
+  }
+  .hero-copy p {
+    max-width: 230px;
+  }
+  .card h2,
+  .section-heading h2 {
+    font-size: 15px;
+  }
+  .friend-card > p,
+  .mood-card > p {
+    font-size: 10px;
+  }
+  .assistant-card strong {
+    font-size: 11px;
+  }
+  .assistant-card small {
+    font-size: 10px;
+  }
+  .hero-reward {
+    font-size: 9px;
+  }
+}
+@media (max-width: 410px) {
+  .hero-art {
+    opacity: 0.28;
+    right: -45px;
+  }
+  .hero-copy {
+    width: 95%;
+  }
+  .hero-label {
+    font-size: 9px;
+  }
+  .hero-copy p {
+    max-width: 240px;
+  }
+  .stats-row {
+    gap: 8px;
+  }
+  .stat-card {
+    padding: 14px 10px;
+  }
+  .stat-label {
+    font-size: 10px;
+  }
+  .stat-card small {
+    font-size: 10px;
+  }
+  .stat-card strong {
+    font-size: 23px;
+  }
+  .mission-row .reward-tag {
+    font-size: 9px;
+  }
+  .chat-launch {
+    font-size: 11px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition: none !important;
+    scroll-behavior: auto !important;
+  }
+}

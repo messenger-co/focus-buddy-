@@ -7,9 +7,7 @@ export const apiBaseUrl = `${url.replace(/\/+$/, "")}/functions/v1`;
 export const cloudConfigured = Boolean(
   url && publishableKey && /^https:\/\//.test(url),
 );
-export const apiConfigured = Boolean(
-  cloudConfigured,
-);
+export const apiConfigured = Boolean(cloudConfigured);
 
 export const supabase = cloudConfigured
   ? createClient(url, publishableKey, {

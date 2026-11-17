@@ -75,3 +75,40 @@ describe("Đọc câu trả lời trực tiếp", () => {
     ).rejects.toMatchObject({ name: "AbortError" });
   });
 });
+
+// Việc nhận câu trả lời mẫu không được hiển thị như AI đã kết nối.
+describe("Trạng thái triển khai AI", () => {
+  it("báo rõ ngoại tuyến khi chưa có cấu hình", async () => {
+    const { getChatReadiness } = await import("./chat");
+    const result = await getChatReadiness();
+    expect(result.ready).toBe(false);
+    expect(result.message).toContain("Chưa kết nối");
+  });
+});
+
+describe("Không báo AI trực tuyến khi dịch vụ chưa sẵn sàng", () => {
+  it("giải thích hàm chưa triển khai khi nhận 404", async () => {
+    const { getChatReadiness } = await import("./chat");
+    const result = await getChatReadiness(
+      "https://example.test/chat/health",
+      async () => new Response("{}", { status: 404 }),
+    );
+    expect(result.ready).toBe(false);
+    expect(result.message).toContain("chưa được triển khai");
+  });
+  it("chỉ báo sẵn sàng khi HTTP thành công và ready=true", async () => {
+    const { getChatReadiness } = await import("./chat");
+    expect(
+      (
+        await getChatReadiness("https://example.test/health", async () =>
+          Response.json({ ready: true }, { status: 503 }),
+        )
+      ).ready,
+    ).toBe(false);
+    expect(
+      await getChatReadiness("https://example.test/health", async () =>
+        Response.json({ ready: true, model: "nvidia/test:free" }),
+      ),
+    ).toMatchObject({ ready: true, model: "nvidia/test:free" });
+  });
+});

@@ -35,28 +35,24 @@ import {
   Play,
   Send,
   Settings,
-  ShieldCheck,
   Sparkles,
   Sprout,
   Star,
   Sun,
   Target,
-  Trophy,
   TrendingUp,
-  Users,
   X,
 } from "lucide-react";
 import { useBuddy, vietnamDay } from "./state";
-import { streamChat } from "./chat";
+import { streamChat, getChatReadiness } from "./chat";
 import {
   COMPANIONS,
-  COLORS,
   EXERCISES,
-  FICTIONAL_LEADERBOARD,
   type CompanionKind,
   type CompanionColor,
   type Mood,
 } from "./data";
+const BuddyStudio = lazy(() => import("./components/BuddyStudio"));
 const Companion = lazy(() => import("./components/Companion"));
 type Buddy = ReturnType<typeof useBuddy>;
 type Message = { role: "user" | "assistant"; content: string };
@@ -66,7 +62,6 @@ const navItems = [
   { to: "/nhiem-vu", icon: BookOpen, label: "Nhiệm vụ học tập" },
   { to: "/ban-dong-hanh", icon: Heart, label: "Bạn đồng hành" },
   { to: "/hanh-trinh", icon: TrendingUp, label: "Hành trình của bạn" },
-  { to: "/bang-xep-hang", icon: Trophy, label: "Cùng nhau tiến bộ" },
 ];
 const number = (n: number) => n.toLocaleString("vi-VN");
 const today = () => vietnamDay();
@@ -102,6 +97,7 @@ function BuddyArt({
       <Companion
         kind={buddy.progress.profile.companion as CompanionKind}
         color={buddy.progress.profile.color as CompanionColor}
+        accessory={buddy.progress.profile.accessory}
         paused={buddy.progress.focus_sessions.some(
           (s) => s.status === "active",
         )}
@@ -337,7 +333,7 @@ function App() {
               className={`mode-tag ${buddy.mode === "online" ? "online" : ""}`}
             >
               <span />
-              {buddy.mode === "demo" ? "Chế độ dùng thử" : "Đã đồng bộ"}
+              Lưu trên thiết bị
             </span>
             <button
               className="avatar small"
@@ -407,47 +403,29 @@ function App() {
             <Route
               path="/ban-dong-hanh"
               element={
-                <CompanionPage
-                  buddy={buddy}
-                  busy={busy}
-                  sleepy={sleepy}
-                  setSleepy={setSleepy}
-                  save={(kind, color) =>
-                    act(
-                      () =>
-                        buddy.savePreferences({
-                          ...buddy.progress.profile,
-                          companion: kind,
-                          color,
-                        }),
-                      "Đã lưu người bạn đồng hành của bạn.",
-                    )
+                <Suspense
+                  fallback={
+                    <div className="inline-notice">
+                      Đang mở khu vườn của bạn…
+                    </div>
                   }
-                />
+                >
+                  <BuddyStudio
+                    profile={buddy.progress.profile}
+                    paused={!!active}
+                    onSave={(changes) =>
+                      buddy.savePreferences({
+                        ...buddy.progress.profile,
+                        ...changes,
+                      })
+                    }
+                  />
+                </Suspense>
               }
             />
             <Route
               path="/hanh-trinh"
               element={<ProgressPage buddy={buddy} />}
-            />
-            <Route
-              path="/bang-xep-hang"
-              element={
-                <LeaderboardPage
-                  buddy={buddy}
-                  join={() =>
-                    act(
-                      () =>
-                        buddy.savePreferences({
-                          ...buddy.progress.profile,
-                          leaderboard_opt_in:
-                            !buddy.progress.profile.leaderboard_opt_in,
-                        }),
-                      "Đã cập nhật lựa chọn chia sẻ của bạn.",
-                    )
-                  }
-                />
-              }
             />
             <Route
               path="*"
@@ -497,7 +475,16 @@ function App() {
       {settings && (
         <SettingsModal buddy={buddy} close={() => setSettings(false)} />
       )}
-      {chat && <ChatModal buddy={buddy} close={() => setChat(false)} />}
+      {chat && (
+        <ChatModal
+          buddy={buddy}
+          close={() => setChat(false)}
+          onSignIn={() => {
+            setChat(false);
+            setSettings(true);
+          }}
+        />
+      )}
     </div>
   );
 }
@@ -553,6 +540,7 @@ function Dashboard({
   );
   const mood = buddy.progress.check_ins.find((c) => c.day === today());
   const companionName =
+    buddy.progress.profile.buddy_name ||
     COMPANIONS.find((c) => c.id === buddy.progress.profile.companion)?.name ||
     "Cáo Mây";
   return (
@@ -1162,114 +1150,6 @@ function MissionsPage({ buddy }: { buddy: Buddy; busy: boolean }) {
     </>
   );
 }
-function CompanionPage({
-  buddy,
-  busy,
-  sleepy,
-  setSleepy,
-  save,
-}: {
-  buddy: Buddy;
-  busy: boolean;
-  sleepy: boolean;
-  setSleepy: (v: boolean) => void;
-  save: (kind: CompanionKind, color: CompanionColor) => void;
-}) {
-  return (
-    <>
-      <PageTitle
-        eyebrow="MỘT NGƯỜI BẠN LUÔN Ở ĐÂY"
-        title="Gặp bạn đồng hành của bạn"
-        description="Chọn một người bạn nhỏ để cùng học, cùng nghỉ và cùng lớn lên."
-      />
-      <div className="companion-layout">
-        <section className="card companion-showcase">
-          <div className="showcase-halo" />
-          <BuddyArt buddy={buddy} sleepy={sleepy} size={300} />
-          <h2>
-            {
-              COMPANIONS.find((c) => c.id === buddy.progress.profile.companion)
-                ?.name
-            }
-          </h2>
-          <p>
-            {sleepy
-              ? "Suỵt… bạn nhỏ đang ngủ."
-              : "Một chút tò mò, một chút dũng cảm, và rất nhiều yêu thương."}
-          </p>
-          <button
-            className="button secondary"
-            onClick={() => setSleepy(!sleepy)}
-          >
-            {sleepy ? <Sun size={17} /> : <Moon size={17} />}
-            {sleepy ? "Đánh thức nhẹ nhàng" : "Nghỉ ngơi một chút"}
-          </button>
-        </section>
-        <div className="companion-options">
-          <section className="card">
-            <h2>Chọn người bạn nhỏ</h2>
-            <div className="companion-choices">
-              {COMPANIONS.map((c) => (
-                <button
-                  key={c.id}
-                  disabled={busy}
-                  className={`companion-choice ${buddy.progress.profile.companion === c.id ? "selected" : ""}`}
-                  onClick={() =>
-                    save(c.id, buddy.progress.profile.color as CompanionColor)
-                  }
-                >
-                  <Suspense fallback={<Leaf />}>
-                    <Companion
-                      kind={c.id}
-                      color={buddy.progress.profile.color as CompanionColor}
-                      paused
-                      size={80}
-                    />
-                  </Suspense>
-                  <span>
-                    <strong>{c.name}</strong>
-                    <small>{c.description}</small>
-                  </span>
-                  {buddy.progress.profile.companion === c.id && (
-                    <Check size={19} />
-                  )}
-                </button>
-              ))}
-            </div>
-          </section>
-          <section className="card">
-            <h2>Một màu sắc của riêng bạn</h2>
-            <p className="muted">Đổi màu chiếc khăn của bạn nhỏ.</p>
-            <div className="color-choices">
-              {COLORS.map((c) => (
-                <button
-                  disabled={busy}
-                  key={c.id}
-                  className={
-                    buddy.progress.profile.color === c.id ? "selected" : ""
-                  }
-                  onClick={() =>
-                    save(
-                      buddy.progress.profile.companion as CompanionKind,
-                      c.id,
-                    )
-                  }
-                >
-                  <span style={{ background: c.hex }}>
-                    {buddy.progress.profile.color === c.id && (
-                      <Check size={20} />
-                    )}
-                  </span>
-                  {c.name}
-                </button>
-              ))}
-            </div>
-          </section>
-        </div>
-      </div>
-    </>
-  );
-}
 function ProgressPage({ buddy }: { buddy: Buddy }) {
   const sessions = buddy.progress.focus_sessions.filter(
     (s) => s.status === "completed",
@@ -1385,141 +1265,6 @@ function ProgressPage({ buddy }: { buddy: Buddy }) {
     </>
   );
 }
-function LeaderboardPage({ buddy, join }: { buddy: Buddy; join: () => void }) {
-  const [version, setVersion] = useState(0);
-  const [rows, setRows] = useState<
-    { display_name: string; total_xp: number; level: number; rank: number }[]
-  >([]);
-  const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
-  useEffect(() => {
-    let valid = true;
-    if (buddy.mode === "demo") return;
-    setError("");
-    setLoading(true);
-    void buddy
-      .loadLeaderboard()
-      .then((r) => {
-        if (valid) setRows(r);
-      })
-      .catch((e: Error) => {
-        if (valid) setError(e.message);
-      })
-      .finally(() => {
-        if (valid) setLoading(false);
-      });
-    return () => {
-      valid = false;
-    };
-  }, [
-    buddy.mode,
-    buddy.progress.profile.leaderboard_opt_in,
-    buddy.progress.profile.total_xp,
-    version,
-  ]);
-  const data =
-    buddy.mode === "demo"
-      ? FICTIONAL_LEADERBOARD.map((r, i) => ({
-          display_name: r.name,
-          total_xp: r.xp,
-          level: Math.floor(r.xp / 100) + 1,
-          rank: i + 1,
-        }))
-      : rows;
-  return (
-    <>
-      <PageTitle
-        eyebrow="CÙNG NHAU LỚN LÊN"
-        title="Một cộng đồng cùng cố gắng"
-        description="Mỗi người một nhịp. Cùng gửi nhau một chút động lực."
-      />
-      {buddy.mode === "demo" ? (
-        <div className="info-banner">
-          <Flower2 size={22} />
-          <div>
-            <strong>Bảng xếp hạng minh họa</strong>
-            <p>
-              Tất cả tên và điểm bên dưới đều là dữ liệu hư cấu, không phải kết
-              quả của học sinh thật.
-            </p>
-          </div>
-        </div>
-      ) : (
-        <div className="info-banner">
-          <ShieldCheck size={23} />
-          <div>
-            <strong>Bạn quyết định việc chia sẻ</strong>
-            <p>
-              Chỉ biệt danh, cấp độ và tổng điểm được hiển thị khi bạn đồng ý
-              tham gia.
-            </p>
-          </div>
-          <button className="button secondary" onClick={join}>
-            {buddy.progress.profile.leaderboard_opt_in
-              ? "Rời bảng xếp hạng"
-              : "Tham gia bằng biệt danh"}
-          </button>
-        </div>
-      )}
-      <section className="card leaderboard">
-        <div className="section-heading">
-          <h2>
-            <Trophy size={22} /> Những mầm xanh chăm chỉ
-          </h2>
-          <div className="leaderboard-controls">
-            {buddy.mode === "online" && (
-              <button
-                className="text-link"
-                disabled={loading}
-                onClick={() => setVersion((v) => v + 1)}
-              >
-                Làm mới
-              </button>
-            )}
-            <span className="pill">
-              <Users size={14} />
-              {data.length}{" "}
-              {buddy.mode === "demo" ? "nhân vật minh họa" : "người tham gia"}
-            </span>
-          </div>
-        </div>
-        {loading && <p className="muted">Đang tải bảng xếp hạng…</p>}
-        {error && <p className="form-error">{error}</p>}
-        <div className="leaderboard-labels">
-          <span>THỨ HẠNG</span>
-          <span>BẠN ĐỒNG HÀNH</span>
-          <span>CẤP ĐỘ</span>
-          <span>TỔNG ĐIỂM</span>
-        </div>
-        {data.map((r, i) => (
-          <div className="leaderboard-row" key={`${r.display_name}-${i}`}>
-            <span className={`rank rank-${i}`}>
-              {i === 0 ? <Trophy size={20} /> : r.rank}
-            </span>
-            <div>
-              <span
-                className={`leader-avatar ${["mint", "peach", "lavender"][i % 3]}`}
-              >
-                <Sprout size={20} />
-              </span>
-              <strong>{r.display_name}</strong>
-            </div>
-            <span>Cấp {r.level}</span>
-            <strong>
-              {number(r.total_xp)} <small>điểm</small>
-            </strong>
-          </div>
-        ))}
-        {!loading && !data.length && (
-          <div className="empty-state">
-            <Sprout size={36} />
-            <p>Chưa có ai tham gia. Bạn có thể là mầm xanh đầu tiên.</p>
-          </div>
-        )}
-      </section>
-    </>
-  );
-}
 function SettingsModal({ buddy, close }: { buddy: Buddy; close: () => void }) {
   const [name, setName] = useState(buddy.progress.profile.display_name);
   const [email, setEmail] = useState("");
@@ -1579,14 +1324,15 @@ function SettingsModal({ buddy, close }: { buddy: Buddy; close: () => void }) {
         </form>
       </section>
       <section className="settings-section">
-        <h3>Tài khoản & đồng bộ</h3>
+        <h3>Kết nối trợ lý AI</h3>
         {buddy.mode === "online" ? (
           <>
             <p>
               Đang đăng nhập: <strong>{buddy.userEmail}</strong>
             </p>
             <p className="muted">
-              Tiến trình được lưu trong tài khoản của bạn.
+              Tài khoản chỉ dùng để trò chuyện AI. Điểm và bạn đồng hành luôn
+              được lưu trên thiết bị này.
             </p>
             <button
               className="button secondary"
@@ -1594,7 +1340,7 @@ function SettingsModal({ buddy, close }: { buddy: Buddy; close: () => void }) {
               onClick={() =>
                 void run(
                   () => buddy.signOut(),
-                  "Đã đăng xuất. Bạn đang ở chế độ dùng thử.",
+                  "Đã đăng xuất khỏi AI. Tiến trình trên thiết bị vẫn được giữ nguyên.",
                 )
               }
             >
@@ -1604,8 +1350,8 @@ function SettingsModal({ buddy, close }: { buddy: Buddy; close: () => void }) {
         ) : buddy.cloudConfigured ? (
           <>
             <p className="muted">
-              Nhận liên kết đăng nhập qua email. Điểm dùng thử được lưu riêng và
-              không chuyển thành điểm trực tuyến.
+              Đăng nhập qua email để dùng trợ lý AI. Bạn không cần tài khoản để
+              học, nuôi bạn đồng hành hoặc lưu tiến trình.
             </p>
             <form
               noValidate
@@ -1636,10 +1382,10 @@ function SettingsModal({ buddy, close }: { buddy: Buddy; close: () => void }) {
           <div className="settings-note">
             <Leaf size={22} />
             <div>
-              <strong>Bạn đang dùng thử trên thiết bị này</strong>
+              <strong>Góc học tập của riêng thiết bị này</strong>
               <p>
-                Tiến trình được lưu trong trình duyệt. Đăng nhập và đồng bộ sẽ
-                khả dụng khi quản trị viên kết nối dịch vụ trực tuyến.
+                Tiến trình được lưu trong trình duyệt. Xóa dữ liệu trang sẽ xóa
+                tiến trình. Không có bảng xếp hạng hay đồng bộ dữ liệu học tập.
               </p>
             </div>
           </div>
@@ -1660,7 +1406,15 @@ function SettingsModal({ buddy, close }: { buddy: Buddy; close: () => void }) {
     </Modal>
   );
 }
-function ChatModal({ buddy, close }: { buddy: Buddy; close: () => void }) {
+function ChatModal({
+  buddy,
+  close,
+  onSignIn,
+}: {
+  buddy: Buddy;
+  close: () => void;
+  onSignIn: () => void;
+}) {
   const [messages, setMessages] = useState<Message[]>([
     {
       role: "assistant",
@@ -1673,13 +1427,33 @@ function ChatModal({ buddy, close }: { buddy: Buddy; close: () => void }) {
   const [error, setError] = useState("");
   const abort = useRef<AbortController | null>(null);
   const bottom = useRef<HTMLDivElement>(null);
-  const live = buddy.mode === "online" && buddy.apiConfigured;
+  const [readiness, setReadiness] = useState<{
+    ready: boolean;
+    message: string;
+    model?: string;
+  } | null>(null);
+  const [offline, setOffline] = useState(false);
+  const [retry, setRetry] = useState(0);
+  useEffect(() => {
+    let mounted = true;
+    if (!buddy.apiConfigured) return;
+    setReadiness(null);
+    getChatReadiness().then((result) => {
+      if (mounted) setReadiness(result);
+    });
+    return () => {
+      mounted = false;
+    };
+  }, [buddy.apiConfigured, retry]);
+  const wantsAI = buddy.mode === "online" && buddy.apiConfigured && !offline;
+  const live = wantsAI && readiness?.ready === true;
+  const blocked = wantsAI && !live;
   useEffect(() => () => abort.current?.abort(), []);
   useEffect(() => {
     bottom.current?.scrollIntoView?.({ behavior: "smooth" });
   }, [messages, busy]);
   const send = async (text: string) => {
-    if (!text.trim() || busy) return;
+    if (!text.trim() || busy || blocked) return;
     const next: Message[] = [
       ...messages,
       { role: "user", content: text.trim() },
@@ -1726,9 +1500,52 @@ function ChatModal({ buddy, close }: { buddy: Buddy; close: () => void }) {
       <div className="chat-mode">
         <span className="live-dot" />
         {live
-          ? "Trợ lý học tập · Trực tuyến"
-          : "Trò chuyện minh họa · Câu trả lời được soạn sẵn"}
+          ? `${readiness?.model?.includes("ultra") ? "Nemotron Ultra" : "NVIDIA Nemotron"} · Mô hình miễn phí`
+          : blocked
+            ? "Đang kiểm tra kết nối AI"
+            : "Gợi ý ngoại tuyến · Câu trả lời được soạn sẵn"}
       </div>
+      {blocked && (
+        <div className="chat-setup" role="status">
+          <Sparkles size={22} />
+          <div>
+            <strong>
+              {readiness ? "Trợ lý AI chưa sẵn sàng" : "Đang kiểm tra kết nối…"}
+            </strong>
+            <p>{readiness?.message || "Mình đang kiểm tra dịch vụ trả lời."}</p>
+            {readiness && (
+              <div className="button-row">
+                <button
+                  className="button secondary"
+                  onClick={() => setRetry((v) => v + 1)}
+                >
+                  Kiểm tra lại
+                </button>
+                <button
+                  className="button secondary"
+                  onClick={() => setOffline(true)}
+                >
+                  Dùng gợi ý ngoại tuyến
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+      {!wantsAI && (
+        <div className="chat-connect">
+          <span>Gợi ý mẫu hoạt động ngay trên thiết bị.</span>
+          {buddy.mode !== "online" ? (
+            <button onClick={onSignIn}>
+              Đăng nhập để dùng AI <ArrowRight size={14} />
+            </button>
+          ) : (
+            <button onClick={() => setOffline(false)}>
+              Kết nối lại AI <ArrowRight size={14} />
+            </button>
+          )}
+        </div>
+      )}
       <div className="chat-messages" aria-live="polite">
         {messages.map((m, i) => (
           <div className={`chat-message ${m.role}`} key={i}>
@@ -1747,7 +1564,11 @@ function ChatModal({ buddy, close }: { buddy: Buddy; close: () => void }) {
       {messages.length === 1 && (
         <div className="chat-suggestions">
           {["Giúp mình bắt đầu học", "Hôm nay mình hơi mệt"].map((s) => (
-            <button key={s} onClick={() => void send(s)}>
+            <button
+              key={s}
+              disabled={blocked || busy}
+              onClick={() => void send(s)}
+            >
               {s}
               <ArrowDown size={13} />
             </button>
@@ -1771,12 +1592,13 @@ function ChatModal({ buddy, close }: { buddy: Buddy; close: () => void }) {
           aria-label="Tin nhắn cho bạn đồng hành"
           placeholder="Chia sẻ điều bạn đang nghĩ…"
           value={input}
+          disabled={blocked}
           maxLength={2000}
           onChange={(e) => setInput(e.target.value)}
         />
         <button
           className="send-button"
-          disabled={busy || !input.trim()}
+          disabled={busy || blocked || !input.trim()}
           aria-label="Gửi tin nhắn"
         >
           <Send size={19} />

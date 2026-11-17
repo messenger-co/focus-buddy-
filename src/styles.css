@@ -1464,68 +1464,6 @@ h1 {
   margin-left: auto;
   flex-shrink: 0;
 }
-.leaderboard {
-  padding: 25px 30px;
-}
-.leaderboard-labels,
-.leaderboard-row {
-  display: grid;
-  grid-template-columns: 90px 1fr 100px 100px;
-  gap: 15px;
-  align-items: center;
-}
-.leaderboard-labels {
-  font-size: 10px;
-  letter-spacing: 1px;
-  color: #a8af9d;
-  border-top: 1px solid var(--line);
-  padding: 20px 0 15px;
-}
-.leaderboard-row {
-  padding: 18px 0;
-  border-top: 1px solid #f0f2ea;
-  font-size: 11px;
-}
-.leaderboard-row > div {
-  display: flex;
-  gap: 13px;
-  align-items: center;
-}
-.leaderboard-row strong {
-  font-weight: 500;
-}
-.leaderboard-row > span:nth-child(3) {
-  font-size: 10px;
-  color: #a0ac94;
-}
-.leaderboard-row > strong {
-  color: #849b72;
-}
-.leaderboard-row small {
-  font-size: 10px;
-  color: #a9b299;
-  font-weight: 400;
-}
-.leader-avatar {
-  width: 34px;
-  height: 34px;
-  border-radius: 50%;
-  display: grid;
-  place-items: center;
-}
-.rank {
-  margin-left: 15px;
-  color: #afb59f;
-}
-.rank-0 {
-  color: #b8a66b;
-}
-.rank-1 {
-  color: #a4aba0;
-}
-.rank-2 {
-  color: #bc9f84;
-}
 .empty-state {
   text-align: center;
   padding: 70px 20px;
@@ -1873,11 +1811,6 @@ h1 {
   .timer-number {
     font-size: 50px;
   }
-  .leaderboard-labels,
-  .leaderboard-row {
-    grid-template-columns: 70px 1fr 70px 85px;
-    gap: 8px;
-  }
 }
 @media (max-width: 1030px) {
   .dashboard-grid {
@@ -2185,43 +2118,6 @@ h1 {
   .section-heading .pill {
     font-size: 10px;
   }
-  .leaderboard {
-    padding: 20px 15px;
-  }
-  .leaderboard-labels,
-  .leaderboard-row {
-    grid-template-columns: 45px 1fr 50px 70px;
-    gap: 4px;
-  }
-  .leaderboard-labels {
-    font-size: 10px;
-    letter-spacing: 0;
-  }
-  .leaderboard-row {
-    font-size: 10px;
-  }
-  .leaderboard-row > div {
-    gap: 7px;
-  }
-  .leader-avatar {
-    width: 27px;
-    height: 27px;
-  }
-  .leader-avatar svg {
-    width: 16px;
-  }
-  .rank {
-    margin-left: 8px;
-  }
-  .leaderboard-row > span:nth-child(3) {
-    font-size: 10px;
-  }
-  .leaderboard-row small {
-    display: none;
-  }
-  .leaderboard .section-heading {
-    flex-wrap: wrap;
-  }
   .info-banner {
     padding: 18px;
   }
@@ -2464,14 +2360,6 @@ h1 {
 .color-choices button {
   color: #717c69;
 }
-.bar-column,
-.leaderboard-labels {
+.bar-column {
   color: #76816b;
-}
-
-.leaderboard-controls {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  flex-wrap: wrap;
 }

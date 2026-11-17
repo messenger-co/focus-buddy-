@@ -1,6 +1,6 @@
 import { useId } from "react";
 import { motion, useReducedMotion } from "motion/react";
-import type { CompanionColor, CompanionKind } from "../data";
+import type { BuddyAccessory, CompanionColor, CompanionKind } from "../data";
 
 export interface CompanionProps {
   kind: CompanionKind;
@@ -9,15 +9,27 @@ export interface CompanionProps {
   sleepy?: boolean;
   size?: number;
   className?: string;
+  accessory?: BuddyAccessory;
+  reaction?: "idle" | "happy" | "love" | "snack" | "play";
 }
 
 const accents = {
   mint: { light: "#C5DFC9", dark: "#79A88B", glow: "#E8F0E5" },
   lavender: { light: "#D5C8E7", dark: "#9E86BE", glow: "#F0EBF6" },
   peach: { light: "#F6C8B5", dark: "#D79079", glow: "#FCF0E8" },
+  sky: { light: "#C3E0F5", dark: "#77A8D0", glow: "#EAF3FB" },
+  sunshine: { light: "#F4E1A0", dark: "#C8A14C", glow: "#FBF5DE" },
+  rose: { light: "#F3CDD9", dark: "#C87CA2", glow: "#FBEDF4" },
 };
 
-const names = { fox: "Cáo Mây", owl: "Cú Mơ", cat: "Mèo Mít" };
+const names = {
+  fox: "Cáo Mây",
+  owl: "Cú Mơ",
+  cat: "Mèo Mít",
+  rabbit: "Thỏ Bông",
+  panda: "Gấu Trúc",
+  dragon: "Rồng Đậu",
+};
 
 /** Nhân vật SVG gốc; không tải ảnh hoặc dịch vụ hoạt ảnh bên ngoài. */
 export default function Companion({
@@ -27,11 +39,21 @@ export default function Companion({
   sleepy = false,
   size = 300,
   className,
+  accessory = "none",
+  reaction = "idle",
 }: CompanionProps) {
   const uid = useId().replace(/:/g, "");
   const reduceMotion = useReducedMotion();
   const animate = !paused && !reduceMotion;
   const accent = accents[color];
+  const bodyColors = {
+    fox: ["#EDBD8D", "#DA9A66"],
+    owl: ["#C9B69B", "#A99072"],
+    cat: ["#DACFC3", "#BCAE9E"],
+    rabbit: ["#FFF4E9", "#EEDFD9"],
+    panda: ["#65746B", "#44534D"],
+    dragon: ["#A6CDB5", "#79A595"],
+  }[kind];
   const bodyId = `companion-body-${uid}`;
   const scarfId = `companion-scarf-${uid}`;
   const titleId = `companion-title-${uid}`;
@@ -57,7 +79,7 @@ export default function Companion({
         fill="#EBA498"
         opacity=".58"
       />
-      {sleepy ? (
+      {sleepy || reaction === "love" || reaction === "happy" ? (
         <g fill="none" stroke="#55463F" strokeWidth="4" strokeLinecap="round">
           <path d={`M ${150 - eyeX} ${eyeY} q 10 10 20 0`} />
           <path d={`M ${150 + eyeX} ${eyeY} q 10 10 20 0`} />
@@ -128,25 +150,8 @@ export default function Companion({
           y2="1"
           gradientUnits="objectBoundingBox"
         >
-          <stop
-            stopColor={
-              kind === "fox"
-                ? "#EDBD8D"
-                : kind === "owl"
-                  ? "#C9B69B"
-                  : "#DACFC3"
-            }
-          />
-          <stop
-            offset="1"
-            stopColor={
-              kind === "fox"
-                ? "#DA9A66"
-                : kind === "owl"
-                  ? "#A99072"
-                  : "#BCAE9E"
-            }
-          />
+          <stop stopColor={bodyColors[0]} />
+          <stop offset="1" stopColor={bodyColors[1]} />
         </linearGradient>
         <linearGradient id={scarfId} x1="0" y1="0" x2="1" y2="1">
           <stop stopColor={accent.light} />
@@ -176,7 +181,15 @@ export default function Companion({
       />
       <motion.g
         animate={
-          animate ? { y: [0, -7, 0], rotate: [0, -1, 0] } : { y: 0, rotate: 0 }
+          animate
+            ? {
+                y:
+                  reaction === "play"
+                    ? [0, -24, 0, -15, 0]
+                    : [0, reaction === "idle" ? -7 : -12, 0],
+                rotate: reaction === "play" ? [-4, 5, -4, 3, -4] : [0, -1, 0],
+              }
+            : { y: 0, rotate: 0 }
         }
         transition={{
           duration: 4,
@@ -317,6 +330,128 @@ export default function Companion({
             {renderFace()}
           </>
         )}
+        {kind === "rabbit" && (
+          <>
+            <ellipse cx="160" cy="216" rx="49" ry="44" fill="#EEDFD9" />
+            <ellipse cx="238" cy="221" rx="20" ry="20" fill="#FFF7EF" />
+            <ellipse
+              cx="126"
+              cy="73"
+              rx="20"
+              ry="62"
+              fill="#EFE1DA"
+              transform="rotate(-12 126 73)"
+            />
+            <ellipse
+              cx="194"
+              cy="73"
+              rx="20"
+              ry="62"
+              fill="#EFE1DA"
+              transform="rotate(12 194 73)"
+            />
+            <ellipse
+              cx="126"
+              cy="66"
+              rx="10"
+              ry="42"
+              fill="#E8B7BA"
+              transform="rotate(-12 126 73)"
+            />
+            <ellipse
+              cx="194"
+              cy="66"
+              rx="10"
+              ry="42"
+              fill="#E8B7BA"
+              transform="rotate(12 194 73)"
+            />
+            <ellipse cx="160" cy="138" rx="69" ry="59" fill="#FFF4E9" />
+            <ellipse cx="160" cy="219" rx="28" ry="32" fill="#FFF7F1" />
+            {renderFace()}
+          </>
+        )}
+        {kind === "panda" && (
+          <>
+            <ellipse cx="160" cy="216" rx="55" ry="46" fill="#44534D" />
+            <ellipse cx="160" cy="214" rx="37" ry="37" fill="#FFFAEA" />
+            <circle cx="111" cy="85" r="25" fill="#44534D" />
+            <circle cx="209" cy="85" r="25" fill="#44534D" />
+            <ellipse cx="160" cy="135" rx="74" ry="62" fill="#FFF9EB" />
+            <ellipse
+              cx="129"
+              cy="137"
+              rx="20"
+              ry="25"
+              fill="#65746B"
+              transform="rotate(22 129 137)"
+            />
+            <ellipse
+              cx="191"
+              cy="137"
+              rx="20"
+              ry="25"
+              fill="#65746B"
+              transform="rotate(-22 191 137)"
+            />
+            {renderFace()}
+          </>
+        )}
+        {kind === "dragon" && (
+          <>
+            <path
+              d="M202 230Q281 246 263 182Q245 207 220 204Z"
+              fill="#79A595"
+            />
+            <path
+              d="M112 195Q63 152 58 199L84 197L79 222Z M208 195Q257 152 262 199L236 197L241 222Z"
+              fill="#BDD7BE"
+              stroke="#7EA58A"
+              strokeWidth="3"
+            />
+            <ellipse cx="160" cy="214" rx="52" ry="48" fill="#8CBAA4" />
+            <ellipse cx="160" cy="218" rx="31" ry="35" fill="#E5EAC6" />
+            <path
+              d="M113 102L108 58L133 86 M187 86L212 58L207 102"
+              fill="#DCC698"
+            />
+            <ellipse cx="160" cy="137" rx="70" ry="61" fill="#A6CDB5" />
+            <path
+              d="M148 79L161 57L174 79 M153 64L160 47L169 64"
+              fill="#77A18B"
+            />
+            <ellipse cx="160" cy="165" rx="36" ry="22" fill="#CBE0BC" />
+            {renderFace()}
+          </>
+        )}
+        {accessory === "glasses" && (
+          <g fill="none" stroke="#846B65" strokeWidth="3.5">
+            <circle cx="129" cy="138" r="20" />
+            <circle cx="191" cy="138" r="20" />
+            <path d="M149 137Q160 130 171 137M108 134L98 129M212 134L222 129" />
+          </g>
+        )}
+        {accessory === "bow" && (
+          <g transform="translate(194 89) rotate(18)">
+            <path
+              d="M0 0Q-29-25-26 0Q-29 25 0 0Q29-25 26 0Q29 25 0 0"
+              fill={accent.dark}
+            />
+            <circle r="7" fill={accent.light} />
+          </g>
+        )}
+        {accessory === "crown" && (
+          <g transform="translate(160 76) rotate(-8)">
+            <path
+              d="M-31 0L-38-34L-15-21L0-44L15-21L38-34L31 0Z"
+              fill="#E6C36E"
+              stroke="#CDA44E"
+              strokeWidth="2"
+            />
+            <path d="M-25-6H25" stroke="#F8E4AA" strokeWidth="4" />
+            <circle cy="-19" r="5" fill={accent.dark} />
+          </g>
+        )}
         <path
           d="M130 183 Q160 193 190 183 L190 196 Q160 208 130 196Z"
           fill={`url(#${scarfId})`}
@@ -336,18 +471,14 @@ export default function Companion({
           cy="254"
           rx="18"
           ry="11"
-          fill={
-            kind === "fox" ? "#D99B6C" : kind === "owl" ? "#DFA46F" : "#BAAC9B"
-          }
+          fill={kind === "owl" ? "#DFA46F" : bodyColors[1]}
         />
         <ellipse
           cx="186"
           cy="254"
           rx="18"
           ry="11"
-          fill={
-            kind === "fox" ? "#D99B6C" : kind === "owl" ? "#DFA46F" : "#BAAC9B"
-          }
+          fill={kind === "owl" ? "#DFA46F" : bodyColors[1]}
         />
         {kind !== "owl" && (
           <>
@@ -402,6 +533,30 @@ export default function Companion({
           opacity=".7"
         />
       </motion.g>
+      {reaction === "love" && (
+        <g fill="#D791AD" aria-hidden="true">
+          <path d="M78 77C57 57 45 84 78 102C111 84 99 57 78 77Z" />
+          <path d="M250 158C238 144 225 165 250 177C275 165 262 144 250 158Z" />
+        </g>
+      )}
+      {reaction === "snack" && (
+        <g transform="translate(246 217) rotate(15)" aria-hidden="true">
+          <circle r="22" fill="#DDA66C" />
+          <circle cx="-6" cy="-7" r="3" fill="#89674C" />
+          <circle cx="10" cy="-4" r="3" fill="#89674C" />
+          <circle cx="2" cy="10" r="3" fill="#89674C" />
+        </g>
+      )}
+      {reaction === "play" && (
+        <g transform="translate(69 238)" aria-hidden="true">
+          <circle r="18" fill={accent.dark} />
+          <path
+            d="M-16-8L14 10M-8 16L8-16"
+            stroke={accent.light}
+            strokeWidth="4"
+          />
+        </g>
+      )}
       {sleepy && (
         <g
           fill={accent.dark}

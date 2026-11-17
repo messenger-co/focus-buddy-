@@ -164,3 +164,44 @@ export async function streamChat(
     );
   await readSSE(response.body, onDelta, signal);
 }
+
+/** Kiểm tra chức năng đã triển khai trước khi hiển thị AI trực tuyến. */
+export async function getChatReadiness(
+  endpoint = apiConfigured ? `${apiBaseUrl}/chat/health` : "",
+  fetcher: typeof fetch = fetch,
+): Promise<{ ready: boolean; message: string; model?: string }> {
+  if (!endpoint)
+    return {
+      ready: false,
+      message: "Chưa kết nối dịch vụ AI. Các gợi ý ngoại tuyến vẫn dùng được.",
+    };
+  try {
+    const response = await fetcher(endpoint, {
+      signal: AbortSignal.timeout(10000),
+    });
+    if (response.status === 404)
+      return {
+        ready: false,
+        message:
+          "Hàm trò chuyện chưa được triển khai. Chủ trang cần triển khai hàm chat và thêm khóa OpenRouter trong Supabase Secrets.",
+      };
+    const data = (await response.json()) as { ready?: boolean; model?: string };
+    return response.ok && data.ready === true
+      ? {
+          ready: true,
+          message: "Đã kết nối dịch vụ AI.",
+          model: typeof data.model === "string" ? data.model : undefined,
+        }
+      : {
+          ready: false,
+          message:
+            "Dịch vụ AI chưa được cấu hình đầy đủ. Chủ trang cần kiểm tra khóa OpenRouter và mô hình miễn phí.",
+        };
+  } catch {
+    return {
+      ready: false,
+      message:
+        "Chưa kiểm tra được kết nối AI. Bạn kiểm tra mạng hoặc dùng gợi ý ngoại tuyến nhé.",
+    };
+  }
+}
