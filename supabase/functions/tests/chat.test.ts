@@ -307,7 +307,7 @@ test("đường dẫn health thực tế trả mô hình công khai, không tr�
   assert.ok(!JSON.stringify(body).includes(env.OPENROUTER_API_KEY));
 });
 
-test("chỉ chấp nhận mô hình NVIDIA miễn phí có giá bằng không trong danh mục", async () => {
+test("chỉ chấp nhận các mô hình cho phép và có giá bằng không trong danh mục", async () => {
   let calls = 0;
   const catalog = async () => {
     calls++;
@@ -316,6 +316,14 @@ test("chỉ chấp nhận mô hình NVIDIA miễn phí có giá bằng không tr
         {
           id: "nvidia/free:free",
           pricing: { prompt: "0", completion: "0", request: "0" },
+        },
+        {
+          id: "google/gemma-4-26b-a4b-it:free",
+          pricing: { prompt: "0", completion: "0" },
+        },
+        {
+          id: "recursive/flint-v1.0:free",
+          pricing: { prompt: "0", completion: "0" },
         },
         { id: "nvidia/paid:free", pricing: { prompt: "0", completion: "0.1" } },
         {
@@ -330,6 +338,9 @@ test("chỉ chấp nhận mô hình NVIDIA miễn phí có giá bằng không tr
     });
   };
   assert.equal(await freeModelAvailable("nvidia/free:free", catalog), true);
+  assert.equal(await freeModelAvailable("google/gemma-4-26b-a4b-it:free", catalog), true);
+  assert.equal(await freeModelAvailable("recursive/flint-v1.0:free", catalog), true);
+  assert.equal(await freeModelAvailable("google/gemma-4-31b-it:free", catalog), false);
   assert.equal(await freeModelAvailable("nvidia/paid:free", catalog), false);
   assert.equal(await freeModelAvailable("nvidia/hidden:free", catalog), false);
   assert.equal(await freeModelAvailable("nvidia/invalid:free", catalog), false);
