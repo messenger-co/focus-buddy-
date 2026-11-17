@@ -351,15 +351,13 @@ async function authenticate(
   }
   const user = (await response.json()) as {
     id?: unknown;
-    is_anonymous?: boolean;
   };
-  // Chỉ chấp nhận tài khoản đã xác thực; chế độ dùng thử không gọi AI trả phí.
+  // Chấp nhận cả phiên khách đã được Supabase xác minh; không tin ID gửi từ client.
   if (
     typeof user.id !== "string" ||
     !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
       user.id,
-    ) ||
-    user.is_anonymous === true
+    )
   )
     return null;
   return user.id;
@@ -427,14 +425,14 @@ export async function handleRequest(
     userId = await authenticate(request, env, fetcher);
   } catch {
     return jsonError(
-      "Dịch vụ đăng nhập đang bận. Bạn hãy thử lại sau.",
+      "Dịch vụ xác thực phiên khách đang bận. Bạn hãy thử lại sau.",
       503,
       headers,
     );
   }
   if (!userId)
     return jsonError(
-      "Phiên đăng nhập đã hết hạn hoặc chưa hợp lệ. Bạn hãy đăng nhập lại.",
+      "Phiên trò chuyện không hợp lệ hoặc đã hết hạn. Bạn hãy tải lại trang và thử lại.",
       401,
       headers,
     );

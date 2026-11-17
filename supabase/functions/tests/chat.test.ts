@@ -96,14 +96,25 @@ test("xác minh phiên bằng Supabase và không tin mã người dùng do khá
     },
   );
   assert.equal(response.status, 401);
-  assert.match(await response.text(), /đăng nhập/);
+  assert.match(await response.text(), /Phiên trò chuyện không hợp lệ/);
 });
 
-test("tài khoản ẩn danh không được gọi AI", async () => {
-  const response = await handleRequest(request(), env, async () =>
-    Response.json({ id: USER_ID, is_anonymous: true }),
-  );
-  assert.equal(response.status, 401);
+test("phiên khách Supabase hợp lệ được gọi AI", async () => {
+  let completions = 0;
+  const response = await handleRequest(request(), env, async (url) => {
+    if (String(url).includes("supabase"))
+      return Response.json({ id: USER_ID, is_anonymous: true });
+    if (String(url).endsWith("/chat/completions")) {
+      completions++;
+      return new Response(
+        'data: {"choices":[{"delta":{"content":"Xin chào!"}}]}\\n\\ndata: [DONE]\\n\\n'.replaceAll("\\n", "\n"),
+        { headers: { "Content-Type": "text/event-stream" } },
+      );
+    }
+    throw new Error("Unexpected upstream");
+  });
+  assert.equal(response.status, 200);
+  assert.equal(completions, 1);
 });
 
 test("từ chối vai trò hệ thống, nội dung quá dài và lịch sử sai cấu trúc", () => {

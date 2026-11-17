@@ -476,14 +476,7 @@ function App() {
         <SettingsModal buddy={buddy} close={() => setSettings(false)} />
       )}
       {chat && (
-        <ChatModal
-          buddy={buddy}
-          close={() => setChat(false)}
-          onSignIn={() => {
-            setChat(false);
-            setSettings(true);
-          }}
-        />
+        <ChatModal buddy={buddy} close={() => setChat(false)} />
       )}
     </div>
   );
@@ -1267,7 +1260,6 @@ function ProgressPage({ buddy }: { buddy: Buddy }) {
 }
 function SettingsModal({ buddy, close }: { buddy: Buddy; close: () => void }) {
   const [name, setName] = useState(buddy.progress.profile.display_name);
-  const [email, setEmail] = useState("");
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
   const [failed, setFailed] = useState(false);
@@ -1325,71 +1317,11 @@ function SettingsModal({ buddy, close }: { buddy: Buddy; close: () => void }) {
       </section>
       <section className="settings-section">
         <h3>Kết nối trợ lý AI</h3>
-        {buddy.mode === "online" ? (
-          <>
-            <p>
-              Đang đăng nhập: <strong>{buddy.userEmail}</strong>
-            </p>
-            <p className="muted">
-              Tài khoản chỉ dùng để trò chuyện AI. Điểm và bạn đồng hành luôn
-              được lưu trên thiết bị này.
-            </p>
-            <button
-              className="button secondary"
-              disabled={busy}
-              onClick={() =>
-                void run(
-                  () => buddy.signOut(),
-                  "Đã đăng xuất khỏi AI. Tiến trình trên thiết bị vẫn được giữ nguyên.",
-                )
-              }
-            >
-              Đăng xuất
-            </button>
-          </>
-        ) : buddy.cloudConfigured ? (
-          <>
-            <p className="muted">
-              Đăng nhập qua email để dùng trợ lý AI. Bạn không cần tài khoản để
-              học, nuôi bạn đồng hành hoặc lưu tiến trình.
-            </p>
-            <form
-              noValidate
-              onSubmit={(e) => {
-                e.preventDefault();
-                void run(
-                  () => buddy.signIn(email),
-                  "Đã gửi liên kết. Hãy mở email trên cùng trình duyệt để đăng nhập.",
-                );
-              }}
-            >
-              <label htmlFor="email">Địa chỉ email</label>
-              <input
-                id="email"
-                type="email"
-                autoComplete="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-                placeholder="ban@vidu.vn"
-              />
-              <button className="button primary" disabled={busy}>
-                {busy ? "Đang gửi…" : "Gửi liên kết đăng nhập"}
-              </button>
-            </form>
-          </>
-        ) : (
-          <div className="settings-note">
-            <Leaf size={22} />
-            <div>
-              <strong>Góc học tập của riêng thiết bị này</strong>
-              <p>
-                Tiến trình được lưu trong trình duyệt. Xóa dữ liệu trang sẽ xóa
-                tiến trình. Không có bảng xếp hạng hay đồng bộ dữ liệu học tập.
-              </p>
-            </div>
-          </div>
-        )}
+        <p className="muted">
+          {buddy.apiConfigured
+            ? "Bạn có thể trò chuyện với AI mà không cần email hay đăng nhập. Ứng dụng tự tạo phiên khách khi gửi câu hỏi đầu tiên."
+            : "AI trực tuyến chưa được cấu hình. Các gợi ý ngoại tuyến vẫn dùng được mà không cần tài khoản."}
+        </p>
       </section>
       <section className="settings-section">
         <h3>Nhẹ nhàng với bạn</h3>
@@ -1406,15 +1338,7 @@ function SettingsModal({ buddy, close }: { buddy: Buddy; close: () => void }) {
     </Modal>
   );
 }
-function ChatModal({
-  buddy,
-  close,
-  onSignIn,
-}: {
-  buddy: Buddy;
-  close: () => void;
-  onSignIn: () => void;
-}) {
+function ChatModal({ buddy, close }: { buddy: Buddy; close: () => void }) {
   const [messages, setMessages] = useState<Message[]>([
     {
       role: "assistant",
@@ -1445,7 +1369,7 @@ function ChatModal({
       mounted = false;
     };
   }, [buddy.apiConfigured, retry]);
-  const wantsAI = buddy.mode === "online" && buddy.apiConfigured && !offline;
+  const wantsAI = buddy.apiConfigured && !offline;
   const live = wantsAI && readiness?.ready === true;
   const blocked = wantsAI && !live;
   useEffect(() => () => abort.current?.abort(), []);
@@ -1535,11 +1459,7 @@ function ChatModal({
       {!wantsAI && (
         <div className="chat-connect">
           <span>Gợi ý mẫu hoạt động ngay trên thiết bị.</span>
-          {buddy.mode !== "online" ? (
-            <button onClick={onSignIn}>
-              Đăng nhập để dùng AI <ArrowRight size={14} />
-            </button>
-          ) : (
+          {buddy.apiConfigured && (
             <button onClick={() => setOffline(false)}>
               Kết nối lại AI <ArrowRight size={14} />
             </button>
@@ -1607,7 +1527,7 @@ function ChatModal({
       <p className="chat-disclaimer">
         {live
           ? "Trợ lý có thể nhầm lẫn. Hãy kiểm tra lại kiến thức quan trọng."
-          : "Đăng nhập và kết nối dịch vụ AI để nhận câu trả lời theo nội dung của bạn."}
+          : "Kết nối dịch vụ AI để nhận câu trả lời theo nội dung của bạn; không cần đăng nhập."}
       </p>
     </Modal>
   );
