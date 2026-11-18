@@ -1,6 +1,6 @@
 import { apiBaseUrl, apiConfigured, supabase } from "./cloud";
 
-export const CHAT_MODEL = "google/gemma-4-31b-it:free";
+export const CHAT_MODEL = "openai/gpt-oss-120b";
 
 export type ChatMessage = { role: "user" | "assistant"; content: string };
 
@@ -194,14 +194,14 @@ export async function getChatReadiness(
       return {
         ready: false,
         message:
-          "Hàm trò chuyện chưa được triển khai. Chủ trang cần triển khai hàm chat và thêm khóa OpenRouter trong Supabase Secrets.",
+          "Hàm trò chuyện chưa được triển khai. Chủ trang cần triển khai hàm chat và thêm khóa Groq trong Supabase Secrets.",
       };
     const data = (await response.json()) as { ready?: boolean; model?: string };
     if (response.ok && data.ready === true && data.model !== CHAT_MODEL)
       return {
         ready: false,
         message:
-          "Dịch vụ AI cần cập nhật sang Google Gemma 4 31B. Chủ trang cần đổi OPENROUTER_MODEL và triển khai lại hàm chat.",
+          "Dịch vụ AI cần cập nhật sang GPT-OSS 120B qua Groq. Chủ trang cần đổi GROQ_MODEL và triển khai lại hàm chat.",
       };
     return response.ok && data.ready === true
       ? {
@@ -212,7 +212,7 @@ export async function getChatReadiness(
       : {
           ready: false,
           message:
-            "Dịch vụ AI chưa được cấu hình đầy đủ. Chủ trang cần kiểm tra khóa OpenRouter và mô hình miễn phí.",
+            "Dịch vụ AI chưa được cấu hình đầy đủ. Chủ trang cần kiểm tra khóa Groq và mô hình GPT-OSS 120B.",
         };
   } catch {
     return {

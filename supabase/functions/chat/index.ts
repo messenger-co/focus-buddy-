@@ -3,8 +3,8 @@ const read = (name: string) => Deno.env.get(name) || "";
 const env: Env = {
   SUPABASE_URL: read("SUPABASE_URL"),
   SUPABASE_PUBLISHABLE_KEY: read("SUPABASE_ANON_KEY"),
-  OPENROUTER_API_KEY: read("OPENROUTER_API_KEY"),
-  OPENROUTER_MODEL: read("OPENROUTER_MODEL") || CHAT_MODEL,
+  GROQ_API_KEY: read("GROQ_API_KEY"),
+  GROQ_MODEL: read("GROQ_MODEL") || CHAT_MODEL,
   ALLOWED_ORIGIN: read("ALLOWED_ORIGIN"),
   QUOTA: new MemoryQuota(),
 };

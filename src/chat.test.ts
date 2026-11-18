@@ -107,9 +107,9 @@ describe("Không báo AI trực tuyến khi dịch vụ chưa sẵn sàng", () =
     ).toBe(false);
     expect(
       await getChatReadiness("https://example.test/health", async () =>
-        Response.json({ ready: true, model: "google/gemma-4-31b-it:free" }),
+        Response.json({ ready: true, model: "openai/gpt-oss-120b" }),
       ),
-    ).toMatchObject({ ready: true, model: "google/gemma-4-31b-it:free" });
+    ).toMatchObject({ ready: true, model: "openai/gpt-oss-120b" });
   });
 });
 
@@ -125,6 +125,6 @@ it("không báo sẵn sàng khi máy chủ vẫn dùng mô hình cũ", async () 
       async () => Response.json({ ready: true, model }),
     );
     expect(result.ready).toBe(false);
-    expect(result.message).toContain("Google Gemma 4 31B");
+    expect(result.message).toContain("GPT-OSS 120B qua Groq");
   }
 });

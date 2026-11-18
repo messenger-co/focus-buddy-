@@ -1,32 +1,28 @@
-# Supabase chỉ phục vụ xác thực AI và Edge Function
+# Triển khai trợ lý Groq
 
-Phiên bản hiện tại không dùng bảng dữ liệu học tập, migration SQL, RLS hoặc bộ đếm PostgreSQL. Tiến trình, điểm, nhiệm vụ và tùy chỉnh bạn đồng hành được lưu trong trình duyệt.
+Giao diện tiếng Việt chạy trên GitHub Pages tại https://messenger-co.github.io/focus-buddy-/ với base `/focus-buddy-/`. Tiến trình và bạn đồng hành lưu cục bộ; không dùng bảng dữ liệu học tập hoặc bảng xếp hạng.
 
-Supabase Auth quản lý phiên khách và cấp JWT để xác thực yêu cầu AI. Edge Function `chat` xác minh JWT qua Auth rồi gọi OpenRouter. Không cần khóa `service_role`.
+Chatbot dùng `openai/gpt-oss-120b` qua `https://api.groq.com/openai/v1/chat/completions`. Trình duyệt chỉ gọi Supabase Edge Function; khóa Groq chỉ được lưu phía máy chủ.
 
-## Triển khai
+Trong Supabase dự án `lrihuhrfsnmkwcvouudd`, bật Anonymous Sign-Ins và đặt Edge Function secrets:
 
-1. Bật **Authentication → Sign In / Providers → Anonymous Sign-Ins** trong dự án `lrihuhrfsnmkwcvouudd`.
-2. Trong Edge Functions → Secrets, đặt `OPENROUTER_API_KEY`, `OPENROUTER_MODEL=google/gemma-4-31b-it:free`, `ALLOWED_ORIGIN=https://messenger-co.github.io`.
-3. Chạy từ thư mục gốc kho:
+- `GROQ_API_KEY`: khóa Groq riêng tư.
+- `GROQ_MODEL`: `openai/gpt-oss-120b`.
+- `ALLOWED_ORIGIN`: `https://messenger-co.github.io`.
+
+Không đưa khóa Groq vào Git hoặc biến Vite. Khóa publishable Supabase được phép dùng ở frontend. Biến GitHub Actions: `VITE_BASE_PATH=/focus-buddy-/`, `VITE_SUPABASE_URL=https://lrihuhrfsnmkwcvouudd.supabase.co`, `VITE_SUPABASE_PUBLISHABLE_KEY`.
+
+Từ thư mục gốc kho đã cập nhật:
 
 ```bash
+npm ci
+npm test
+npm run test:edge
+npm run build
 supabase login
-supabase link --project-ref lrihuhrfsnmkwcvouudd
-supabase functions deploy chat
+supabase functions deploy chat --project-ref lrihuhrfsnmkwcvouudd
 ```
 
-Không chạy migration hoặc `supabase db push`. Tệp `.env.edge.example` chỉ mô tả tên biến, không chứa khóa thật. Nhập khóa trực tiếp qua trang quản trị secrets; không đưa vào Git.
+GitHub Actions tự xuất bản giao diện khi push main; không tự triển khai Supabase. Người có quyền quản trị cần đặt secrets và triển khai hàm. Kiểm tra `/functions/v1/chat/health` trả đúng mô hình, sau đó thử câu hỏi thật bằng phiên khách.
 
-`verify_jwt=false` trong `config.toml` tắt bộ kiểm tra cổng cũ để hỗ trợ các khóa ký hiện tại. Điều này không mở quyền gọi AI: handler vẫn yêu cầu Bearer JWT hợp lệ, kiểm tra qua `/auth/v1/user` và chấp nhận phiên khách đã được xác minh. CORS kiểm tra đúng nguồn nhưng không thay thế JWT.
-
-## Endpoint
-
-- `GET /functions/v1/chat/health`: thông báo dịch vụ có đủ cấu hình hay chưa; không trả khóa và không chứng minh nhà cung cấp AI đang đáp ứng.
-- `POST /functions/v1/chat`: cần JWT; nhận `{messages:[{role:"user"|"assistant",content:string}]}` và trả nội dung SSE.
-
-Hàm chỉ dùng `google/gemma-4-31b-it:free` được danh mục OpenRouter xác nhận có giá bằng 0. Danh mục lưu tối đa năm phút; yêu cầu nhà cung cấp đặt giá tối đa bằng 0 và không có chuyển đổi sang mô hình trả phí.
-
-Hạn mức RAM là 20 lượt/người/giờ và 200 lượt/giờ trong từng isolate. Các isolate không dùng chung bộ đếm; khởi động lại làm mất bộ đếm. Không coi đây là giới hạn bền vững trên toàn dịch vụ. Giới hạn đầu ra là 1.800 token và thời gian chờ 60 giây.
-
-Kiểm thử handler từ gốc kho bằng `npm run test:edge`. Hướng dẫn đầy đủ nằm trong [README chính](../README.md).
+Handler xác minh JWT qua Supabase Auth, kiểm tra nguồn và đầu vào, giới hạn 1.800 token, thời gian chờ 60 giây và che lỗi nhà cung cấp. Hạn mức RAM 20 lượt/người/giờ và 200 lượt/isolate/giờ không bền vững qua khởi động lại hoặc chia sẻ giữa isolate. Giới hạn và phí sử dụng phụ thuộc gói Groq; ứng dụng không bảo đảm miễn phí. Không tự chuyển mô hình hoặc nhà cung cấp.

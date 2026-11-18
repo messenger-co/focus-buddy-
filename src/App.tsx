@@ -1422,7 +1422,7 @@ function ChatModal({ buddy, close }: { buddy: Buddy; close: () => void }) {
       <div className="chat-mode">
         <span className="live-dot" />
         {live
-          ? "Google Gemma 4 31B · Mô hình miễn phí"
+          ? "GPT-OSS 120B qua Groq · Groq"
           : blocked
             ? "Đang kiểm tra kết nối AI"
             : "Gợi ý ngoại tuyến · Câu trả lời được soạn sẵn"}

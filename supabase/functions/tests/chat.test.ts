@@ -4,7 +4,6 @@ import {
   handleRequest as rawHandleRequest,
   MemoryQuota,
   CHAT_MODEL,
-  freeModelAvailable,
   LIMITS,
   validateMessages,
   type Env,
@@ -15,8 +14,8 @@ const env: Env = {
   SUPABASE_URL: "https://test-project.supabase.co",
   SUPABASE_PUBLISHABLE_KEY: "sb_publishable_test_only",
   ALLOWED_ORIGIN: "https://example.github.io",
-  OPENROUTER_MODEL: CHAT_MODEL,
-  OPENROUTER_API_KEY: "private_test_key_must_not_leak",
+  GROQ_MODEL: CHAT_MODEL,
+  GROQ_API_KEY: "private_test_key_must_not_leak",
   QUOTA: { consume: () => ({ allowed: true, retryAfter: 0 }) },
 };
 
@@ -26,18 +25,7 @@ function handleRequest(
   env: Env,
   fetcher: TestFetcher = fetch,
 ): Promise<Response> {
-  return rawHandleRequest(request, env, async (url, init) => {
-    if (String(url) === "https://openrouter.ai/api/v1/models")
-      return Response.json({
-        data: [
-          {
-            id: env.OPENROUTER_MODEL,
-            pricing: { prompt: "0", completion: "0" },
-          },
-        ],
-      });
-    return fetcher(url, init);
-  });
+  return rawHandleRequest(request, env, fetcher);
 }
 
 function request(
@@ -157,7 +145,7 @@ test("giới hạn kích thước byte cả khi không có Content-Length", asyn
   assert.equal(response.status, 413);
 });
 
-test("hết lượt hoặc dịch vụ giới hạn hỏng thì không gọi OpenRouter", async () => {
+test("hết lượt hoặc dịch vụ giới hạn hỏng thì không gọi Groq", async () => {
   for (const fail of [false, true]) {
     let upstreamCalls = 0;
     const limited = {
@@ -171,7 +159,7 @@ test("hết lượt hoặc dịch vụ giới hạn hỏng thì không gọi Ope
       },
     };
     const response = await handleRequest(request(), limited, async (url) => {
-      if (String(url).includes("openrouter")) upstreamCalls++;
+      if (String(url).includes("api.groq.com")) upstreamCalls++;
       return Response.json({ id: USER_ID });
     });
     assert.equal(response.status, fail ? 503 : 429);
@@ -185,22 +173,18 @@ test("truyền SSE qua Edge Function với mô hình cấu hình và khóa chỉ
     'data: {"choices":[{"delta":{"content":"Chào bạn!"}}]}\n\ndata: [DONE]\n\n';
   const response = await handleRequest(request(), env, async (url, init) => {
     if (String(url).includes("supabase")) return Response.json({ id: USER_ID });
-    assert.equal(url, "https://openrouter.ai/api/v1/chat/completions");
+    assert.equal(url, "https://api.groq.com/openai/v1/chat/completions");
     assert.equal(
       new Headers(init?.headers).get("Authorization"),
-      `Bearer ${env.OPENROUTER_API_KEY}`,
+      `Bearer ${env.GROQ_API_KEY}`,
     );
     const body = JSON.parse(String(init?.body));
-    assert.equal(body.model, env.OPENROUTER_MODEL);
+    assert.equal(body.model, env.GROQ_MODEL);
     assert.equal(body.max_tokens, LIMITS.maxOutputTokens);
     assert.match(body.messages[0].content, /tiếng Việt/);
-    assert.equal(body.provider.data_collection, "deny");
-    assert.deepEqual(body.provider.max_price, {
-      prompt: 0,
-      completion: 0,
-      request: 0,
-    });
-    assert.equal(body.provider.allow_fallbacks, false);
+    assert.equal(body.provider, undefined);
+    assert.equal(body.reasoning_effort, "low");
+    assert.equal(body.reasoning_format, "hidden");
     return new Response(chunks, {
       headers: { "Content-Type": "text/event-stream" },
     });
@@ -212,7 +196,7 @@ test("truyền SSE qua Edge Function với mô hình cấu hình và khóa chỉ
   );
   const text = await response.text();
   assert.equal(text, chunks);
-  assert.ok(!text.includes(env.OPENROUTER_API_KEY));
+  assert.ok(!text.includes(env.GROQ_API_KEY));
 });
 
 test("ẩn lỗi chi tiết và bí mật từ nhà cung cấp AI", async () => {
@@ -220,16 +204,16 @@ test("ẩn lỗi chi tiết và bí mật từ nhà cung cấp AI", async () => 
     String(url).includes("supabase")
       ? Response.json({ id: USER_ID })
       : Response.json(
-          { error: `debug ${env.OPENROUTER_API_KEY}` },
+          { error: `debug ${env.GROQ_API_KEY}` },
           { status: 403 },
         ),
   );
   assert.equal(response.status, 502);
-  assert.ok(!(await response.text()).includes(env.OPENROUTER_API_KEY));
+  assert.ok(!(await response.text()).includes(env.GROQ_API_KEY));
 });
 
 test("chuẩn hóa lỗi SSE bị tách thành nhiều phần và không lộ thông tin nhà cung cấp", async () => {
-  const raw = `data: ${JSON.stringify({ error: { message: `Provider debug ${env.OPENROUTER_API_KEY}` } })}\r\n\r\n`;
+  const raw = `data: ${JSON.stringify({ error: { message: `Provider debug ${env.GROQ_API_KEY}` } })}\r\n\r\n`;
   const encoder = new TextEncoder();
   const pieces = [raw.slice(0, 9), raw.slice(9, 31), raw.slice(31)];
   const source = new ReadableStream<Uint8Array>({
@@ -249,7 +233,7 @@ test("chuẩn hóa lỗi SSE bị tách thành nhiều phần và không lộ th
   const text = await response.text();
   assert.match(text, /Phản hồi bị gián đoạn/);
   assert.ok(!text.includes("Provider debug"));
-  assert.ok(!text.includes(env.OPENROUTER_API_KEY));
+  assert.ok(!text.includes(env.GROQ_API_KEY));
   assert.ok(text.endsWith("data: [DONE]\n\n"));
 });
 
@@ -284,12 +268,12 @@ test("kiểm tra sức khỏe không công khai cấu hình hoặc khóa", async
   );
   assert.deepEqual(await response.json(), {
     ready: true,
-    model: env.OPENROUTER_MODEL,
+    model: env.GROQ_MODEL,
     message: "Trợ lý đã sẵn sàng.",
   });
   const missing = await handleRequest(
     new Request("https://edge.example/health"),
-    { ...env, OPENROUTER_API_KEY: "" },
+    { ...env, GROQ_API_KEY: "" },
   );
   assert.equal(missing.status, 503);
 });
@@ -303,52 +287,15 @@ test("đường dẫn health thực tế trả mô hình công khai, không tr�
   );
   const body = await response.json();
   assert.equal(body.ready, true);
-  assert.equal(body.model, env.OPENROUTER_MODEL);
+  assert.equal(body.model, env.GROQ_MODEL);
   assert.equal(
     response.headers.get("Access-Control-Allow-Origin"),
     env.ALLOWED_ORIGIN,
   );
-  assert.ok(!JSON.stringify(body).includes(env.OPENROUTER_API_KEY));
+  assert.ok(!JSON.stringify(body).includes(env.GROQ_API_KEY));
 });
 
-test("chỉ chấp nhận Google Gemma 4 31B miễn phí và kiểm tra từng loại giá", async () => {
-  let calls = 0;
-  const catalog = async () => {
-    calls++;
-    return Response.json({
-      data: [
-        {
-          id: CHAT_MODEL,
-          pricing: { prompt: "0", completion: "0", request: "0" },
-        },
-      ],
-    });
-  };
-  assert.equal(CHAT_MODEL, "google/gemma-4-31b-it:free");
-  assert.equal(await freeModelAvailable(CHAT_MODEL, catalog), true);
-  assert.equal(await freeModelAvailable(CHAT_MODEL, catalog), true);
-  assert.equal(calls, 1);
-  for (const model of [
-    "google/gemma-4-31b-it",
-    "google/gemma-4-26b-a4b-it:free",
-    "nvidia/nemotron-3-ultra-550b-a55b:free",
-  ])
-    assert.equal(await freeModelAvailable(model, catalog), false);
-  for (const pricing of [
-    { prompt: "0", completion: "0.1" },
-    { prompt: "0", completion: "0", request: "1" },
-    { prompt: null, completion: "0" },
-    { prompt: "0" },
-  ])
-    assert.equal(
-      await freeModelAvailable(CHAT_MODEL, async () =>
-        Response.json({ data: [{ id: CHAT_MODEL, pricing }] }),
-      ),
-      false,
-    );
-});
-
-test("cấu hình cũ hoặc bản Gemma trả phí không thể gọi OpenRouter", async () => {
+test("cấu hình cũ hoặc bản Gemma trả phí không thể gọi Groq", async () => {
   for (const model of [
     "nvidia/nemotron-3-ultra-550b-a55b:free",
     "google/gemma-4-31b-it",
@@ -356,7 +303,7 @@ test("cấu hình cũ hoặc bản Gemma trả phí không thể gọi OpenRoute
     let calls = 0;
     const response = await rawHandleRequest(
       request(),
-      { ...env, OPENROUTER_MODEL: model },
+      { ...env, GROQ_MODEL: model },
       async () => {
         calls++;
         throw Error("Không được gọi");
@@ -364,24 +311,6 @@ test("cấu hình cũ hoặc bản Gemma trả phí không thể gọi OpenRoute
     );
     assert.equal(response.status, 503);
     assert.equal(calls, 0);
-  }
-});
-
-test("không gọi hoàn thành hội thoại khi danh mục không xác nhận miễn phí", async () => {
-  for (const badCatalog of [
-    Response.json({ data: [] }),
-    Response.json({}, { status: 503 }),
-  ]) {
-    let completions = 0;
-    const response = await rawHandleRequest(request(), env, async (url) => {
-      if (String(url).includes("supabase"))
-        return Response.json({ id: USER_ID });
-      if (String(url).endsWith("/models")) return badCatalog;
-      completions++;
-      throw Error("Không được gọi");
-    });
-    assert.equal(response.status, 503);
-    assert.equal(completions, 0);
   }
 });
 
@@ -405,7 +334,7 @@ test("lỗi chính sách dữ liệu được giải thích an toàn, không l�
       : Response.json(
           {
             error: {
-              message: `No endpoints found matching your data policy. debug=${env.OPENROUTER_API_KEY}`,
+              message: `No endpoints found matching your data policy. debug=${env.GROQ_API_KEY}`,
             },
           },
           { status: 404 },
@@ -413,7 +342,7 @@ test("lỗi chính sách dữ liệu được giải thích an toàn, không l�
   );
   assert.equal(response.status, 502);
   const text = await response.text();
-  assert.match(text, /quyền riêng tư/);
-  assert.ok(!text.includes(env.OPENROUTER_API_KEY));
+  assert.match(text, /chưa trả lời được/);
+  assert.ok(!text.includes(env.GROQ_API_KEY));
   assert.ok(!text.includes("debug="));
 });
