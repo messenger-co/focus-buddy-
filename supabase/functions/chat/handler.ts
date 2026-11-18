@@ -413,7 +413,7 @@ export async function handleRequest(
           Authorization: `Bearer ${env.GROQ_API_KEY}`,
           "Content-Type": "application/json",
           "HTTP-Referer": env.ALLOWED_ORIGIN,
-          "X-Title": "Focus Buddy 2.0",
+          "User-Agent": "FocusBuddy/2.0",
         },
         body: JSON.stringify({
           model: env.GROQ_MODEL,
