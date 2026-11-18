@@ -215,6 +215,7 @@ describe("Tiến trình trên thiết bị và tùy chỉnh bạn nhỏ", () => 
     delete profile.buddy_name;
     delete profile.accessory;
     delete profile.scene;
+    delete profile.theme;
     profile.leaderboard_opt_in = true;
     localStorage.setItem(DEMO_STORAGE_KEY, JSON.stringify(legacy));
     const migrated = readDemoProgress();
@@ -223,6 +224,7 @@ describe("Tiến trình trên thiết bị và tùy chỉnh bạn nhỏ", () => 
       buddy_name: "",
       accessory: "none",
       scene: "garden",
+      theme: "meadow",
     });
     expect(migrated.profile).not.toHaveProperty("leaderboard_opt_in");
     expect(migrated.completed_exercises).toEqual(["logic-1"]);
@@ -232,20 +234,22 @@ describe("Tiến trình trên thiết bị và tùy chỉnh bạn nhỏ", () => 
     const initial = createDemoProgress();
     const preferences = {
       ...initial.profile,
-      companion: "dragon" as const,
+      companion: "axolotl" as const,
       color: "sky" as const,
       buddy_name: "  Rồng Bông  ",
-      accessory: "crown" as const,
+      accessory: "satchel" as const,
+      theme: "tide" as const,
       scene: "space" as const,
       total_xp: 9999,
     };
     const result = demoReducer(initial, { type: "preferences", preferences });
     localStorage.setItem(DEMO_STORAGE_KEY, JSON.stringify(result.progress));
     expect(readDemoProgress().profile).toMatchObject({
-      companion: "dragon",
+      companion: "axolotl",
       color: "sky",
       buddy_name: "Rồng Bông",
-      accessory: "crown",
+      accessory: "satchel",
+      theme: "tide",
       scene: "space",
       total_xp: 0,
     });

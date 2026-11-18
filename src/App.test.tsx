@@ -203,7 +203,7 @@ describe("Trải nghiệm dùng thử bằng tiếng Việt", () => {
     app.unmount();
   });
 
-  it("tương tác với bạn nhỏ và dừng trò chơi trong phiên tập trung", async () => {
+  it("giữ bạn nhỏ yên tĩnh và cho phép chơi một ván trong phiên tập trung", async () => {
     mount("/ban-dong-hanh");
     fireEvent.click(await screen.findByRole("button", { name: "Ôm một cái" }));
     expect(
@@ -223,10 +223,21 @@ describe("Trải nghiệm dùng thử bằng tiếng Việt", () => {
     const play = await screen.findByRole("button", { name: "Chơi cùng" });
     expect((play as HTMLButtonElement).disabled).toBe(true);
     expect(
-      screen.getByText(
-        "Các trò chơi tạm nghỉ đến khi phiên tập trung kết thúc.",
-      ),
+      screen.getByText("Bạn nhỏ đang ngồi yên trong phiên tập trung."),
     ).toBeTruthy();
+    const session = saved().focus_sessions[0];
+    fireEvent.click(screen.getByRole("link", { name: "Mở bàn trò chơi" }));
+    fireEvent.click(
+      await screen.findByRole("link", { name: /Bước chân con số/ }),
+    );
+    for (let n = 1; n <= 9; n++)
+      fireEvent.click(await screen.findByRole("button", { name: `Số ${n}` }));
+    expect(
+      await screen.findByRole("heading", { name: "Hoàn thành rồi!" }),
+    ).toBeTruthy();
+    fireEvent.click(screen.getByRole("link", { name: "Về đồng hồ" }));
+    expect(screen.getByRole("timer")).toBeTruthy();
+    expect(saved().focus_sessions[0]).toEqual(session);
     expect(saved().profile.total_xp).toBe(0);
   });
 

@@ -25,6 +25,8 @@ import {
   Coffee,
   Flame,
   Flower2,
+  Gamepad2,
+  MessagesSquare,
   Heart,
   Home,
   Leaf,
@@ -52,6 +54,8 @@ import {
   type CompanionColor,
   type Mood,
 } from "./data";
+const Games = lazy(() => import("./games/Games"));
+const Discussion = lazy(() => import("./discussion/Discussion"));
 const BuddyStudio = lazy(() => import("./components/BuddyStudio"));
 const Companion = lazy(() => import("./components/Companion"));
 type Buddy = ReturnType<typeof useBuddy>;
@@ -61,6 +65,8 @@ const navItems = [
   { to: "/tap-trung", icon: Clock3, label: "Giờ tập trung" },
   { to: "/nhiem-vu", icon: BookOpen, label: "Nhiệm vụ học tập" },
   { to: "/ban-dong-hanh", icon: Heart, label: "Bạn đồng hành" },
+  { to: "/tro-choi", icon: Gamepad2, label: "Trò chơi tập trung" },
+  { to: "/thao-luan", icon: MessagesSquare, label: "Phòng thảo luận" },
   { to: "/hanh-trinh", icon: TrendingUp, label: "Hành trình của bạn" },
 ];
 const number = (n: number) => n.toLocaleString("vi-VN");
@@ -243,10 +249,16 @@ function App() {
         : "Đã lưu cảm xúc hôm nay. Thêm 10 điểm cho bạn!",
     );
   const page =
-    navItems.find((item) => item.to === location.pathname)?.label ||
-    "Góc của bạn";
+    navItems.find(
+      (item) =>
+        item.to === location.pathname ||
+        (item.to !== "/" && location.pathname.startsWith(item.to + "/")),
+    )?.label || "Góc của bạn";
   return (
-    <div className={`app ${active ? "focus-active" : ""}`}>
+    <div
+      data-theme={buddy.progress.profile.theme}
+      className={`app ${active ? "focus-active" : ""}`}
+    >
       {menu && (
         <button
           className="sidebar-scrim"
@@ -424,6 +436,25 @@ function App() {
               }
             />
             <Route
+              path="/tro-choi/:slug?"
+              element={
+                <Suspense fallback={<p>Đang mở trò chơi…</p>}>
+                  <Games
+                    profile={buddy.progress.profile}
+                    countdown={active ? timerText(remaining) : null}
+                  />
+                </Suspense>
+              }
+            />
+            <Route
+              path="/thao-luan"
+              element={
+                <Suspense fallback={<p>Đang mở phòng thảo luận…</p>}>
+                  <Discussion />
+                </Suspense>
+              }
+            />
+            <Route
               path="/hanh-trinh"
               element={<ProgressPage buddy={buddy} />}
             />
@@ -453,7 +484,7 @@ function App() {
           </footer>
         </main>
       </div>
-      {!chat && (
+      {!chat && location.pathname !== "/thao-luan" && (
         <button className="chat-launch" onClick={() => setChat(true)}>
           <Sparkles size={18} />
           <span>Trò chuyện cùng bạn</span>
@@ -864,7 +895,7 @@ function FocusPage({
                 cy="150"
                 r="137"
                 fill="none"
-                stroke="#edf0e8"
+                stroke="var(--study-pale)"
                 strokeWidth="7"
               />
               <circle
@@ -872,7 +903,7 @@ function FocusPage({
                 cy="150"
                 r="137"
                 fill="none"
-                stroke="#6e947b"
+                stroke="var(--study-accent)"
                 strokeWidth="7"
                 strokeLinecap="round"
                 strokeDasharray="861"
@@ -924,6 +955,10 @@ function FocusPage({
               Đóng phiên này để bắt đầu lại
             </button>
           )}
+          <NavLink className="focus-games-link" to="/tro-choi">
+            <Gamepad2 size={17} />
+            Chơi một ván tập trung
+          </NavLink>
           <p className="timer-note">
             {active
               ? "Đồng hồ vẫn tiếp tục khi bạn chuyển trang hoặc tải lại."

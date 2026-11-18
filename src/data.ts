@@ -4,7 +4,9 @@ export type CompanionKind =
   | "cat"
   | "rabbit"
   | "panda"
-  | "dragon";
+  | "dragon"
+  | "axolotl"
+  | "penguin";
 export type CompanionColor =
   | "mint"
   | "lavender"
@@ -12,8 +14,22 @@ export type CompanionColor =
   | "sky"
   | "sunshine"
   | "rose";
-export type BuddyAccessory = "none" | "bow" | "glasses" | "crown";
+export type BuddyAccessory =
+  | "none"
+  | "bow"
+  | "glasses"
+  | "crown"
+  | "beret"
+  | "headphones"
+  | "satchel"
+  | "sprout";
 export type BuddyScene = "garden" | "space" | "sunset";
+export const THEMES = [
+  { id: "meadow", name: "Đồng cỏ", tones: ["#294f45", "#85a97e", "#e6dfaa"] },
+  { id: "tide", name: "Thủy triều", tones: ["#214d65", "#7bbcb6", "#ffe2bd"] },
+  { id: "dusk", name: "Chạng vạng", tones: ["#554465", "#b59ac8", "#efc6aa"] },
+] as const;
+export type StudyTheme = (typeof THEMES)[number]["id"];
 export type Mood = "great" | "okay" | "tired";
 
 export const COMPANIONS: {
@@ -50,6 +66,16 @@ export const COMPANIONS: {
     id: "dragon",
     name: "Rồng Đậu",
     description: "Nhỏ xíu nhưng mang trong mình ước mơ thật lớn.",
+  },
+  {
+    id: "axolotl",
+    name: "Kỳ giông Đào",
+    description: "Mang theo màu san hô và cả một túi câu hỏi tò mò.",
+  },
+  {
+    id: "penguin",
+    name: "Cánh Cụt Băng",
+    description: "Bước từng bước nhỏ và luôn nhớ đường về cùng bạn.",
   },
 ];
 
@@ -118,6 +144,10 @@ export const ACCESSORIES: {
   { id: "bow", name: "Nơ xinh", symbol: "🎀" },
   { id: "glasses", name: "Kính tròn", symbol: "👓" },
   { id: "crown", name: "Vương miện", symbol: "👑" },
+  { id: "beret", name: "Mũ họa sĩ", symbol: "🎨" },
+  { id: "headphones", name: "Tai nghe", symbol: "🎧" },
+  { id: "satchel", name: "Túi thám hiểm", symbol: "🎒" },
+  { id: "sprout", name: "Kẹp mầm non", symbol: "🌱" },
 ];
 export const SCENES: { id: BuddyScene; name: string; description: string }[] = [
   { id: "garden", name: "Vườn nhỏ", description: "Lá xanh và chút bình yên" },

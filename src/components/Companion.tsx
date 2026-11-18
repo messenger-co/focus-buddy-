@@ -10,7 +10,7 @@ export interface CompanionProps {
   size?: number;
   className?: string;
   accessory?: BuddyAccessory;
-  reaction?: "idle" | "happy" | "love" | "snack" | "play";
+  reaction?: "idle" | "happy" | "love" | "snack" | "play" | "wave";
 }
 
 const accents = {
@@ -29,6 +29,8 @@ const names = {
   rabbit: "Thỏ Bông",
   panda: "Gấu Trúc",
   dragon: "Rồng Đậu",
+  axolotl: "Kỳ giông Đào",
+  penguin: "Cánh Cụt Băng",
 };
 
 /** Nhân vật SVG gốc; không tải ảnh hoặc dịch vụ hoạt ảnh bên ngoài. */
@@ -47,14 +49,17 @@ export default function Companion({
   const animate = !paused && !reduceMotion;
   const accent = accents[color];
   const bodyColors = {
-    fox: ["#EDBD8D", "#DA9A66"],
+    fox: ["#f7c48b", "#cb8455"],
     owl: ["#C9B69B", "#A99072"],
     cat: ["#DACFC3", "#BCAE9E"],
     rabbit: ["#FFF4E9", "#EEDFD9"],
     panda: ["#65746B", "#44534D"],
-    dragon: ["#A6CDB5", "#79A595"],
+    dragon: ["#B7DDC0", "#76A591"],
+    axolotl: ["#ffded1", "#db939a"],
+    penguin: ["#83aebe", "#3c6476"],
   }[kind];
   const bodyId = `companion-body-${uid}`;
+  const blushId = `companion-blush-${uid}`;
   const scarfId = `companion-scarf-${uid}`;
   const titleId = `companion-title-${uid}`;
 
@@ -66,19 +71,28 @@ export default function Companion({
       <ellipse
         cx={160 - eyeX - 12}
         cy={eyeY + 19}
-        rx="11"
-        ry="6"
-        fill="#EBA498"
-        opacity=".58"
+        rx="14"
+        ry="8"
+        fill={`url(#${blushId})`}
       />
       <ellipse
         cx={160 + eyeX + 12}
         cy={eyeY + 19}
-        rx="11"
-        ry="6"
-        fill="#EBA498"
-        opacity=".58"
+        rx="14"
+        ry="8"
+        fill={`url(#${blushId})`}
       />
+      <g
+        fill="none"
+        stroke="#995f51"
+        opacity=".48"
+        strokeWidth="1.6"
+        strokeLinecap="round"
+      >
+        <path
+          d={`M${145 - eyeX} ${eyeY + 21}l2-4m2 5 2-4m${2 * eyeX + 15} 3 2-4m2 5 2-4`}
+        />
+      </g>
       {sleepy || reaction === "love" || reaction === "happy" ? (
         <g fill="none" stroke="#55463F" strokeWidth="4" strokeLinecap="round">
           <path d={`M ${150 - eyeX} ${eyeY} q 10 10 20 0`} />
@@ -94,13 +108,37 @@ export default function Companion({
           }}
           style={{ originX: "160px", originY: `${eyeY}px` }}
         >
-          <ellipse cx={160 - eyeX} cy={eyeY} rx="6.5" ry="9" fill="#55463F" />
-          <ellipse cx={160 + eyeX} cy={eyeY} rx="6.5" ry="9" fill="#55463F" />
+          <ellipse cx={160 - eyeX} cy={eyeY} rx="7" ry="9.4" fill="#473d3a" />
+          {reaction === "wave" ? (
+            <path
+              d={`M${152 + eyeX} ${eyeY + 1}q8-9 16 0`}
+              fill="none"
+              stroke="#4b3f39"
+              strokeWidth="3.5"
+              strokeLinecap="round"
+            />
+          ) : (
+            <ellipse cx={160 + eyeX} cy={eyeY} rx="7" ry="9.4" fill="#473d3a" />
+          )}
           <circle cx={158 - eyeX} cy={eyeY - 3} r="2.1" fill="#FFFCF4" />
-          <circle cx={158 + eyeX} cy={eyeY - 3} r="2.1" fill="#FFFCF4" />
+          {reaction !== "wave" && (
+            <circle cx={158 + eyeX} cy={eyeY - 3} r="2.5" fill="#fff9e9" />
+          )}
         </motion.g>
       )}
-      {kind === "owl" ? (
+      {kind === "axolotl" ? (
+        <g fill="#976465">
+          <circle cx="153" cy="153" r="1.4" />
+          <circle cx="167" cy="153" r="1.4" />
+          <path
+            d="M148 160q12 12 24 0"
+            fill="none"
+            stroke="#976465"
+            strokeWidth="2.7"
+            strokeLinecap="round"
+          />
+        </g>
+      ) : kind === "owl" || kind === "penguin" ? (
         <path
           d={`M152 ${eyeY + 17} Q160 ${eyeY + 12} 168 ${eyeY + 17} L160 ${eyeY + 28}Z`}
           fill="#DFA46F"
@@ -128,7 +166,7 @@ export default function Companion({
       width={size}
       height={size}
       viewBox="0 0 320 300"
-      className={className}
+      className={`companion-art ${className || ""} ${animate ? "buddy-moving" : ""} reaction-${reaction}`}
       role="img"
       aria-labelledby={titleId}
       style={{ maxWidth: "100%", overflow: "visible" }}
@@ -142,23 +180,39 @@ export default function Companion({
             : " đang đồng hành cùng bạn"}
       </title>
       <defs>
-        <linearGradient
-          id={bodyId}
-          x1=".2"
-          y1="0"
-          x2=".85"
-          y2="1"
-          gradientUnits="objectBoundingBox"
-        >
+        <radialGradient id={bodyId} cx="36%" cy="23%" r="85%">
           <stop stopColor={bodyColors[0]} />
+          <stop offset=".52" stopColor={bodyColors[0]} />
           <stop offset="1" stopColor={bodyColors[1]} />
-        </linearGradient>
+        </radialGradient>
+        <radialGradient id={blushId}>
+          <stop stopColor="#e59a94" stopOpacity=".88" />
+          <stop offset=".62" stopColor="#efaea1" stopOpacity=".64" />
+          <stop offset="1" stopColor="#efa996" stopOpacity="0" />
+        </radialGradient>
         <linearGradient id={scarfId} x1="0" y1="0" x2="1" y2="1">
           <stop stopColor={accent.light} />
           <stop offset="1" stopColor={accent.dark} />
         </linearGradient>
       </defs>
-      <circle cx="160" cy="147" r="113" fill={accent.glow} />
+      <circle
+        className="buddy-halo"
+        cx="160"
+        cy="147"
+        r="113"
+        fill={accent.glow}
+      />
+      <circle
+        className="buddy-halo"
+        cx="160"
+        cy="147"
+        r="106"
+        fill="none"
+        stroke={accent.dark}
+        strokeWidth="1.2"
+        strokeDasharray="2 7"
+        opacity=".42"
+      />
       <circle cx="81" cy="214" r="17" fill={accent.glow} />
       <circle cx="245" cy="65" r="9" fill={accent.glow} />
       <motion.ellipse
@@ -200,14 +254,26 @@ export default function Companion({
       >
         {kind === "fox" && (
           <>
-            <path
-              d="M214 241 C273 247 290 184 250 157 C262 191 225 193 205 214Z"
-              fill={`url(#${bodyId})`}
-            />
-            <path
-              d="M250 157 C270 171 277 192 267 214 C252 216 238 207 235 195 C250 188 256 174 250 157Z"
-              fill="#FFF1DA"
-            />
+            <g className="plush-tail">
+              {" "}
+              <path
+                d="M214 241 C273 247 290 184 250 157 C262 191 225 193 205 214Z"
+                fill={`url(#${bodyId})`}
+              />
+              <path
+                d="M250 157 C270 171 277 192 267 214 C252 216 238 207 235 195 C250 188 256 174 250 157Z"
+                fill="#FFF1DA"
+              />
+              <path
+                d="M231 227q19-6 24-19"
+                stroke="#a76d48"
+                opacity=".46"
+                strokeWidth="1.7"
+                fill="none"
+                strokeDasharray="3 4"
+                strokeLinecap="round"
+              />
+            </g>
             <ellipse
               cx="160"
               cy="213"
@@ -241,6 +307,21 @@ export default function Companion({
               fill="#FFF1DA"
             />
             <path d="M145 81 Q152 67 163 75 Q168 68 179 79" fill="#EDBD8D" />
+            <g
+              fill="none"
+              stroke="#a76745"
+              strokeWidth="2.3"
+              strokeLinecap="round"
+              opacity=".65"
+            >
+              <path d="M122 119q5-4 10-3m54 0q6-1 11 3" />
+            </g>
+            <g fill="#ba7550" opacity=".65">
+              <circle cx="110" cy="153" r="1.8" />
+              <circle cx="116" cy="155" r="1.3" />
+              <circle cx="210" cy="153" r="1.8" />
+              <circle cx="204" cy="155" r="1.3" />
+            </g>
             {renderFace()}
           </>
         )}
@@ -424,6 +505,173 @@ export default function Companion({
             {renderFace()}
           </>
         )}
+        {kind === "axolotl" && (
+          <>
+            <path
+              d="M192 243Q227 221 224 198Q245 202 240 221Q258 214 259 194Q273 257 192 253Z"
+              fill="#e89da3"
+              stroke="#c97e88"
+              strokeWidth="2"
+            />
+            <ellipse
+              cx="160"
+              cy="213"
+              rx="52"
+              ry="46"
+              fill={`url(#${bodyId})`}
+            />
+            <ellipse cx="160" cy="220" rx="31" ry="30" fill="#fff2dc" />
+            {[false, true].map((mirror) => (
+              <g
+                key={String(mirror)}
+                transform={mirror ? "translate(320 0) scale(-1 1)" : undefined}
+              >
+                <g
+                  className="coral-gills"
+                  stroke="#ce8389"
+                  strokeWidth="2"
+                  strokeLinejoin="round"
+                >
+                  <path
+                    d="M101 129Q67 115 65 82Q91 87 106 113Q82 81 88 63Q113 82 115 116Z"
+                    fill="#eaa0a2"
+                  />
+                  <path
+                    d="M102 132Q76 112 55 119Q61 141 99 148Z"
+                    fill="#f3b6ac"
+                  />
+                  <path
+                    d="M99 149Q77 142 63 156Q78 170 106 159Z"
+                    fill="#eaa0a2"
+                  />
+                  <path
+                    d="M76 99l22 22m-29 7 27 10m-20 17 22-3"
+                    fill="none"
+                    stroke="#fff0db"
+                    strokeWidth="2.5"
+                    strokeLinecap="round"
+                  />
+                </g>
+              </g>
+            ))}
+            <path
+              d="M84 140Q85 93 133 86Q162 77 188 86Q237 95 236 140Q239 190 161 196Q80 192 84 140Z"
+              fill={`url(#${bodyId})`}
+            />
+            <path
+              d="M137 93q12-3 18-1"
+              fill="none"
+              stroke="#fff2de"
+              strokeWidth="4"
+              strokeLinecap="round"
+            />
+            {renderFace()}
+          </>
+        )}
+        {kind === "penguin" && (
+          <>
+            <ellipse
+              cx="160"
+              cy="212"
+              rx="54"
+              ry="49"
+              fill={`url(#${bodyId})`}
+            />
+            <ellipse cx="160" cy="216" rx="36" ry="39" fill="#fff4df" />
+            <path
+              d="M116 182Q87 185 91 219Q102 232 120 202M204 182Q232 186 231 219Q218 232 200 201"
+              fill="#507b89"
+            />
+            <path
+              d="M87 137Q87 85 146 76Q143 67 151 60Q157 72 163 73Q166 61 178 63L173 76Q231 82 233 138Q234 191 161 194Q87 192 87 137Z"
+              fill={`url(#${bodyId})`}
+            />
+            <path
+              d="M160 123Q139 98 116 114Q92 132 108 163Q119 188 160 188Q201 188 213 161Q226 129 204 114Q181 98 160 123Z"
+              fill="#fff6e7"
+            />
+            {renderFace({ eyeY: 138, eyeX: 29 })}
+          </>
+        )}
+        {accessory === "beret" && (
+          <g transform="rotate(-11 155 83)">
+            <path
+              d="M105 83Q99 68 118 61Q136 47 151 52Q187 47 199 67Q207 80 185 84Z"
+              fill="#b65f50"
+              stroke="#89493c"
+              strokeWidth="2.5"
+            />
+            <path
+              d="M115 81Q145 85 189 77L187 85Q145 96 117 88Z"
+              fill="#783f39"
+            />
+            <path
+              d="M152 56q-7-10 2-14"
+              fill="none"
+              stroke="#78413b"
+              strokeWidth="5"
+              strokeLinecap="round"
+            />
+            <path
+              d="M117 72q13-11 27-12"
+              fill="none"
+              stroke="#e99777"
+              strokeWidth="4"
+              strokeLinecap="round"
+            />
+          </g>
+        )}
+        {accessory === "headphones" && (
+          <g fill={accent.dark} stroke="#455856" strokeWidth="3.5">
+            <path
+              d="M92 136C81 59 232 55 228 136"
+              fill="none"
+              strokeWidth="10"
+            />
+            <path
+              d="M92 115C94 66 209 65 225 112"
+              fill="none"
+              stroke={accent.light}
+              strokeWidth="4"
+            />
+            <rect
+              x="85"
+              y="117"
+              width="20"
+              height="43"
+              rx="9"
+              transform="rotate(-8 95 139)"
+            />
+            <rect
+              x="215"
+              y="117"
+              width="20"
+              height="43"
+              rx="9"
+              transform="rotate(8 225 139)"
+            />
+          </g>
+        )}
+        {accessory === "sprout" && (
+          <g transform="translate(191 84) rotate(12)">
+            <path
+              d="M-2 2Q2-11 3-22"
+              fill="none"
+              stroke="#487e58"
+              strokeWidth="4"
+            />
+            <path d="M2-14Q-18-9-23-29Q-1-32 2-14" fill="#91b873" />
+            <path d="M3-19Q5-38 24-40Q25-19 3-19" fill="#568c62" />
+            <rect
+              x="-12"
+              y="-1"
+              width="24"
+              height="7"
+              rx="3.5"
+              fill="#d6a15f"
+            />
+          </g>
+        )}
         {accessory === "glasses" && (
           <g fill="none" stroke="#846B65" strokeWidth="3.5">
             <circle cx="129" cy="138" r="20" />
@@ -471,23 +719,79 @@ export default function Companion({
           cy="254"
           rx="18"
           ry="11"
-          fill={kind === "owl" ? "#DFA46F" : bodyColors[1]}
+          fill={
+            kind === "owl" || kind === "penguin" ? "#DFA46F" : bodyColors[1]
+          }
         />
         <ellipse
           cx="186"
           cy="254"
           rx="18"
           ry="11"
-          fill={kind === "owl" ? "#DFA46F" : bodyColors[1]}
+          fill={
+            kind === "owl" || kind === "penguin" ? "#DFA46F" : bodyColors[1]
+          }
         />
-        {kind !== "owl" && (
+        <g transform="translate(178 195) rotate(-12)">
+          <circle r="7" fill="#a7804f" />
+          <circle cy="-1" r="5.5" fill="#f4d399" />
+          <path
+            d="M0-4l1.1 2.5 2.6.3-2 1.8.6 2.7L0 1.9l-2.3 1.4.6-2.7-2-1.8 2.6-.3Z"
+            fill="#a97848"
+          />
+        </g>
+        <path
+          d="M134 192Q162 200 184 190"
+          fill="none"
+          stroke="#fff8dd"
+          opacity=".82"
+          strokeWidth="1.7"
+          strokeDasharray="3 4"
+        />
+        {accessory === "satchel" && (
+          <g stroke="#745640" strokeWidth="2.4" strokeLinejoin="round">
+            <path d="M127 187Q155 218 197 231" fill="none" strokeWidth="7" />
+            <g transform="rotate(-9 191 233)">
+              <rect
+                x="171"
+                y="219"
+                width="42"
+                height="30"
+                rx="7"
+                fill="#bc8960"
+              />
+              <path d="M171 222Q193 242 213 222V218H171Z" fill="#d7ad76" />
+              <rect
+                x="189"
+                y="228"
+                width="7"
+                height="6"
+                rx="1.5"
+                fill="#ffe0a1"
+              />
+            </g>
+          </g>
+        )}
+        {reaction === "wave" && (kind === "owl" || kind === "penguin") && (
+          <path
+            className="waving-paw"
+            d="M205 202Q225 197 228 173Q207 174 200 191Z"
+            fill={bodyColors[1]}
+          />
+        )}
+        {kind !== "owl" && kind !== "penguin" && (
           <>
             <path
               d="M115 211 q-8 16 2 20 q11 4 14-11"
               fill={`url(#${bodyId})`}
             />
             <path
-              d="M205 211 q8 16-2 20 q-11 4-14-11"
+              className="waving-paw"
+              d={
+                reaction === "wave"
+                  ? "M192 215Q204 186 216 191Q226 201 205 220Z"
+                  : "M205 211 q8 16-2 20 q-11 4-14-11"
+              }
               fill={`url(#${bodyId})`}
             />
           </>
@@ -534,7 +838,7 @@ export default function Companion({
         />
       </motion.g>
       {reaction === "love" && (
-        <g fill="#D791AD" aria-hidden="true">
+        <g className="buddy-hearts" fill="#D791AD" aria-hidden="true">
           <path d="M78 77C57 57 45 84 78 102C111 84 99 57 78 77Z" />
           <path d="M250 158C238 144 225 165 250 177C275 165 262 144 250 158Z" />
         </g>
@@ -548,7 +852,11 @@ export default function Companion({
         </g>
       )}
       {reaction === "play" && (
-        <g transform="translate(69 238)" aria-hidden="true">
+        <g
+          className="buddy-ball"
+          transform="translate(69 238)"
+          aria-hidden="true"
+        >
           <circle r="18" fill={accent.dark} />
           <path
             d="M-16-8L14 10M-8 16L8-16"

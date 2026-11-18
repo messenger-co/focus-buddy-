@@ -1,7 +1,21 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { Session } from "@supabase/supabase-js";
-import { EXERCISES, COMPANIONS, COLORS } from "./data";
-import type { CompanionKind, CompanionColor, Mood } from "./data";
+import {
+  EXERCISES,
+  COMPANIONS,
+  COLORS,
+  ACCESSORIES,
+  SCENES,
+  THEMES,
+} from "./data";
+import type {
+  CompanionKind,
+  CompanionColor,
+  Mood,
+  BuddyAccessory,
+  BuddyScene,
+  StudyTheme,
+} from "./data";
 import {
   apiConfigured,
   authRedirectUrl,
@@ -12,8 +26,6 @@ import {
 
 export const DEMO_STORAGE_KEY = "focus-buddy-demo-v2";
 export const FOCUS_DURATION_MS = 20 * 60 * 1000;
-export type BuddyAccessory = "none" | "bow" | "glasses" | "crown";
-export type BuddyScene = "garden" | "space" | "sunset";
 export type Profile = {
   display_name: string;
   companion: CompanionKind;
@@ -21,12 +33,19 @@ export type Profile = {
   buddy_name: string;
   accessory: BuddyAccessory;
   scene: BuddyScene;
+  theme: StudyTheme;
   total_xp: number;
   level: number;
 };
 export type Preferences = Pick<
   Profile,
-  "display_name" | "companion" | "color" | "buddy_name" | "accessory" | "scene"
+  | "display_name"
+  | "companion"
+  | "color"
+  | "buddy_name"
+  | "accessory"
+  | "scene"
+  | "theme"
 >;
 export type FocusSession = {
   id: string;
@@ -159,6 +178,7 @@ export function createDemoProgress(): Progress {
       buddy_name: "",
       accessory: "none",
       scene: "garden",
+      theme: "meadow",
       total_xp: 0,
       level: 1,
     },
@@ -206,10 +226,13 @@ export function readDemoProgress(storage?: Pick<Storage, "getItem">): Progress {
               .trim()
               .slice(0, 24)
           : "",
-      accessory: ["none", "bow", "glasses", "crown"].includes(profile.accessory)
+      theme: THEMES.some((t) => t.id === profile.theme)
+        ? profile.theme
+        : "meadow",
+      accessory: ACCESSORIES.some((a) => a.id === profile.accessory)
         ? profile.accessory
         : "none",
-      scene: ["garden", "space", "sunset"].includes(profile.scene)
+      scene: SCENES.some((s) => s.id === profile.scene)
         ? profile.scene
         : "garden",
     };
@@ -341,8 +364,9 @@ export function demoReducer(
     if (
       !COMPANIONS.some((c) => c.id === preferences.companion) ||
       !COLORS.some((c) => c.id === preferences.color) ||
-      !["none", "bow", "glasses", "crown"].includes(preferences.accessory) ||
-      !["garden", "space", "sunset"].includes(preferences.scene)
+      !ACCESSORIES.some((a) => a.id === preferences.accessory) ||
+      !SCENES.some((s) => s.id === preferences.scene) ||
+      !THEMES.some((t) => t.id === preferences.theme)
     )
       throw new Error(
         "Bạn chọn nhân vật, màu sắc và phụ kiện trong danh sách nhé.",
@@ -355,6 +379,7 @@ export function demoReducer(
       buddy_name: buddyName,
       accessory: preferences.accessory,
       scene: preferences.scene,
+      theme: preferences.theme,
     };
     result = progress.profile;
   }

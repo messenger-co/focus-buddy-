@@ -1,9 +1,12 @@
 import { useEffect, useRef, useState } from "react";
+import { Link } from "react-router-dom";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import {
   Check,
   Cookie,
   Heart,
+  Hand,
+  Gamepad2,
   Moon,
   Palette,
   Sparkles,
@@ -16,6 +19,7 @@ import {
   COLORS,
   COMPANIONS,
   SCENES,
+  THEMES,
   type BuddyAccessory,
   type BuddyScene,
   type CompanionColor,
@@ -30,11 +34,12 @@ export interface BuddyStudioProps {
     buddy_name?: string;
     accessory?: string;
     scene?: string;
+    theme?: string;
   };
   paused: boolean;
   onSave: (changes: Record<string, string>) => Promise<unknown>;
 }
-type Reaction = "idle" | "happy" | "love" | "snack" | "play";
+type Reaction = "idle" | "happy" | "love" | "snack" | "play" | "wave";
 export default function BuddyStudio({
   profile,
   paused,
@@ -96,29 +101,31 @@ export default function BuddyStudio({
     ? "Mình sẽ ngồi yên ở đây cùng bạn tập trung."
     : sleepy
       ? "Ngủ một chút, mơ thật nhiều…"
-      : reaction === "love"
-        ? "Một cái ôm cho bạn, một cái ôm cho mình!"
-        : reaction === "snack"
-          ? "Ngon quá! Mình nạp đầy năng lượng rồi."
-          : reaction === "play"
-            ? "Bắt được rồi! Đến lượt bạn nè."
-            : reaction === "happy"
-              ? "Hôm nay được ở bên bạn, vui thật đấy!"
-              : "Chạm vào mình nhé, mình đang đợi bạn đó!";
+      : reaction === "wave"
+        ? "Chào bạn! Mình sẵn sàng học cùng bạn rồi."
+        : reaction === "love"
+          ? "Một cái ôm cho bạn, một cái ôm cho mình!"
+          : reaction === "snack"
+            ? "Ngon quá! Mình nạp đầy năng lượng rồi."
+            : reaction === "play"
+              ? "Bắt được rồi! Đến lượt bạn nè."
+              : reaction === "happy"
+                ? "Hôm nay được ở bên bạn, vui thật đấy!"
+                : "Chạm vào mình nhé, mình đang đợi bạn đó!";
   return (
     <div className={`buddy-studio ${still ? "studio-still" : ""}`}>
       <header className="studio-heading">
         <div>
-          <span className="studio-eyebrow">
-            <Sparkles size={14} /> MỘT THẾ GIỚI NHỎ, RẤT RIÊNG BẠN
-          </span>
           <h1>Gặp bạn đồng hành của bạn</h1>
           <p>
             Chọn một người bạn, thêm chút sắc màu và tạo nên góc nhỏ của riêng
             mình.
           </p>
         </div>
-        <span className="studio-count">6 người bạn đang chờ</span>
+        <Link className="studio-games-link" to="/tro-choi">
+          <Gamepad2 size={18} />
+          Mở bàn trò chơi
+        </Link>
       </header>
       <div className="studio-layout">
         <section
@@ -148,6 +155,23 @@ export default function BuddyStudio({
           </div>
           <div className="room-landscape" aria-hidden="true">
             <span className="room-sun" />
+            <div className="room-canopy canopy-left">
+              <i />
+              <i />
+              <i />
+            </div>
+            <div className="room-canopy canopy-right">
+              <i />
+              <i />
+              <i />
+            </div>
+            <div className="room-grass">
+              <i />
+              <i />
+              <i />
+              <i />
+              <i />
+            </div>
             <span className="room-cloud cloud-one" />
             <span className="room-cloud cloud-two" />
             <span className="room-hill hill-one" />
@@ -188,11 +212,14 @@ export default function BuddyStudio({
             />
           </button>
           <div className="room-name">
-            <span>BẠN NHỎ CỦA BẠN</span>
             <h2>{displayName}</h2>
             <p>{selected.description}</p>
           </div>
           <div className="buddy-interactions">
+            <button disabled={paused} onClick={() => interact("wave")}>
+              <Hand size={18} />
+              <span>Vẫy tay</span>
+            </button>
             <button disabled={paused} onClick={() => interact("love")}>
               <Heart size={18} />
               <span>Ôm một cái</span>
@@ -208,7 +235,7 @@ export default function BuddyStudio({
           </div>
           {paused && (
             <p className="studio-pause-note">
-              Các trò chơi tạm nghỉ đến khi phiên tập trung kết thúc.
+              Bạn nhỏ đang ngồi yên trong phiên tập trung.
             </p>
           )}
         </section>
@@ -366,6 +393,25 @@ export default function BuddyStudio({
                   <h2>Hôm nay mình đi đâu?</h2>
                   <p>Một khung cảnh mới cho những ý tưởng mới.</p>
                 </div>
+                <h3 className="studio-label">Chủ đề ứng dụng</h3>
+                <div className="theme-choices">
+                  {THEMES.map((theme) => (
+                    <button
+                      key={theme.id}
+                      disabled={saving}
+                      aria-pressed={profile.theme === theme.id}
+                      onClick={() => void save({ theme: theme.id })}
+                    >
+                      <span className="theme-strip" aria-hidden="true">
+                        {theme.tones.map((color) => (
+                          <i key={color} style={{ backgroundColor: color }} />
+                        ))}
+                      </span>
+                      {theme.name}
+                    </button>
+                  ))}
+                </div>
+                <h3 className="studio-label">Phông nền của bạn nhỏ</h3>
                 <div className="studio-scenes">
                   {SCENES.map((item) => (
                     <button
