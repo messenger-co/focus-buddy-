@@ -31,7 +31,14 @@ Handler xác minh JWT qua Supabase Auth, kiểm tra nguồn và đầu vào, gi�
 
 Mở **Bạn đồng hành** để chọn nhân vật và đặt tên. Thẻ **Phong cách** đổi khăn và phụ kiện. Trong thẻ **Không gian**, chọn chủ đề Đồng cỏ, Thủy triều hoặc Chạng vạng cho ứng dụng và chọn riêng cảnh nền của bạn nhỏ. Các lựa chọn được lưu cùng tiến trình trên trình duyệt.
 
-Thẻ **Trò chơi tập trung** có năm trò ngắn luyện trí nhớ, quan sát, chú ý, suy luận và ngôn ngữ. Từ đồng hồ có thể mở một ván rồi trở về. Đồng hồ vẫn dùng thời điểm kết thúc của phiên đã lưu.
+Trong **Trò chơi tập trung**, bạn điều khiển chính bạn đồng hành đã chọn, với màu khăn và phụ kiện đang đeo. Mỗi trò phiêu lưu có ba chặng.
+
+- **Bước nhảy Đảo Mây** dùng phím trái/phải hoặc A/D để chạy. Nhấn phím Cách hoặc mũi tên lên để nhảy, nhấn lần nữa trên không để nhảy đôi. Bật nấm lò xo, đón đảo đang trôi và thu tinh thể trên đường đến cổng sao.
+- **Cánh lượn ngân hà** dùng phím Cách hoặc mũi tên lên để điều khiển cánh diều. Giữ để bay lên, thả để hạ xuống. Bay qua các vòng sáng và tránh mây giông để tới vạch đích.
+
+Điện thoại có các nút điều khiển ngay dưới khung chơi. Dùng nút tạm dừng hoặc phím Esc khi muốn nghỉ. Nếu trượt sau khi qua cờ giữa chặng, bạn sẽ tiếp tục ở cờ cùng số vật phẩm đã nhặt. Trình duyệt lưu kỷ lục riêng của mỗi chặng theo số vật phẩm, rồi theo thời gian về đích.
+
+Mục **Thử thách nhanh** có năm trò luyện trí nhớ, quan sát, chú ý, suy luận và ngôn ngữ. Bạn có thể mở bất kỳ trò nào từ đồng hồ rồi quay về. Đồng hồ vẫn đếm đến thời điểm kết thúc của phiên học.
 
 ## Phòng thảo luận công khai
 

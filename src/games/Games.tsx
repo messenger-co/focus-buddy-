@@ -1,11 +1,10 @@
-import { useEffect, useRef, useState } from "react";
+import { lazy, Suspense, useEffect, useRef, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import {
   ArrowLeft,
   ArrowRight,
   Check,
   Clock3,
-  Cloud,
   Feather,
   Flower2,
   Footprints,
@@ -14,7 +13,6 @@ import {
   Moon,
   RotateCcw,
   ScanEye,
-  Shapes,
   Sparkles,
   Sprout,
   Star,
@@ -32,6 +30,9 @@ import {
   type GameId,
 } from "./puzzles";
 import "./games.css";
+import { adventures } from "./arcade/courses";
+import { AdventureShelf } from "./arcade/Gallery";
+const Adventure = lazy(() => import("./arcade/Adventure"));
 
 const symbols = [
   { icon: Leaf, name: "Lá" },
@@ -432,6 +433,7 @@ export default function Games({
 }) {
   const { slug } = useParams();
   const selected = gameShelf.find((g) => g.id === slug);
+  const adventure = adventures.find((g) => g.slug === slug);
   return (
     <div className="games-page">
       {countdown && (
@@ -441,40 +443,37 @@ export default function Games({
           <ArrowRight size={16} />
         </Link>
       )}
-      {selected ? (
+      {selected || adventure ? (
         <>
           <Link className="back-to-shelf" to="/tro-choi">
             <ArrowLeft size={16} />
             Tất cả trò chơi
           </Link>
-          <PlayTable key={selected.id} id={selected.id} profile={profile} />
+          {adventure ? (
+            <Suspense fallback={<p>Đang mở đường chơi…</p>}>
+              <Adventure
+                key={adventure.mode}
+                mode={adventure.mode}
+                profile={profile}
+              />
+            </Suspense>
+          ) : (
+            selected && (
+              <PlayTable key={selected.id} id={selected.id} profile={profile} />
+            )
+          )}
         </>
       ) : (
         <>
-          <header className="arcade-banner">
-            <div>
-              <div className="banner-icons" aria-hidden="true">
-                <Shapes size={24} />
-                <span />
-                <span />
-              </div>
-              <h1>Trò chơi tập trung</h1>
-              <p>
-                Chọn một ván ngắn để luyện trí nhớ, quan sát hoặc làm nóng tư
-                duy.
-              </p>
-            </div>
-            <div className="arcade-mascot" aria-hidden="true">
-              <Cloud className="banner-cloud" />
-              <Companion
-                size={170}
-                kind={profile.companion}
-                color={profile.color}
-                accessory={profile.accessory}
-                paused={!!countdown}
-              />
-            </div>
+          <header className="arcade-lobby-heading">
+            <h1>Trò chơi tập trung</h1>
+            <p>
+              Chọn một chuyến phiêu lưu cùng{" "}
+              {profile.buddy_name || "bạn nhỏ của bạn"}.
+            </p>
           </header>
+          <AdventureShelf profile={profile} />
+          <h2 className="shelf-caption">Thử thách nhanh</h2>
           <div className="game-shelf">
             {gameShelf.map((game) => (
               <Link

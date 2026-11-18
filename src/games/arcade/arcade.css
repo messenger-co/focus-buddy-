@@ -1,0 +1,450 @@
+.arcade-lobby-heading {
+  margin: 0 0 18px;
+}
+.arcade-lobby-heading h1,
+.adventure-title h1 {
+  font-size: clamp(26px, 3vw, 40px);
+  letter-spacing: -0.045em;
+  line-height: 1.23;
+  color: var(--study-ink);
+}
+.arcade-lobby-heading p,
+.adventure-title p {
+  margin-top: 6px;
+  color: #53665b;
+  font-size: 14px;
+}
+.adventure-shelf {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+  margin-bottom: 32px;
+}
+.adventure-card {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  border: 1px solid #c4d5cf;
+  border-radius: 20px;
+  overflow: hidden;
+  background: #fffefa;
+  box-shadow: 0 4px 18px #2034330b;
+  position: relative;
+}
+.adventure-card:focus-visible {
+  outline-offset: 2px;
+}
+.adventure-poster,
+.arcade-stage {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  user-select: none;
+}
+.adventure-poster {
+  height: clamp(155px, 16vw, 215px);
+  background: #9bd4d0;
+}
+.poster-glide,
+.stage-night {
+  background: #403858;
+}
+.adventure-poster canvas,
+.arcade-stage canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+.arcade-actor {
+  position: absolute;
+  pointer-events: none;
+  left: 22%;
+  top: 65%;
+  width: 10%;
+  height: 20%;
+  transform: translate(-50%, -100%);
+  transform-origin: 50% 100%;
+  will-change: transform;
+}
+.arcade-actor .companion-art {
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  filter: drop-shadow(0 0.7px 1px #34374755);
+}
+.sprite-foot-left {
+  transform: translateY(var(--left-foot, 0px));
+}
+.sprite-foot-right {
+  transform: translateY(var(--right-foot, 0px));
+}
+.sprite-scarf {
+  transform-origin: 186px 195px;
+  transform: rotate(var(--scarf-angle, 0deg));
+}
+.adventure-card-copy {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 18px 19px 20px;
+}
+.adventure-card-copy h2 {
+  font-size: clamp(19px, 2vw, 27px);
+  line-height: 1.27;
+  letter-spacing: -0.04em;
+  margin: 6px 0;
+}
+.adventure-card-copy p {
+  color: #526559;
+  font-size: 13px;
+  line-height: 1.55;
+}
+.adventure-type {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #427364;
+  font-size: 11px;
+  font-weight: 700;
+}
+.card-glide .adventure-type {
+  color: #705781;
+}
+.adventure-card-arrow {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 39px;
+  height: 39px;
+  border-radius: 50%;
+  background: #dfeede;
+  color: #35584d;
+}
+.card-glide .adventure-card-arrow {
+  background: #efe5f2;
+  color: #5e4672;
+}
+@media (hover: hover) and (prefers-reduced-motion: no-preference) {
+  .adventure-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 9px 24px #20343319;
+  }
+}
+.shelf-caption {
+  font-size: 21px;
+  margin-bottom: 13px;
+  font-weight: 650;
+  letter-spacing: -0.035em;
+}
+.adventure-page {
+  max-width: 1000px;
+  margin: 0 auto 20px;
+}
+.course-picker {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin: 18px 0 14px;
+}
+.course-picker button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  background: #fffefa;
+  border: 1px solid var(--study-line);
+  border-radius: 24px;
+  padding: 7px 11px 7px 7px;
+  color: #56655d;
+  min-height: 36px;
+}
+.course-picker button span {
+  width: 21px;
+  height: 21px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  font-variant-numeric: tabular-nums;
+  color: #36554b;
+  background: #d9ecdf;
+}
+.course-picker .course-coral span {
+  background: #f9dfcc;
+  color: #784e43;
+}
+.course-picker .course-night span {
+  background: #e8e1ef;
+  color: #645276;
+}
+.course-picker button[aria-pressed="true"] {
+  background: var(--study-ink);
+  color: white;
+  border-color: var(--study-ink);
+}
+.arcade-console {
+  outline: none;
+  border: 1px solid #c6d5c9;
+  border-radius: 19px;
+  overflow: hidden;
+  box-shadow: 0 8px 28px #263e380c;
+  background: #fffefa;
+}
+.arcade-console:focus-visible {
+  outline: 2px solid var(--study-accent);
+  outline-offset: 3px;
+}
+.console-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  min-height: 45px;
+  padding: 6px 15px;
+  background: #233f39;
+  color: #fff9df;
+  gap: 8px;
+}
+.console-top strong {
+  font-size: 13px;
+  font-weight: 600;
+}
+.console-tools,
+.arcade-score {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.arcade-score {
+  color: #ffe4a2;
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+  font-size: 12px;
+  white-space: nowrap;
+}
+.console-tools button {
+  width: 33px;
+  height: 33px;
+  border-radius: 9px;
+  display: grid;
+  place-items: center;
+  color: #fff9e5;
+  background: #ffffff16;
+}
+.arcade-stage {
+  height: clamp(245px, 30vw, 390px);
+  background: linear-gradient(#5aa8c2, #f4e4b8);
+}
+.arcade-stage.stage-night {
+  background: linear-gradient(#313459, #877998);
+}
+.stage-start,
+.stage-curtain {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+.stage-start {
+  align-items: flex-end;
+  padding: 16px;
+}
+.stage-curtain {
+  background: #1c2c3b7d;
+  color: #fffcee;
+  text-align: center;
+  pointer-events: auto;
+  padding: 12px;
+}
+.stage-curtain > div {
+  padding: 15px 22px;
+  background: #233e40f2;
+  box-shadow: 0 7px 20px #1629222f;
+  border: 1px solid #c4d6bd77;
+  border-radius: 18px;
+  max-width: 100%;
+}
+.stage-curtain svg {
+  margin-inline: auto;
+}
+.stage-curtain h2 {
+  font-size: clamp(21px, 3vw, 29px);
+  margin: 3px 0;
+}
+.stage-curtain p {
+  font-size: 13px;
+  color: #ffedbd;
+}
+.curtain-actions {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 11px;
+}
+.launch-game,
+.arcade-ghost {
+  pointer-events: auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  min-height: 40px;
+  padding: 9px 15px;
+  font-weight: 700;
+  border-radius: 12px;
+  font-size: 13px;
+}
+.launch-game {
+  color: #3d4137;
+  background: #ffe296;
+  border: 1px solid #b2945f;
+  box-shadow: 0 3px 0 #82694e;
+}
+.arcade-ghost {
+  color: #fff9df;
+  background: #ffffff16;
+  border: 1px solid #ffffff52;
+}
+.arcade-progress {
+  display: block;
+  border: 0;
+  border-radius: 0;
+  appearance: none;
+  width: 100%;
+  height: 5px;
+  color: #e9af58;
+  background: #d7decf;
+}
+.arcade-progress::-webkit-progress-bar {
+  background: #d7decf;
+}
+.arcade-progress::-webkit-progress-value {
+  background: #dc9f50;
+}
+.arcade-progress::-moz-progress-bar {
+  background: #dc9f50;
+}
+.arcade-controls {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 15px 8px;
+}
+.direction-pad {
+  display: flex;
+  gap: 8px;
+}
+.pad-key {
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  min-width: 55px;
+  min-height: 46px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-weight: 700;
+  border: 1px solid #c3d3c7;
+  border-bottom: 3px solid #acbfb1;
+  border-radius: 13px;
+  background: #edf3e9;
+  color: #395a4c;
+}
+.pad-key:active:enabled {
+  transform: translateY(2px);
+  border-bottom-width: 1px;
+}
+.pad-key:disabled {
+  opacity: 0.64;
+}
+.pad-action {
+  margin-left: auto;
+  min-width: 110px;
+  padding: 0 16px;
+  background: #dceade;
+  border-color: #b4cbbb;
+  border-bottom-color: #96b29c;
+}
+.arcade-readout {
+  padding: 1px 16px 12px;
+  color: #52655a;
+  min-width: 0;
+}
+.arcade-readout p {
+  font-size: 12px;
+  line-height: 1.65;
+}
+.arcade-signal:empty {
+  display: none;
+}
+.arcade-readout .arcade-signal,
+.arcade-best {
+  margin-top: 5px;
+  color: var(--study-ink);
+}
+.arcade-best {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-weight: 600;
+}
+@media (max-width: 720px) {
+  .adventure-shelf {
+    grid-template-columns: 1fr;
+    gap: 12px;
+    margin-bottom: 24px;
+  }
+  .adventure-poster {
+    height: clamp(142px, 38vw, 215px);
+  }
+  .adventure-card-copy {
+    padding: 13px 15px;
+  }
+  .arcade-stage {
+    height: clamp(215px, 60vw, 295px);
+  }
+  .course-picker {
+    gap: 5px;
+  }
+  .course-picker button {
+    font-size: 11px;
+    gap: 4px;
+    padding-inline: 5px 8px;
+  }
+  .course-picker button span {
+    width: 17px;
+    height: 17px;
+  }
+  .arcade-controls {
+    padding: 10px;
+  }
+  .arcade-readout {
+    padding-inline: 10px;
+  }
+  .console-top {
+    padding-inline: 10px;
+  }
+}
+@media (max-width: 370px) {
+  .course-picker button {
+    font-size: 10px;
+  }
+  .pad-key {
+    min-width: 45px;
+  }
+}
+@media (max-height: 540px) and (orientation: landscape) {
+  .arcade-stage {
+    height: clamp(170px, 43vh, 235px);
+  }
+  .course-picker {
+    margin-block: 10px;
+  }
+}

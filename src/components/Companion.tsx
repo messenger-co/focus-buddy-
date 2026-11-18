@@ -9,6 +9,7 @@ export interface CompanionProps {
   sleepy?: boolean;
   size?: number;
   className?: string;
+  sprite?: boolean;
   accessory?: BuddyAccessory;
   reaction?: "idle" | "happy" | "love" | "snack" | "play" | "wave";
 }
@@ -41,12 +42,13 @@ export default function Companion({
   sleepy = false,
   size = 300,
   className,
+  sprite = false,
   accessory = "none",
   reaction = "idle",
 }: CompanionProps) {
   const uid = useId().replace(/:/g, "");
   const reduceMotion = useReducedMotion();
-  const animate = !paused && !reduceMotion;
+  const animate = !sprite && !paused && !reduceMotion;
   const accent = accents[color];
   const bodyColors = {
     fox: ["#f7c48b", "#cb8455"],
@@ -165,7 +167,7 @@ export default function Companion({
     <svg
       width={size}
       height={size}
-      viewBox="0 0 320 300"
+      viewBox={sprite ? "42 -5 236 270" : "0 0 320 300"}
       className={`companion-art ${className || ""} ${animate ? "buddy-moving" : ""} reaction-${reaction}`}
       role="img"
       aria-labelledby={titleId}
@@ -173,11 +175,13 @@ export default function Companion({
     >
       <title id={titleId}>
         {names[kind]}
-        {sleepy
-          ? " đang nghỉ ngơi"
-          : paused
-            ? " cùng bạn tập trung"
-            : " đang đồng hành cùng bạn"}
+        {sprite
+          ? " đang phiêu lưu"
+          : sleepy
+            ? " đang nghỉ ngơi"
+            : paused
+              ? " cùng bạn tập trung"
+              : " đang đồng hành cùng bạn"}
       </title>
       <defs>
         <radialGradient id={bodyId} cx="36%" cy="23%" r="85%">
@@ -195,44 +199,48 @@ export default function Companion({
           <stop offset="1" stopColor={accent.dark} />
         </linearGradient>
       </defs>
-      <circle
-        className="buddy-halo"
-        cx="160"
-        cy="147"
-        r="113"
-        fill={accent.glow}
-      />
-      <circle
-        className="buddy-halo"
-        cx="160"
-        cy="147"
-        r="106"
-        fill="none"
-        stroke={accent.dark}
-        strokeWidth="1.2"
-        strokeDasharray="2 7"
-        opacity=".42"
-      />
-      <circle cx="81" cy="214" r="17" fill={accent.glow} />
-      <circle cx="245" cy="65" r="9" fill={accent.glow} />
-      <motion.ellipse
-        cx="160"
-        cy="268"
-        rx="64"
-        ry="9"
-        fill="#766A52"
-        opacity=".1"
-        animate={
-          animate
-            ? { scaleX: [1, 0.88, 1], opacity: [0.1, 0.07, 0.1] }
-            : { scaleX: 1, opacity: 0.1 }
-        }
-        transition={{
-          duration: 4,
-          repeat: animate ? Infinity : 0,
-          ease: "easeInOut",
-        }}
-      />
+      {!sprite && (
+        <>
+          <circle
+            className="buddy-halo"
+            cx="160"
+            cy="147"
+            r="113"
+            fill={accent.glow}
+          />
+          <circle
+            className="buddy-halo"
+            cx="160"
+            cy="147"
+            r="106"
+            fill="none"
+            stroke={accent.dark}
+            strokeWidth="1.2"
+            strokeDasharray="2 7"
+            opacity=".42"
+          />
+          <circle cx="81" cy="214" r="17" fill={accent.glow} />
+          <circle cx="245" cy="65" r="9" fill={accent.glow} />
+          <motion.ellipse
+            cx="160"
+            cy="268"
+            rx="64"
+            ry="9"
+            fill="#766A52"
+            opacity=".1"
+            animate={
+              animate
+                ? { scaleX: [1, 0.88, 1], opacity: [0.1, 0.07, 0.1] }
+                : { scaleX: 1, opacity: 0.1 }
+            }
+            transition={{
+              duration: 4,
+              repeat: animate ? Infinity : 0,
+              ease: "easeInOut",
+            }}
+          />
+        </>
+      )}
       <motion.g
         animate={
           animate
@@ -704,17 +712,20 @@ export default function Companion({
           d="M130 183 Q160 193 190 183 L190 196 Q160 208 130 196Z"
           fill={`url(#${scarfId})`}
         />
-        <path
-          d="M178 196 L195 195 L201 225 Q191 231 180 225Z"
-          fill={`url(#${scarfId})`}
-        />
-        <path
-          d="M184 216 l12-1"
-          stroke={accent.light}
-          strokeWidth="3"
-          strokeLinecap="round"
-        />
+        <g className={sprite ? "sprite-scarf" : undefined}>
+          <path
+            d="M178 196 L195 195 L201 225 Q191 231 180 225Z"
+            fill={`url(#${scarfId})`}
+          />
+          <path
+            d="M184 216 l12-1"
+            stroke={accent.light}
+            strokeWidth="3"
+            strokeLinecap="round"
+          />
+        </g>
         <ellipse
+          className={sprite ? "sprite-foot-left" : undefined}
           cx="134"
           cy="254"
           rx="18"
@@ -724,6 +735,7 @@ export default function Companion({
           }
         />
         <ellipse
+          className={sprite ? "sprite-foot-right" : undefined}
           cx="186"
           cy="254"
           rx="18"
@@ -797,46 +809,50 @@ export default function Companion({
           </>
         )}
       </motion.g>
-      <motion.g
-        initial={{ y: 0, opacity: 0.7 }}
-        animate={
-          animate
-            ? { y: [0, -5, 0], opacity: [0.6, 1, 0.6] }
-            : { y: 0, opacity: 0.7 }
-        }
-        transition={{
-          duration: 3,
-          repeat: animate ? Infinity : 0,
-          ease: "easeInOut",
-        }}
-      >
-        <path
-          d="M62 111 l3-10 3 10 10 3-10 3-3 10-3-10-10-3Z"
-          fill={accent.dark}
-        />
-        <path d="M251 139 l2-7 2 7 7 2-7 2-2 7-2-7-7-2Z" fill="#D9B76D" />
-      </motion.g>
-      <motion.g
-        initial={{ y: 0, opacity: 0.8 }}
-        animate={
-          animate
-            ? { y: [0, 4, 0], opacity: [1, 0.5, 1] }
-            : { y: 0, opacity: 0.8 }
-        }
-        transition={{
-          duration: 4.5,
-          repeat: animate ? Infinity : 0,
-          ease: "easeInOut",
-        }}
-      >
-        <circle cx="72" cy="181" r="3.5" fill="#D9B76D" />
-        <circle cx="244" cy="99" r="3" fill={accent.dark} />
-        <path
-          d="M180 35 l2-6 2 6 6 2-6 2-2 6-2-6-6-2Z"
-          fill="#D9B76D"
-          opacity=".7"
-        />
-      </motion.g>
+      {!sprite && (
+        <>
+          <motion.g
+            initial={{ y: 0, opacity: 0.7 }}
+            animate={
+              animate
+                ? { y: [0, -5, 0], opacity: [0.6, 1, 0.6] }
+                : { y: 0, opacity: 0.7 }
+            }
+            transition={{
+              duration: 3,
+              repeat: animate ? Infinity : 0,
+              ease: "easeInOut",
+            }}
+          >
+            <path
+              d="M62 111 l3-10 3 10 10 3-10 3-3 10-3-10-10-3Z"
+              fill={accent.dark}
+            />
+            <path d="M251 139 l2-7 2 7 7 2-7 2-2 7-2-7-7-2Z" fill="#D9B76D" />
+          </motion.g>
+          <motion.g
+            initial={{ y: 0, opacity: 0.8 }}
+            animate={
+              animate
+                ? { y: [0, 4, 0], opacity: [1, 0.5, 1] }
+                : { y: 0, opacity: 0.8 }
+            }
+            transition={{
+              duration: 4.5,
+              repeat: animate ? Infinity : 0,
+              ease: "easeInOut",
+            }}
+          >
+            <circle cx="72" cy="181" r="3.5" fill="#D9B76D" />
+            <circle cx="244" cy="99" r="3" fill={accent.dark} />
+            <path
+              d="M180 35 l2-6 2 6 6 2-6 2-2 6-2-6-6-2Z"
+              fill="#D9B76D"
+              opacity=".7"
+            />
+          </motion.g>
+        </>
+      )}
       {reaction === "love" && (
         <g className="buddy-hearts" fill="#D791AD" aria-hidden="true">
           <path d="M78 77C57 57 45 84 78 102C111 84 99 57 78 77Z" />

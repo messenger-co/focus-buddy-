@@ -227,9 +227,18 @@ describe("Trải nghiệm dùng thử bằng tiếng Việt", () => {
     ).toBeTruthy();
     const session = saved().focus_sessions[0];
     fireEvent.click(screen.getByRole("link", { name: "Mở bàn trò chơi" }));
-    fireEvent.click(
-      await screen.findByRole("link", { name: /Bước chân con số/ }),
+    await screen.findByRole(
+      "heading",
+      { name: "Trò chơi tập trung" },
+      { timeout: 4000 },
     );
+    expect(
+      screen.getByRole("link", { name: /Bước nhảy Đảo Mây/ }),
+    ).toBeTruthy();
+    expect(
+      screen.getByRole("link", { name: /Cánh lượn ngân hà/ }),
+    ).toBeTruthy();
+    fireEvent.click(screen.getByRole("link", { name: /Bước chân con số/ }));
     for (let n = 1; n <= 9; n++)
       fireEvent.click(await screen.findByRole("button", { name: `Số ${n}` }));
     expect(

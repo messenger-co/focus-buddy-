@@ -484,12 +484,14 @@ function App() {
           </footer>
         </main>
       </div>
-      {!chat && location.pathname !== "/thao-luan" && (
-        <button className="chat-launch" onClick={() => setChat(true)}>
-          <Sparkles size={18} />
-          <span>Trò chuyện cùng bạn</span>
-        </button>
-      )}
+      {!chat &&
+        location.pathname !== "/thao-luan" &&
+        !location.pathname.startsWith("/tro-choi/") && (
+          <button className="chat-launch" onClick={() => setChat(true)}>
+            <Sparkles size={18} />
+            <span>Trò chuyện cùng bạn</span>
+          </button>
+        )}
       {toast && (
         <div className="toast" role="status">
           <CheckCheck size={20} />

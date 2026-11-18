@@ -4,72 +4,11 @@
   margin-inline: auto;
   color: var(--study-ink);
 }
-.arcade-banner {
-  color: var(--study-ink);
-  position: relative;
-  isolation: isolate;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 16px;
-  padding: 24px clamp(20px, 4vw, 48px);
-  margin-bottom: 24px;
-  border-radius: 24px;
-  overflow: hidden;
-  border: 1px solid var(--study-line);
-  background:
-    repeating-radial-gradient(
-      ellipse at 99% 124%,
-      transparent 0 17px,
-      #ffffff60 18px 19px,
-      transparent 20px 32px
-    ),
-    linear-gradient(112deg, var(--study-pale), var(--study-mid));
-}
-.arcade-banner h1,
 .discussion-heading h1,
 .play-header h1 {
   font-size: clamp(25px, 3.1vw, 41px);
   letter-spacing: -0.045em;
   line-height: 1.23;
-}
-.arcade-banner p {
-  max-width: 42ch;
-  margin-top: 10px;
-}
-.banner-icons {
-  display: flex;
-  gap: 5px;
-  align-items: center;
-  margin-bottom: 10px;
-}
-.banner-icons span {
-  width: 18px;
-  height: 3px;
-  background: currentColor;
-  opacity: 0.34;
-  border-radius: 8px;
-}
-.banner-icons span:last-child {
-  width: 7px;
-}
-.arcade-mascot {
-  position: relative;
-  width: 158px;
-  flex: none;
-  display: grid;
-  place-items: center;
-}
-.arcade-mascot svg {
-  height: auto;
-}
-.banner-cloud {
-  position: absolute;
-  right: -8px;
-  top: 8px;
-  fill: #fff9;
-  stroke: #fff9;
-  width: 46px;
 }
 .game-shelf {
   display: grid;
@@ -468,19 +407,6 @@
   }
 }
 @media (max-width: 590px) {
-  .arcade-banner {
-    padding: 19px 16px;
-    gap: 0;
-  }
-  .arcade-banner p {
-    font-size: 12px;
-  }
-  .arcade-mascot {
-    width: 82px;
-  }
-  .banner-cloud {
-    width: 26px;
-  }
   .game-shelf {
     gap: 10px;
   }
@@ -513,8 +439,5 @@
 @media (max-width: 350px) {
   .game-shelf {
     grid-template-columns: 1fr;
-  }
-  .arcade-mascot {
-    display: none;
   }
 }
