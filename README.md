@@ -2,7 +2,7 @@
 
 Ứng dụng React chạy trên GitHub Pages. Bạn có thể tập trung 20 phút, làm bài tập, hoàn thành nhiệm vụ, nhận điểm kinh nghiệm và tùy chỉnh một người bạn nhỏ. **Tiến trình được lưu trên thiết bị; ứng dụng không dùng cơ sở dữ liệu học tập và không có bảng xếp hạng.**
 
-Tài khoản Supabase chỉ dùng để xác thực khi trò chuyện với AI. Supabase Edge Function gọi OpenRouter bằng khóa riêng tư. Các tính năng học tập và bạn đồng hành hoạt động ngay cả khi chưa cấu hình AI hoặc chưa đăng nhập.
+Supabase tự tạo phiên khách để xác thực khi trò chuyện với AI; không cần email. Supabase Edge Function gọi OpenRouter bằng khóa riêng tư. Các tính năng học tập và bạn đồng hành hoạt động ngay cả khi chưa cấu hình AI hoặc chưa đăng nhập.
 
 ## Tính năng
 
@@ -13,7 +13,7 @@ Tài khoản Supabase chỉ dùng để xác thực khi trò chuyện với AI. 
 - Sáu màu khăn, bốn lựa chọn phụ kiện, ba cảnh nền và tên riêng cho bạn nhỏ.
 - Tương tác vuốt ve, cho ăn và chơi đùa. Các tương tác này tạo phản ứng vui, không tự cộng điểm học tập.
 - Hoạt ảnh tôn trọng tùy chọn giảm chuyển động; chuyển động trang trí dừng trong phiên tập trung.
-- Gợi ý trò chuyện ngoại tuyến có nhãn rõ ràng; AI trực tuyến cần đăng nhập và Edge Function đã triển khai.
+- Gợi ý trò chuyện ngoại tuyến có nhãn rõ ràng; AI trực tuyến dùng phiên khách Supabase và Edge Function đã triển khai.
 
 ## Chạy và kiểm tra trên máy
 
@@ -71,17 +71,9 @@ Cấu hình phát triển cục bộ: sao chép `.env.example` thành `.env.loca
 
 Chủ dự án cần quyền quản trị Supabase để hoàn tất phần này. Khóa publishable không cấp quyền triển khai hàm hoặc đặt secrets.
 
-### 1. Cấu hình đăng nhập
+### 1. Bật phiên khách
 
-Trong dự án `lrihuhrfsnmkwcvouudd`, mở **Authentication → Providers** và bật Email. Cấu hình SMTP phù hợp khi sử dụng thật.
-
-Tại **Authentication → URL Configuration**, đặt cả **Site URL** và một mục trong **Redirect URLs** thành:
-
-```text
-https://messenger-co.github.io/focus-buddy-/
-```
-
-Khi phát triển, thêm `http://localhost:5173/` vào Redirect URLs. Không đưa phần `#` vào URL chuyển hướng. Luồng PKCE yêu cầu mở liên kết email bằng chính trình duyệt đã yêu cầu đăng nhập.
+Trong dự án `lrihuhrfsnmkwcvouudd`, mở **Authentication → Sign In / Providers → Anonymous Sign-Ins** và bật đăng nhập ẩn danh. Giao diện tự tạo phiên khách khi gửi câu hỏi đầu tiên; người dùng không cần email. Mỗi yêu cầu vẫn phải có JWT do Supabase xác minh.
 
 ### 2. Đặt secrets phía máy chủ
 
@@ -90,7 +82,7 @@ Trong **Edge Functions → Secrets** của Supabase, thêm:
 | Secret               | Giá trị                                       |
 | -------------------- | --------------------------------------------- |
 | `OPENROUTER_API_KEY` | Khóa riêng tư từ tài khoản OpenRouter của bạn |
-| `OPENROUTER_MODEL`   | `nvidia/nemotron-3-ultra-550b-a55b:free`      |
+| `OPENROUTER_MODEL`   | `google/gemma-4-31b-it:free`                  |
 | `ALLOWED_ORIGIN`     | `https://messenger-co.github.io`              |
 
 Nhập khóa trực tiếp trong trang quản trị secrets; không gửi khóa vào hội thoại, mã nguồn hoặc tệp được đưa lên Git. `ALLOWED_ORIGIN` chỉ gồm giao thức và tên miền, không chứa đường dẫn kho hay dấu `/` cuối. Với thử nghiệm cục bộ, dùng `http://localhost:5173` và khôi phục nguồn thật trước khi vận hành.
@@ -107,22 +99,22 @@ supabase link --project-ref lrihuhrfsnmkwcvouudd
 supabase functions deploy chat
 ```
 
-Không cần chạy SQL hoặc `supabase db push` cho phiên bản này. Cấu hình `supabase/config.toml` tắt bộ kiểm tra JWT cũ tại cổng API; **handler vẫn bắt buộc JWT và xác minh phiên qua Supabase Auth `/auth/v1/user`** trước khi gọi OpenRouter. Tài khoản ẩn danh không được gọi AI.
+Không cần chạy SQL hoặc `supabase db push` cho phiên bản này. Cấu hình `supabase/config.toml` tắt bộ kiểm tra JWT cũ tại cổng API; **handler vẫn bắt buộc JWT và xác minh phiên qua Supabase Auth `/auth/v1/user`** trước khi gọi OpenRouter. Phiên khách hợp lệ được gọi AI; yêu cầu thiếu JWT hoặc JWT không hợp lệ bị từ chối.
 
 Giao diện chỉ gọi `https://lrihuhrfsnmkwcvouudd.supabase.co/functions/v1/chat`. Khóa OpenRouter chỉ được dùng trong yêu cầu từ Edge Function đến OpenRouter.
 
 ### 4. Kiểm tra sau triển khai
 
 - Mở ứng dụng, mở trò chuyện và xác nhận dịch vụ đã sẵn sàng. Kiểm tra sức khỏe nằm tại `/functions/v1/chat/health`.
-- Đăng nhập qua email trong cùng trình duyệt, gửi một câu hỏi tiếng Việt và xác nhận câu trả lời được truyền dần.
+- Gửi một câu hỏi tiếng Việt từ phiên khách mới và xác nhận câu trả lời được truyền dần.
 - Trong công cụ mạng của trình duyệt, yêu cầu AI phải đến Supabase Edge Function, không trực tiếp đến OpenRouter.
-- Kiểm tra token bị thiếu hoặc không hợp lệ bị từ chối; thử đăng xuất và xác nhận điểm cục bộ vẫn còn.
+- Kiểm tra token bị thiếu hoặc không hợp lệ bị từ chối; xác nhận tạo phiên khách không làm thay đổi điểm cục bộ.
 
 ## Mô hình miễn phí và giới hạn
 
-Mặc định chọn **NVIDIA Nemotron 3 Ultra 550B A55B (free)**, một mô hình suy luận tổng quát mạnh đang có trong danh mục OpenRouter tại thời điểm cấu hình. Không có một mô hình mạnh nhất cho mọi loại câu hỏi; chất lượng và khả năng cung cấp có thể thay đổi.
+Sử dụng **Google Gemma 4 31B (free)** qua OpenRouter, mã chính xác `google/gemma-4-31b-it:free`. Khi nâng cấp từ phiên bản cũ, cần đổi secret `OPENROUTER_MODEL` và triển khai lại hàm `chat`; GitHub Actions chỉ cập nhật giao diện. Giao diện sẽ yêu cầu cập nhật nếu máy chủ vẫn báo mô hình khác.
 
-Handler chỉ chấp nhận ID NVIDIA có hậu tố `:free`, kiểm tra giá trong danh mục OpenRouter và lưu kết quả tối đa năm phút. Yêu cầu đến nhà cung cấp giới hạn giá bằng 0. Nếu mô hình không còn miễn phí hoặc không xác minh được danh mục, hàm báo lỗi; **không tự chuyển sang mô hình trả phí**. Miễn phí vẫn có hạn mức và có thể hết công suất.
+Handler chỉ chấp nhận `google/gemma-4-31b-it:free`, kiểm tra giá trong danh mục OpenRouter và lưu kết quả tối đa năm phút. Yêu cầu đến nhà cung cấp giới hạn giá bằng 0. Nếu mô hình không còn miễn phí hoặc không xác minh được danh mục, hàm báo lỗi; **không tự chuyển sang mô hình trả phí**. Miễn phí vẫn có hạn mức và có thể hết công suất.
 
 Giới hạn một yêu cầu: 12 tin nhắn, tối đa 4.000 ký tự mỗi tin, tổng 8.000 ký tự và 24.000 byte; tối đa 1.800 token đầu ra; thời gian chờ OpenRouter 60 giây.
 
@@ -148,12 +140,10 @@ GitHub Actions cập nhật giao diện. Thay đổi mã Edge Function cần ch�
 | Tải lại trang con bị 404                        | Dùng URL có dấu `#` do ứng dụng tạo.                                                                                                                                                              |
 | AI báo chưa triển khai                          | Triển khai hàm `chat` trong đúng dự án Supabase; kiểm tra `/chat/health`.                                                                                                                         |
 | AI chưa được cấu hình đầy đủ                    | Kiểm tra ba secrets và nguồn CORS đúng tên miền.                                                                                                                                                  |
-| Email đăng nhập không đến                       | Kiểm tra thư rác, SMTP, hạn mức gửi và cấu hình Email provider.                                                                                                                                   |
-| Đăng nhập không hoàn tất                        | Kiểm tra Site URL/Redirect URLs và mở email trên cùng trình duyệt đã yêu cầu.                                                                                                                     |
-| AI báo phiên không hợp lệ                       | Đăng nhập lại; xác nhận giao diện và Edge Function dùng cùng dự án.                                                                                                                               |
+| AI báo phiên không hợp lệ                       | Tải lại trang; xác nhận đã bật Anonymous Sign-Ins và giao diện dùng đúng dự án.                                                                                                                   |
 | AI báo hết lượt                                 | Chờ hạn mức trong giờ mới hoặc hạn mức OpenRouter được phục hồi.                                                                                                                                  |
 | AI báo chính sách dữ liệu chặn mô hình miễn phí | Chủ tài khoản tự xem lựa chọn tại https://openrouter.ai/settings/privacy. Ứng dụng không tự thay đổi sự đồng ý về sử dụng dữ liệu; một số mô hình miễn phí không phù hợp với chính sách hiện tại. |
-| AI báo mô hình không khả dụng                   | Kiểm tra danh mục OpenRouter, chọn một ID NVIDIA `:free` có giá bằng 0 rồi cập nhật secret.                                                                                                       |
+| AI báo mô hình không khả dụng                   | Kiểm tra danh mục OpenRouter, đặt secret đúng `google/gemma-4-31b-it:free`.                                                                                                                       |
 | Điểm hoặc bạn đồng hành không còn               | Kiểm tra đúng trình duyệt/nguồn trang; dữ liệu bị xóa hoặc chế độ riêng tư không bảo đảm lưu lâu dài.                                                                                             |
 
 Trạng thái bàn giao và giới hạn kiểm thử nằm trong [KIEM-THU.md](KIEM-THU.md). Bản dựng thành công không đồng nghĩa Edge Function đã được triển khai bằng tài khoản của bạn.

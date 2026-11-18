@@ -1,5 +1,7 @@
 import { apiBaseUrl, apiConfigured, supabase } from "./cloud";
 
+export const CHAT_MODEL = "google/gemma-4-31b-it:free";
+
 export type ChatMessage = { role: "user" | "assistant"; content: string };
 
 /** Giữ ngữ cảnh gần nhất trong hạn mức của Edge Function, luôn giữ nguyên câu hỏi mới. */
@@ -195,6 +197,12 @@ export async function getChatReadiness(
           "Hàm trò chuyện chưa được triển khai. Chủ trang cần triển khai hàm chat và thêm khóa OpenRouter trong Supabase Secrets.",
       };
     const data = (await response.json()) as { ready?: boolean; model?: string };
+    if (response.ok && data.ready === true && data.model !== CHAT_MODEL)
+      return {
+        ready: false,
+        message:
+          "Dịch vụ AI cần cập nhật sang Google Gemma 4 31B. Chủ trang cần đổi OPENROUTER_MODEL và triển khai lại hàm chat.",
+      };
     return response.ok && data.ready === true
       ? {
           ready: true,

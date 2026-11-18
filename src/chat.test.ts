@@ -107,8 +107,24 @@ describe("Không báo AI trực tuyến khi dịch vụ chưa sẵn sàng", () =
     ).toBe(false);
     expect(
       await getChatReadiness("https://example.test/health", async () =>
-        Response.json({ ready: true, model: "nvidia/test:free" }),
+        Response.json({ ready: true, model: "google/gemma-4-31b-it:free" }),
       ),
-    ).toMatchObject({ ready: true, model: "nvidia/test:free" });
+    ).toMatchObject({ ready: true, model: "google/gemma-4-31b-it:free" });
   });
+});
+
+it("không báo sẵn sàng khi máy chủ vẫn dùng mô hình cũ", async () => {
+  const { getChatReadiness } = await import("./chat");
+  for (const model of [
+    "nvidia/nemotron-3-ultra-550b-a55b:free",
+    "google/gemma-4-31b-it",
+    undefined,
+  ]) {
+    const result = await getChatReadiness(
+      "https://example.test/health",
+      async () => Response.json({ ready: true, model }),
+    );
+    expect(result.ready).toBe(false);
+    expect(result.message).toContain("Google Gemma 4 31B");
+  }
 });

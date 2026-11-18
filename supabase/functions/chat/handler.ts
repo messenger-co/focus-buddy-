@@ -1,3 +1,5 @@
+export const CHAT_MODEL = "google/gemma-4-31b-it:free";
+
 export interface Env {
   SUPABASE_URL: string;
   SUPABASE_PUBLISHABLE_KEY: string;
@@ -63,7 +65,7 @@ export async function freeModelAvailable(
   model: string,
   fetcher: Fetcher = fetch,
 ): Promise<boolean> {
-  if (!/^(?:nvidia\/[a-zA-Z0-9_.-]+|google\/gemma-4-26b-a4b-it|recursive\/flint-v1\.0):free$/.test(model)) return false;
+  if (model !== CHAT_MODEL) return false;
   let cached = modelCache.get(fetcher);
   if (!cached || cached.expires <= Date.now()) {
     const response = await fetcher("https://openrouter.ai/api/v1/models", {
@@ -79,7 +81,7 @@ export async function freeModelAvailable(
     for (const entry of catalog.data) {
       if (
         typeof entry.id !== "string" ||
-        !/^(?:nvidia\/[a-zA-Z0-9_.-]+|google\/gemma-4-26b-a4b-it|recursive\/flint-v1\.0):free$/.test(entry.id) ||
+        entry.id !== CHAT_MODEL ||
         !entry.pricing
       )
         continue;
@@ -137,7 +139,7 @@ function configured(env: Env): boolean {
       !env.SUPABASE_PUBLISHABLE_KEY.startsWith("YOUR_") &&
       !!env.OPENROUTER_API_KEY &&
       !env.OPENROUTER_API_KEY.startsWith("YOUR_") &&
-      /^(?:nvidia\/[a-zA-Z0-9_.-]+|google\/gemma-4-26b-a4b-it|recursive\/flint-v1\.0):free$/.test(env.OPENROUTER_MODEL) &&
+      env.OPENROUTER_MODEL === CHAT_MODEL &&
       !!env.QUOTA
     );
   } catch {

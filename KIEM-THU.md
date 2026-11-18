@@ -2,11 +2,11 @@
 
 ## Kết quả đã thực hiện
 
-- 30/30 kiểm thử giao diện, tiến trình cục bộ, bộ đọc SSE và đường dẫn đạt.
-- 16/16 kiểm thử Edge Function đạt; kiểm tra Deno cho điểm vào hàm đạt.
+- 31/31 kiểm thử giao diện, tiến trình cục bộ, bộ đọc SSE và đường dẫn đạt.
+- 17/17 kiểm thử Edge Function đạt; kiểm tra Deno cho điểm vào hàm đạt.
 - Bản dựng production cho `/focus-buddy-/` thành công; tài nguyên và phông tiếng Việt tồn tại, gói tùy chỉnh bạn đồng hành tải riêng.
 - Đã quét các tệp chuẩn bị commit và bản dựng, không phát hiện khóa riêng tư.
-- Đã kiểm tra mô hình NVIDIA Nemotron Ultra miễn phí có trong danh mục OpenRouter. Yêu cầu thử thật bị tài khoản OpenRouter chặn bởi chính sách dữ liệu của mô hình miễn phí (HTTP 404); chưa xác nhận nhận được câu trả lời AI thật.
+- Ngày 18/11/2026: danh mục OpenRouter có `google/gemma-4-31b-it:free`, giá đầu vào và đầu ra bằng 0. Lần gọi thử Gemma qua OpenRouter trả HTTP 429 (nhà cung cấp đang giới hạn yêu cầu); chưa có câu trả lời thật được xác nhận. Endpoint sức khỏe Supabase trả HTTP 200 nhưng vẫn báo `recursive/flint-v1.0:free`, nên cần đổi secret và triển khai lại hàm để sử dụng Gemma 4 31B.
 - Chưa xem trực quan bằng trình duyệt vì phiên này không cung cấp công cụ trình duyệt. Kiểm thử tương tác dùng DOM mô phỏng.
 - Triển khai Edge Function vẫn cần quyền quản trị Supabase. Không có migration SQL cần chạy.
 
@@ -19,7 +19,7 @@ Các nhóm cần kiểm tra trước khi xuất bản:
 - Chuyển động dừng khi tập trung và tôn trọng tùy chọn giảm chuyển động.
 - Chat có nhãn gợi ý ngoại tuyến; dịch vụ chưa triển khai hoặc cấu hình lỗi không được mô tả là AI đang hoạt động.
 - Edge Function xác minh JWT, kiểm tra dữ liệu, giới hạn RAM, giới hạn token, truyền SSE và che lỗi nhà cung cấp.
-- Chỉ mô hình NVIDIA `:free` có giá 0 được gọi; lỗi danh mục hoặc mô hình trả phí bị chặn.
+- Chỉ Google Gemma 4 31B `:free` có giá 0 được gọi; lỗi danh mục hoặc mô hình trả phí bị chặn.
 - Bản dựng đúng `/focus-buddy-/`, không lộ khóa riêng tư và không chứa tài nguyên sai đường dẫn.
 
 ## Lệnh kiểm thử
@@ -30,13 +30,13 @@ npm run test:edge
 npm run build
 ```
 
-Kiểm thử DOM và kiểm thử handler dùng các phản hồi giả lập phù hợp; chúng không thay thế việc xem bố cục trong trình duyệt và thử đăng nhập, email, mô hình OpenRouter trên dịch vụ thật.
+Kiểm thử DOM và kiểm thử handler dùng các phản hồi giả lập phù hợp; chúng không thay thế việc xem bố cục trong trình duyệt và thử phiên khách và mô hình OpenRouter trên dịch vụ thật.
 
 ## Phần cần quyền quản trị dự án
 
 Supabase Edge Function phải được triển khai và đặt secrets bởi người có quyền quản trị. Khóa publishable không làm được các thao tác đó. Không còn bước triển khai SQL hoặc kiểm thử RLS cho dữ liệu học tập.
 
-Sau triển khai, kiểm tra endpoint sức khỏe, đăng nhập email, một câu trả lời AI thật và các lỗi phiên hết hạn. Kiểm tra sức khỏe chỉ xác nhận cấu hình cơ bản, không bảo đảm mô hình luôn khả dụng.
+Sau triển khai, kiểm tra endpoint sức khỏe với đúng mã mô hình, tạo phiên khách, một câu trả lời AI thật và các lỗi phiên hết hạn. Kiểm tra sức khỏe chỉ xác nhận cấu hình cơ bản, không bảo đảm mô hình luôn khả dụng.
 
 ## Giới hạn đã biết
 

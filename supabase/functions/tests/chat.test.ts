@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import {
   handleRequest as rawHandleRequest,
   MemoryQuota,
+  CHAT_MODEL,
   freeModelAvailable,
   LIMITS,
   validateMessages,
@@ -14,7 +15,7 @@ const env: Env = {
   SUPABASE_URL: "https://test-project.supabase.co",
   SUPABASE_PUBLISHABLE_KEY: "sb_publishable_test_only",
   ALLOWED_ORIGIN: "https://example.github.io",
-  OPENROUTER_MODEL: "nvidia/test-model:free",
+  OPENROUTER_MODEL: CHAT_MODEL,
   OPENROUTER_API_KEY: "private_test_key_must_not_leak",
   QUOTA: { consume: () => ({ allowed: true, retryAfter: 0 }) },
 };
@@ -107,7 +108,10 @@ test("phiên khách Supabase hợp lệ được gọi AI", async () => {
     if (String(url).endsWith("/chat/completions")) {
       completions++;
       return new Response(
-        'data: {"choices":[{"delta":{"content":"Xin chào!"}}]}\\n\\ndata: [DONE]\\n\\n'.replaceAll("\\n", "\n"),
+        'data: {"choices":[{"delta":{"content":"Xin chào!"}}]}\\n\\ndata: [DONE]\\n\\n'.replaceAll(
+          "\\n",
+          "\n",
+        ),
         { headers: { "Content-Type": "text/event-stream" } },
       );
     }
@@ -307,47 +311,60 @@ test("đường dẫn health thực tế trả mô hình công khai, không tr�
   assert.ok(!JSON.stringify(body).includes(env.OPENROUTER_API_KEY));
 });
 
-test("chỉ chấp nhận các mô hình cho phép và có giá bằng không trong danh mục", async () => {
+test("chỉ chấp nhận Google Gemma 4 31B miễn phí và kiểm tra từng loại giá", async () => {
   let calls = 0;
   const catalog = async () => {
     calls++;
     return Response.json({
       data: [
         {
-          id: "nvidia/free:free",
+          id: CHAT_MODEL,
           pricing: { prompt: "0", completion: "0", request: "0" },
-        },
-        {
-          id: "google/gemma-4-26b-a4b-it:free",
-          pricing: { prompt: "0", completion: "0" },
-        },
-        {
-          id: "recursive/flint-v1.0:free",
-          pricing: { prompt: "0", completion: "0" },
-        },
-        { id: "nvidia/paid:free", pricing: { prompt: "0", completion: "0.1" } },
-        {
-          id: "nvidia/hidden:free",
-          pricing: { prompt: "0", completion: "0", request: "1" },
-        },
-        {
-          id: "nvidia/invalid:free",
-          pricing: { prompt: null, completion: "0" },
         },
       ],
     });
   };
-  assert.equal(await freeModelAvailable("nvidia/free:free", catalog), true);
-  assert.equal(await freeModelAvailable("google/gemma-4-26b-a4b-it:free", catalog), true);
-  assert.equal(await freeModelAvailable("recursive/flint-v1.0:free", catalog), true);
-  assert.equal(await freeModelAvailable("google/gemma-4-31b-it:free", catalog), false);
-  assert.equal(await freeModelAvailable("nvidia/paid:free", catalog), false);
-  assert.equal(await freeModelAvailable("nvidia/hidden:free", catalog), false);
-  assert.equal(await freeModelAvailable("nvidia/invalid:free", catalog), false);
-  assert.equal(await freeModelAvailable("nvidia/missing:free", catalog), false);
-  assert.equal(await freeModelAvailable("nvidia/free", catalog), false);
-  assert.equal(await freeModelAvailable("other/free:free", catalog), false);
+  assert.equal(CHAT_MODEL, "google/gemma-4-31b-it:free");
+  assert.equal(await freeModelAvailable(CHAT_MODEL, catalog), true);
+  assert.equal(await freeModelAvailable(CHAT_MODEL, catalog), true);
   assert.equal(calls, 1);
+  for (const model of [
+    "google/gemma-4-31b-it",
+    "google/gemma-4-26b-a4b-it:free",
+    "nvidia/nemotron-3-ultra-550b-a55b:free",
+  ])
+    assert.equal(await freeModelAvailable(model, catalog), false);
+  for (const pricing of [
+    { prompt: "0", completion: "0.1" },
+    { prompt: "0", completion: "0", request: "1" },
+    { prompt: null, completion: "0" },
+    { prompt: "0" },
+  ])
+    assert.equal(
+      await freeModelAvailable(CHAT_MODEL, async () =>
+        Response.json({ data: [{ id: CHAT_MODEL, pricing }] }),
+      ),
+      false,
+    );
+});
+
+test("cấu hình cũ hoặc bản Gemma trả phí không thể gọi OpenRouter", async () => {
+  for (const model of [
+    "nvidia/nemotron-3-ultra-550b-a55b:free",
+    "google/gemma-4-31b-it",
+  ]) {
+    let calls = 0;
+    const response = await rawHandleRequest(
+      request(),
+      { ...env, OPENROUTER_MODEL: model },
+      async () => {
+        calls++;
+        throw Error("Không được gọi");
+      },
+    );
+    assert.equal(response.status, 503);
+    assert.equal(calls, 0);
+  }
 });
 
 test("không gọi hoàn thành hội thoại khi danh mục không xác nhận miễn phí", async () => {
