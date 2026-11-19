@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   HOME, PROJECTS, WORLD_SIZE, buildWorld, canBuild, decodeWorld,
-  gatherWorld, initialWorld, isBlocked, keyOf, resourceAt,
+  gatherWorld, initialWorld, isBlocked, keyOf, placeBlock, removeBlock, resourceAt,
   restWorld, stepWorld, tileAt,
 } from "./world";
 import { isoPoint, tileFromScreen } from "./paint";
@@ -25,6 +25,19 @@ describe("Buddy Survival block-world", () => {
     expect(gathered?.energy).toBe(world.energy-3);
     expect(gatherWorld(gathered!, HOME-3, HOME)).toBeNull();
     expect(stepWorld(gathered!, -1, 0)?.x).toBe(HOME-3);
+  });
+  it("places and reclaims wood and stone blocks without cloud storage", () => {
+    const ready = { ...initialWorld(), supplies:{wood:4,stone:3,water:2,food:2} };
+    const placed = placeBlock(ready,HOME+1,HOME,"wood");
+    expect(placed?.placed).toEqual([{ x: HOME+1, y: HOME, material:"wood" }]);
+    expect(placed?.supplies.wood).toBe(3);
+    expect(isBlocked(placed!,HOME+1,HOME)).toBe(true);
+    expect(stepWorld(placed!,1,0)).toBeNull();
+    expect(placeBlock(placed!,HOME+1,HOME,"wood")).toBeNull();
+    const taken = removeBlock(placed!,HOME+1,HOME);
+    expect(taken?.placed).toHaveLength(0);
+    expect(taken?.supplies.wood).toBe(4);
+    expect(decodeWorld(JSON.parse(JSON.stringify(placed)))?.placed).toEqual(placed!.placed);
   });
   it("offers a finite ten-chapter building progression", () => {
     expect(PROJECTS).toHaveLength(10);
