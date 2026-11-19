@@ -124,7 +124,7 @@ export default function BuddyStudio({
         </div>
         <Link className="studio-games-link" to="/tro-choi">
           <Gamepad2 size={18} />
-          Mở bàn trò chơi
+          Chơi cùng Buddy
         </Link>
       </header>
       <div className="studio-layout">
