@@ -517,8 +517,8 @@ export default function Games({
               <div><small>NHẢY · THỬ PHẢN XẠ · CẤP ĐỘ TĂNG DẦN</small><h2>Buddy Runner</h2><p>Trò chơi giống khủng long offline, nhưng chính Buddy của bạn chạy và nhảy. Có kỷ lục lưu cục bộ.</p><span>Chơi ngay <ArrowRight size={15}/></span></div>
             </Link>
             <Link to="/tro-choi/dao-xanh" className="buddy-feature-game survival-feature">
-              <span className="buddy-feature-emoji" aria-hidden="true">🏝️</span>
-              <div><small>PHIÊU LƯU · BỐN CHƯƠNG · TỰ LƯU</small><h2>Buddy Survival: Đảo Xanh</h2><p>Đi khám phá, nhặt vật liệu, xây nơi ở và mở khóa công trình mới. Tiến độ chỉ lưu trên thiết bị.</p><span>Khám phá đảo <ArrowRight size={15}/></span></div>
+              <span className="buddy-feature-emoji" aria-hidden="true">🌍</span>
+              <div><small>THẾ GIỚI 40×40 · 10 CÔNG TRÌNH · LƯU MÁY</small><h2>Buddy Survival: Đảo Xanh</h2><p>Đi tự do trong thế giới khối kiểu Minecraft: rừng, hồ, bãi đá, cây cối, thu thập tài nguyên và dựng làng. Tiến độ chỉ lưu trên thiết bị.</p><span>Khám phá đảo <ArrowRight size={15}/></span></div>
             </Link>
           </div>
           <AdventureShelf profile={profile} />

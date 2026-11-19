@@ -1,0 +1,243 @@
+/* Minecraft-like block sandbox made with Canvas 2D, no WebGL or textures.
+   This is an actual game view, not a collection of terrain cards. */
+.survival-world{
+  --voxel-ink:#264d43;
+  --voxel-green:#467b65;
+  --voxel-line:#b2d5c2;
+  width:100%;
+  max-width:1380px;
+  margin:0 auto 38px;
+  color:var(--voxel-ink);
+}
+.voxel-heading{
+  position:relative;display:flex;align-items:flex-end;justify-content:space-between;
+  gap:20px;flex-wrap:wrap;padding:24px 25px;
+  background:linear-gradient(112deg,#eff8e9,#dff1e3 53%,#fef8e7);
+  border:1px solid #c6dbbf;border-radius:23px 23px 0 0;
+  box-shadow:0 6px 0 #a4c6ae,0 17px 30px #24453215;
+}
+.voxel-eyebrow{display:flex;align-items:center;gap:8px;color:#34785d;font-size:10px;font-weight:850;letter-spacing:1.3px}
+.voxel-heading h1{font-size:clamp(25px,3.1vw,39px);letter-spacing:-1.1px;line-height:1.2;margin:8px 0}
+.voxel-heading p{font-size:12px;line-height:1.7;max-width:600px;color:#5c7c69}
+.voxel-heading-actions{display:flex;flex-wrap:wrap;gap:8px}
+.voxel-small-button{display:inline-flex;align-items:center;gap:7px;background:#fff;
+  border:1px solid #b5d0bd;border-radius:10px;padding:10px 12px;
+  box-shadow:0 3px 0 #9dbda8;color:#3c6654;font-size:11px;font-weight:750}
+.voxel-small-button:active{transform:translateY(2px);box-shadow:0 1px 0 #9dbda8}
+.voxel-viewport{
+  position:relative;isolation:isolate;
+  width:100%;height:clamp(410px,62vh,680px);
+  overflow:hidden;background:#a8d9ce;
+  border:6px solid #f1f9ef;
+  outline:1px solid #aecfb8;
+  box-shadow:0 11px 0 #86ad9c,0 24px 30px #2e5b4c3c;
+  user-select:none;-webkit-user-select:none;
+}
+.voxel-viewport::after{
+  content:"";pointer-events:none;position:absolute;inset:0;z-index:5;
+  background:linear-gradient(90deg,#24443825,transparent 12% 89%,#203d3520),
+    linear-gradient(0deg,#142d2a32,transparent 31%,#ffffff1f);
+}
+.voxel-canvas{display:block;width:100%;height:100%;touch-action:manipulation;cursor:crosshair}
+.voxel-buddy{
+  position:absolute;top:50%;left:50%;width:82px;height:82px;z-index:4;
+  pointer-events:none;transform:translate(-50%,-88%);
+  filter:drop-shadow(0 4px 2px #2c5d506d) drop-shadow(0 8px 5px #1f463d3a);
+  will-change:left,top;
+}
+.voxel-buddy svg{width:82px;height:82px;overflow:visible}
+.voxel-buddy .sprite-scarf{transform-origin:185px 196px;animation:voxel-scarf .9s ease-in-out infinite alternate}
+.voxel-buddy .sprite-foot-left{animation:voxel-foot-left .43s ease-in-out infinite alternate}
+.voxel-buddy .sprite-foot-right{animation:voxel-foot-right .43s ease-in-out infinite alternate}
+@keyframes voxel-scarf{from{transform:rotate(0)}to{transform:rotate(7deg)}}
+@keyframes voxel-foot-left{from{transform:translateY(0)}to{transform:translateY(-2px)}}
+@keyframes voxel-foot-right{from{transform:translateY(-2px)}to{transform:translateY(0)}}
+.voxel-world-brand{
+  position:absolute;z-index:6;top:14px;left:14px;display:flex;align-items:center;gap:7px;
+  padding:7px 11px;border-radius:9px;background:#f5ffeedb;
+  border:1px solid #ffffffa9;box-shadow:0 3px 0 #a4c3a9b7;
+  color:#306a54;font-size:11px;font-weight:850;
+  backdrop-filter:blur(7px);pointer-events:none;
+}
+.voxel-top-hud{
+  position:absolute;z-index:6;top:14px;left:50%;transform:translateX(-50%);
+  display:flex;align-items:center;gap:7px;max-width:calc(100% - 330px);
+}
+.voxel-hud-chip{
+  display:inline-flex;align-items:center;gap:7px;white-space:nowrap;
+  color:#355c4c;background:#f6ffecdd;padding:8px 12px;
+  border-radius:11px;border:1px solid #fff;box-shadow:0 3px 0 #99b8a6b9;
+  font-size:11px;font-weight:650;backdrop-filter:blur(8px)
+}
+.voxel-hud-chip b{font-size:13px;color:#295b4a}
+.voxel-energy svg{color:#bf7a75}
+.voxel-energy-track{
+  display:block;width:51px;height:7px;background:#cedfc8;border-radius:99px;overflow:hidden;
+  box-shadow:inset 0 1px 2px #5274524d;
+}
+.voxel-energy-track>i{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,#5daf83,#a4d7a0);transition:width .2s}
+.voxel-mini-map{
+  position:absolute;z-index:6;top:14px;right:14px;padding:10px;
+  background:#f8ffefd7;backdrop-filter:blur(9px);
+  border:2px solid #f6fff4;box-shadow:0 4px 0 #8db8a3,0 9px 17px #1d513a34;
+  border-radius:14px;
+}
+.voxel-mini-map>span{display:flex;align-items:center;gap:6px;font-size:10px;letter-spacing:.8px;font-weight:850;margin-bottom:6px}
+.voxel-mini-map canvas{width:116px;height:116px;display:block;border-radius:7px;border:2px solid #fff;background:#c7e4bc;box-shadow:0 2px 5px #24483726}
+.voxel-viewport-bottom{
+  position:absolute;z-index:6;bottom:14px;left:50%;transform:translateX(-50%);
+  display:flex;flex-direction:column;gap:9px;align-items:center;
+  width:calc(100% - 30px);pointer-events:none
+}
+.voxel-notice{
+  max-width:750px;background:#f9fff1eb;color:#335a49;
+  padding:9px 14px;border-radius:11px;line-height:1.55;
+  border:1px solid #fff;box-shadow:0 3px 0 #9fbea0c7,0 5px 20px #30543c24;
+  font-size:11px;font-weight:690;text-align:center;backdrop-filter:blur(8px)
+}
+.voxel-pickup{
+  color:#3c734d;background:#fff9d2;border:2px solid #fef8d9;padding:8px 16px;
+  border-radius:15px;font-size:15px;font-weight:900;
+  box-shadow:0 5px 0 #ddc586;animation:voxel-popup 1.2s ease-out both
+}
+@keyframes voxel-popup{from{opacity:0;transform:translateY(16px) scale(.8)}24%{opacity:1;transform:translateY(0) scale(1.08)}85%{opacity:1}to{opacity:0;transform:translateY(-12px)}}
+.voxel-hotbar{display:flex;align-items:stretch;justify-content:center;gap:5px;pointer-events:auto}
+.voxel-inventory-slot{
+  position:relative;min-width:65px;height:61px;display:flex;align-items:center;justify-content:center;
+  background:linear-gradient(145deg,#fffefaef,#e3eecd);
+  border:2px solid #f9fff2;border-radius:10px;
+  box-shadow:0 5px 0 #719a7ac9,0 9px 14px #234c3d56,inset 0 1px #fff;
+}
+.voxel-inventory-slot>span{font-size:26px;filter:drop-shadow(0 3px 2px #3b574133)}
+.voxel-inventory-slot>b{position:absolute;right:5px;bottom:4px;border-radius:7px;background:#315f4bd9;color:#fff;padding:1px 6px;font-size:11px}
+.voxel-inventory-slot.voxel-gather{background:linear-gradient(145deg,#a7dfaa,#66ad85);color:#20563f;cursor:pointer;min-width:65px}
+.voxel-gather small{position:absolute;bottom:4px;right:5px;border-radius:5px;padding:1px 4px;color:#fff;background:#397a56;font-weight:750}
+.voxel-help{
+  position:absolute;z-index:12;left:50%;top:50%;transform:translate(-50%,-50%);
+  width:min(480px,calc(100% - 28px));max-height:calc(100% - 30px);overflow-y:auto;
+  background:linear-gradient(160deg,#fffdf4,#eaf5e2);
+  padding:27px;border-radius:20px;border:2px solid #fff9e0;
+  box-shadow:0 12px 0 #6f9c81,0 26px 80px #183e33a8;
+}
+.voxel-help h2{font-size:23px;margin-bottom:14px}
+.voxel-help p{font-size:12px;line-height:1.65;margin:8px 0;color:#476a59}
+.voxel-help .voxel-action{margin-top:11px}
+.voxel-help-close{position:absolute;top:11px;right:11px;padding:7px;border-radius:7px}
+.voxel-controls{
+  position:relative;z-index:3;display:flex;gap:24px;align-items:center;
+  padding:20px 24px;margin-top:14px;
+  background:linear-gradient(140deg,#eff9ec,#e7f2e3);
+  border:1px solid #bdd7c0;border-radius:19px;
+  box-shadow:0 6px 0 #b0cdb0,0 14px 24px #274d3720;
+}
+.voxel-dpad{
+  display:grid;flex:none;gap:5px;
+  grid-template-columns:repeat(3,48px);
+  grid-template-rows:repeat(2,44px);
+  grid-template-areas:". up ." "left down right";
+}
+.voxel-dpad button{
+  display:grid;place-items:center;background:linear-gradient(150deg,#fff,#d8e9d7);
+  border:1px solid #bad2bb;border-radius:12px;color:#407655;
+  box-shadow:0 5px 0 #a7c6ae,0 7px 13px #21473628;
+  touch-action:manipulation;transition:transform .13s,box-shadow .13s;
+}
+.voxel-dpad button:active{transform:translateY(3px);box-shadow:0 2px 0 #a7c6ae}
+.voxel-dpad button svg{width:20px;height:20px}
+.voxel-control-main{flex:1;min-width:0}
+.voxel-control-title{display:flex;flex-wrap:wrap;gap:8px;justify-content:space-between;
+  font-size:11px;color:#567d61;font-weight:800;margin-bottom:12px}
+.voxel-control-title span{display:flex;align-items:center;gap:6px}
+.voxel-action-row{display:flex;flex-wrap:wrap;gap:9px}
+.voxel-action{
+  display:inline-flex;align-items:center;justify-content:center;gap:8px;
+  background:linear-gradient(170deg,#ffffff,#e5eee0);
+  color:#416452;border:1px solid #bdd7bf;border-radius:12px;
+  min-height:43px;padding:11px 17px;font-weight:800;font-size:12px;
+  box-shadow:0 4px 0 #a0bfa9,0 7px 12px #2851381b;cursor:pointer
+}
+.voxel-action.primary{background:linear-gradient(140deg,#79b98e,#417e64);color:#fff;border-color:#357854;box-shadow:0 4px 0 #326c51,0 8px 12px #28513824}
+.voxel-action:hover:not(:disabled){transform:translateY(-1px);filter:brightness(1.04)}
+.voxel-action:active:not(:disabled){transform:translateY(3px);box-shadow:0 1px 0 #9cbbaa}
+.voxel-action:disabled{opacity:.55;cursor:not-allowed;box-shadow:none}
+.voxel-action kbd{font-size:10px;color:inherit;border:1px solid currentColor;border-radius:5px;padding:1px 4px;opacity:.8}
+.voxel-control-tip{font-size:11px;color:#789281;margin-top:10px;line-height:1.65}
+.voxel-quest{
+  display:flex;align-items:center;gap:19px;margin-top:19px;
+  border:1px solid #b9d3be;background:linear-gradient(145deg,#fffdf6,#e9f5e6);
+  border-radius:18px;padding:20px;
+  box-shadow:0 5px 0 #bad3bc,0 13px 20px #244c3618;
+}
+.voxel-quest-icon{
+  flex:none;width:65px;height:65px;display:grid;place-items:center;
+  font-size:34px;background:linear-gradient(145deg,#d2e6d1,#b5d6bd);
+  border-radius:18px;box-shadow:0 4px 0 #91b29d,inset 0 2px #fff;
+}
+.voxel-quest-content{flex:1;min-width:0}
+.voxel-quest-kicker{font-size:10px;letter-spacing:1px;font-weight:850;color:#417a5e}
+.voxel-quest h2{font-size:20px;letter-spacing:-.5px;margin:5px 0}
+.voxel-quest p{font-size:12px;color:#64806c}
+.voxel-project-progress{width:100%;max-width:390px;height:7px;margin:12px 0;border-radius:10px;background:#cee4cb;overflow:hidden;box-shadow:inset 0 2px 4px #32563a2c}
+.voxel-project-progress>i{display:block;height:100%;background:linear-gradient(90deg,#4d9971,#f6d18d);border-radius:inherit;transition:width .25s}
+.voxel-project-costs{display:flex;gap:8px;flex-wrap:wrap}
+.voxel-project-costs span{padding:5px 9px;font-size:11px;font-weight:730;border:1px solid #f2d2c0;border-radius:8px;background:#fff2e9;color:#9b6d50}
+.voxel-project-costs span.enough{background:#e0f6e1;color:#417c53;border-color:#b9d8b7}
+.voxel-quest>.voxel-action{flex:none}
+.voxel-footer{
+  display:flex;align-items:center;flex-wrap:wrap;justify-content:space-between;
+  gap:13px;padding:16px 6px;margin-top:13px;
+  font-size:11px;color:#6a846f;font-weight:660
+}
+.voxel-footer>span,.voxel-footer-actions{display:flex;align-items:center;gap:7px}
+.voxel-footer-actions{gap:18px}
+.voxel-footer a,.voxel-footer button{display:inline-flex;gap:6px;align-items:center;font-size:11px;color:#4e8c69;text-decoration:underline;font-weight:760}
+@media(max-width:1100px){
+  .voxel-top-hud{top:50px;left:14px;transform:none;max-width:calc(100% - 178px)}
+  .voxel-top-hud .voxel-hud-chip{padding:7px}
+}
+@media(max-width:780px){
+  .voxel-heading{padding:18px 20px}
+  .voxel-viewport{height:clamp(430px,58vh,580px)}
+  .voxel-top-hud{top:48px;left:9px;max-width:calc(100% - 134px)}
+  .voxel-hud-chip{font-size:10px}
+  .voxel-energy-track{width:32px}
+  .voxel-mini-map{right:8px;top:8px;padding:7px}
+  .voxel-mini-map canvas{width:86px;height:86px}
+  .voxel-mini-map>span{font-size:8px}
+  .voxel-controls{gap:14px;padding:15px}
+  .voxel-action-row{gap:6px}
+  .voxel-action{padding:10px 12px;font-size:11px}
+  .voxel-quest{gap:12px}
+}
+@media(max-width:530px){
+  .voxel-heading h1{font-size:26px}
+  .voxel-viewport{height:510px;border-width:4px}
+  .voxel-top-hud{flex-direction:column;align-items:flex-start;top:49px;gap:4px}
+  .voxel-hud-chip{font-size:9px;padding:5px 8px;box-shadow:0 2px 0 #9fbaac}
+  .voxel-hud-chip b{font-size:11px}
+  .voxel-mini-map canvas{width:75px;height:75px}
+  .voxel-mini-map>span{font-size:8px}
+  .voxel-notice{font-size:10px;line-height:1.3;padding:7px 9px}
+  .voxel-viewport-bottom{bottom:8px}
+  .voxel-inventory-slot{min-width:53px;width:53px;height:52px}
+  .voxel-inventory-slot>span{font-size:22px}
+  .voxel-inventory-slot.voxel-gather{min-width:53px}
+  .voxel-controls{flex-direction:column;align-items:stretch}
+  .voxel-dpad{align-self:center;grid-template-columns:repeat(3,54px);grid-template-rows:repeat(2,49px)}
+  .voxel-control-title{justify-content:space-between}
+  .voxel-action-row{justify-content:center}
+  .voxel-control-tip{text-align:center}
+  .voxel-quest{align-items:flex-start;flex-wrap:wrap;padding:15px}
+  .voxel-quest-icon{width:48px;height:48px;font-size:25px}
+  .voxel-quest>.voxel-action{width:100%}
+  .voxel-quest h2{font-size:17px}
+}
+@media(prefers-reduced-motion:reduce){
+  .survival-world *,.survival-world *::before,.survival-world *::after{
+    animation:none!important;transition:none!important;scroll-behavior:auto!important;
+  }
+  .voxel-buddy{will-change:auto}
+}
+.games-page.fx-lite .survival-world .voxel-buddy .sprite-foot-left,
+.games-page.fx-lite .survival-world .voxel-buddy .sprite-foot-right,
+.games-page.fx-lite .survival-world .voxel-buddy .sprite-scarf{animation:none}

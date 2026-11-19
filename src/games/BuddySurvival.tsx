@@ -1,221 +1,416 @@
-import { useCallback, useEffect, useState } from "react";
-import { ArrowDown, ArrowLeft, ArrowRight, ArrowUp, BedDouble, Compass, Hammer, Heart, Leaf, RotateCcw, Sparkles, Sun, Trees } from "lucide-react";
+import { useCallback, useEffect, useRef, useState, type PointerEvent } from "react";
+import {
+  ArrowDown, ArrowLeft, ArrowRight, ArrowUp, BedDouble, Compass,
+  Hammer, Heart, Leaf, Map as MapIcon, RotateCcw, Save, Sparkles, Trees,
+  VolumeX, X,
+} from "lucide-react";
 import { Link } from "react-router-dom";
 import Companion from "../components/Companion";
 import type { Profile } from "../state";
-import "./buddy-survival.css";
+import {
+  HOME, PROJECTS, RESOURCE_ICONS, RESOURCE_LABELS,
+  WORLD_SIZE, buildWorld, canBuild, gatherWorld, initialWorld, isBlocked,
+  loadWorld, placeBlock, removeBlock, resourceAt, restWorld, stepWorld, storeWorld, tileAt,
+  type Resource, type WorldSave,
+} from "./survival/world";
+import { drawIsland, drawMiniMap, isoPoint, tileFromScreen } from "./survival/paint";
+import "./buddy-survival-world.css";
 
-const SAVE_KEY = "focus-buddy-island-survival-v1";
-const SIZE = 7;
-const LAND = [
-  "GFGSBGG",
-  "GBGGGFG",
-  "GGWGGGS",
-  "FGGCGGF",
-  "GSGGGWG",
-  "GFGGBGG",
-  "GGSGFGG",
-] as const;
-type Resource = "wood" | "water" | "food" | "stone";
-type Supplies = Record<Resource, number>;
-type Save = { x: number; y: number; day: number; energy: number; supplies: Supplies; projects: number; harvested: string[]; steps: number };
-type Tile = "F" | "S" | "W" | "B" | "C" | "G";
-type Project = { title: string; description: string; need: Partial<Supplies> };
-const PROJECTS: readonly Project[] = [
-  { title: "Lều ấm áp", description: "Dựng nơi nghỉ chân cho Buddy trong khu vườn.", need: { wood: 4, stone: 2 } },
-  { title: "Hồ nước nhỏ", description: "Trang trí điểm lấy nước của hòn đảo.", need: { wood: 3, stone: 3, water: 2 } },
-  { title: "Vườn trái cây", description: "Cùng Buddy tạo góc vườn xanh mát.", need: { wood: 3, stone: 2, food: 2 } },
-  { title: "Cầu gỗ nhỏ", description: "Kết nối con đường qua suối để khám phá thuận tiện hơn.", need: { wood: 6, stone: 3 } },
-  { title: "Góc đọc sách", description: "Tạo một nơi nghỉ ngơi và đọc sách dưới tán cây.", need: { wood: 6, stone: 2, food: 2 } },
-  { title: "Đài ngắm sao", description: "Xây đài quan sát những vì sao buổi tối.", need: { wood: 4, stone: 6, water: 2 } },
-  { title: "Xưởng thủ công", description: "Cùng Buddy trang trí và sửa chữa đồ đạc.", need: { wood: 7, stone: 4, food: 2 } },
-  { title: "Nhà kính", description: "Chăm những mầm cây xanh trong khu vườn.", need: { wood: 4, stone: 5, water: 5 } },
-  { title: "Quảng trường đèn lồng", description: "Thắp sáng con đường bằng đèn lồng nhiều màu.", need: { wood: 6, stone: 6, food: 3 } },
-  { title: "Ngọn hải đăng", description: "Hoàn thành chuyến phiêu lưu và thắp sáng cả hòn đảo.", need: { wood: 7, stone: 7, water: 4, food: 4 } },
-];
-const LABELS: Record<Resource,string> = { wood: "Gỗ", stone: "Đá", water: "Nước", food: "Trái cây" };
-const ICONS: Record<Tile,string> = { F:"🌳", S:"🪨", W:"💧", B:"🍓", C:"🏡", G:"🌿" };
-const TILE_LABELS: Record<Tile,string> = {F:"Rừng cây",S:"Bãi đá",W:"Suối nước",B:"Bụi trái cây",C:"Trại Buddy",G:"Đồng cỏ"};
-const RESOURCES: Partial<Record<Tile,Resource>> = {F:"wood",S:"stone",W:"water",B:"food"};
-function initial(): Save {
-  return { x: 3, y: 3, day: 1, energy: 12, supplies: {wood: 0, stone: 0, water: 2, food: 2}, projects: 0, harvested: [], steps: 0 };
-}
-function load(): Save {
-  try {
-    const source: unknown = JSON.parse(localStorage.getItem(SAVE_KEY) || "null");
-    if (!source || typeof source !== "object") return initial();
-    const obj = source as Partial<Save>;
-    const validInt = (v: unknown, max: number) => typeof v === "number" && Number.isSafeInteger(v) && v >= 0 && v <= max;
-    if (!validInt(obj.x, SIZE - 1) || !validInt(obj.y, SIZE - 1) ||
-        !validInt(obj.day, 999999) || obj.day === 0 || !validInt(obj.energy, 12) ||
-        !validInt(obj.projects, PROJECTS.length) || !validInt(obj.steps, 99999999) ||
-        !obj.supplies || !Array.isArray(obj.harvested)) return initial();
-    const supplies = obj.supplies;
-    if (!Object.keys(LABELS).every((name) => validInt(supplies[name as Resource], 9999))) return initial();
-    return {
-      x: obj.x!, y: obj.y!, day: obj.day!, energy: obj.energy!, projects: obj.projects!,
-      steps: obj.steps!, supplies: { ...supplies },
-      harvested: obj.harvested.filter((key): key is string => typeof key === "string" && /^[0-6],[0-6]$/.test(key)).slice(0, SIZE * SIZE),
-    };
-  } catch {return initial();}
-}
-function tile(x: number, y: number): Tile {return LAND[y][x] as Tile;}
-function coord(x: number,y: number) {return `${x},${y}`;}
+type Direction = [number, number];
+const DIRECTIONS: Record<string, Direction> = {
+  ArrowUp: [0, -1], KeyW: [0, -1],
+  ArrowDown: [0, 1], KeyS: [0, 1],
+  ArrowLeft: [-1, 0], KeyA: [-1, 0],
+  ArrowRight: [1, 0], KeyD: [1, 0],
+};
+const MAX_FPS = 32;
+
+/** Full canvas sandbox world; localStorage is the ONLY progress persistence. */
 export default function BuddySurvival({ profile }: { profile: Profile }) {
-  const [world, setWorld] = useState<Save>(load);
-  const [notice, setNotice] = useState("Chào mừng đến đảo xanh! Hãy thu thập vật liệu và xây dựng từng công trình cùng Buddy.");
-  useEffect(() => {
-    try {localStorage.setItem(SAVE_KEY, JSON.stringify(world));} catch {/* Local storage may be disabled. */}
-  }, [world]);
-  const move = useCallback((dx: number,dy: number) => {
-    setWorld((previous) => {
-      const x = previous.x + dx,y = previous.y + dy;
-      if (x < 0 || y < 0 || x >= SIZE || y >= SIZE) {setNotice("Đã đến mép bản đồ rồi.");return previous;}
-      if (previous.energy === 0) {setNotice("Buddy cần nghỉ một chút để có thêm năng lượng.");return previous;}
-      setNotice(`Bạn đã khám phá: ${TILE_LABELS[tile(x,y)]}. ${x === 3 && y === 3 ? "Đây là trại chính!" : ""}`);
-      return {...previous,x,y,energy:previous.energy-1,steps:previous.steps+1};
-    });
+  const [world, setWorld] = useState<WorldSave>(loadWorld);
+  const latest = useRef(world);
+  const surface = useRef<HTMLCanvasElement>(null);
+  const mini = useRef<HTMLCanvasElement>(null);
+  const actor = useRef<HTMLDivElement>(null);
+  const viewport = useRef<HTMLDivElement>(null);
+  const camera = useRef({ x: world.x, y: world.y });
+  const playerAnimation = useRef({ x: world.x, y: world.y });
+  const facing = useRef<Direction>([0, 1]);
+  const [selected, setSelected] = useState<{ x: number; y: number } | null>(null);
+  const [message, setMessage] = useState("Bước vào thế giới của Buddy! WASD để đi, E để thu thập, B để xây dựng.");
+  const [pickup, setPickup] = useState("");
+  const [showHelp, setShowHelp] = useState(false);
+  const [effects, setEffects] = useState(() => {
+    try { return localStorage.getItem("focus-buddy-rich-effects-v1") !== "off"; }
+    catch { return true; }
+  });
+  const lastStep = useRef(0);
+  const effectsRef = useRef(effects);
+  useEffect(() => { effectsRef.current = effects; }, [effects]);
+  const update = useCallback((next: WorldSave) => {
+    latest.current = next;
+    setWorld(next);
   }, []);
   useEffect(() => {
-    const handler = (event: KeyboardEvent) => {
-      const element = event.target as HTMLElement | null;
-      if (element?.closest("input,textarea,[contenteditable=true]")) return;
-      const arrows: Record<string,[number,number]> = {ArrowUp:[0,-1],KeyW:[0,-1],ArrowDown:[0,1],KeyS:[0,1],ArrowLeft:[-1,0],KeyA:[-1,0],ArrowRight:[1,0],KeyD:[1,0]};
-      const direction = arrows[event.code];
-      if (direction) {event.preventDefault();move(...direction);}
+    const timeout = window.setTimeout(() => storeWorld(world), 180);
+    return () => window.clearTimeout(timeout);
+  }, [world]);
+  useEffect(() => {
+    const preserve = () => storeWorld(latest.current);
+    window.addEventListener("pagehide", preserve);
+    return () => {
+      preserve();
+      window.removeEventListener("pagehide", preserve);
     };
-    window.addEventListener("keydown",handler);
-    return () => window.removeEventListener("keydown",handler);
-  }, [move]);
-  const current = tile(world.x,world.y);
-  const resource = RESOURCES[current];
-  const already = world.harvested.includes(coord(world.x,world.y));
-  const nextProject = PROJECTS[world.projects];
-  const canBuild = nextProject && Object.entries(nextProject.need).every(([key,value]) => world.supplies[key as Resource] >= (value || 0));
-  function gather() {
-    if (!resource || already) {setNotice("Khu này chưa có gì mới để thu thập hôm nay.");return;}
-    if (world.energy === 0) {setNotice("Buddy cần nghỉ một chút.");return;}
-    setWorld((previous) => ({
-      ...previous,energy:previous.energy-1,harvested:[...previous.harvested,coord(previous.x,previous.y)],
-      supplies:{...previous.supplies,[resource]:previous.supplies[resource]+2},
-    }));
-    setNotice(`Bạn đã nhặt 2 ${LABELS[resource].toLowerCase()}! Tài nguyên mới xuất hiện vào ngày hôm sau.`);
-  }
-  function craft() {
-    if (current !== "C" || !nextProject || !canBuild) return;
-    const costs = nextProject.need;
-    setWorld((previous) => ({
-      ...previous,projects:previous.projects+1,
-      supplies:Object.fromEntries(Object.keys(LABELS).map((name) => [name,previous.supplies[name as Resource]-(costs[name as Resource] || 0)])) as Supplies,
-    }));
-    setNotice(`Hoàn thành ${nextProject.title}! Buddy đã mở khóa chương ${Math.min(world.projects + 2, PROJECTS.length)}.`);
-  }
-  function rest() {
-    const inCamp = current === "C";
-    setWorld((previous) => ({
-      ...previous,energy:inCamp ? 12 : Math.min(12,previous.energy+5),
-      ...(inCamp ? {day:previous.day+1,harvested:[]} : {}),
-    }));
-    setNotice(inCamp ? "Chào ngày mới! Nguồn tài nguyên đã hồi phục." : "Bạn và Buddy nghỉ ngơi nhanh, lấy lại 5 năng lượng.");
-  }
-  function reset() {
-    if (!window.confirm("Xóa tiến độ Đảo Xanh đã lưu trên thiết bị và chơi lại từ đầu?")) return;
-    setWorld(initial());
-    setNotice("Cuộc phiêu lưu mới đã bắt đầu!");
-  }
+  }, []);
+  useEffect(() => {
+    try { localStorage.setItem("focus-buddy-rich-effects-v1", effects ? "on" : "off"); }
+    catch { /* Reduced-effects preference is optional. */ }
+  }, [effects]);
+
+  const move = useCallback((dx: number, dy: number) => {
+    const now = performance.now();
+    if (now - lastStep.current < 105) return;
+    lastStep.current = now;
+    facing.current = [dx, dy];
+    const before = latest.current;
+    const moved = stepWorld(before, dx, dy);
+    if (moved) {
+      update(moved);
+      setSelected(null);
+    } else if (before.energy < 1) setMessage("Buddy cần nghỉ để hồi sức. Nhấn R hoặc chọn Nghỉ ngơi.");
+    else if (isBlocked(before, before.x + dx, before.y + dy))
+      setMessage("Có nước hoặc vật cản phía trước. Thu thập tài nguyên (E), hoặc đi đường khác.");
+  }, [update]);
+
+  const gather = useCallback((target?: { x: number; y: number }) => {
+    const current = latest.current;
+    const options = target ? [target] : [
+      ...(selected ? [selected] : []),
+      { x: current.x + facing.current[0], y: current.y + facing.current[1] },
+      { x: current.x, y: current.y },
+      { x: current.x, y: current.y - 1 },
+      { x: current.x + 1, y: current.y },
+      { x: current.x, y: current.y + 1 },
+      { x: current.x - 1, y: current.y },
+    ];
+    for (const pos of options) {
+      const next = gatherWorld(current, pos.x, pos.y);
+      if (next) {
+        const kind = resourceAt(pos.x, pos.y);
+        update(next);
+        setPickup((kind ? RESOURCE_ICONS[kind] : "✨") + " + " + (kind === "water" ? "3" : "2"));
+        setMessage("Đã lấy " + (kind ? RESOURCE_LABELS[kind].toLowerCase() : "tài nguyên") +
+          "! Mỗi ngày mới, tài nguyên có thể xuất hiện trở lại.");
+        setSelected(null);
+        return;
+      }
+    }
+    setMessage(current.energy < 3
+      ? "Buddy cần ít nhất 3 năng lượng để thu thập. Hãy nghỉ một chút."
+      : "Đứng cạnh cây, đá, bụi quả hoặc nước rồi nhấn E để lấy tài nguyên.");
+  }, [selected, update]);
+
+  const build = useCallback(() => {
+    const current = latest.current;
+    if (!canBuild(current)) {
+      setMessage(Math.abs(current.x - HOME) + Math.abs(current.y - HOME) > 3
+        ? "Hãy quay về gần trại để xây công trình."
+        : "Bạn cần thu thập thêm vật liệu cho công trình này.");
+      return;
+    }
+    const project = PROJECTS[current.projects];
+    const next = buildWorld(current);
+    if (next && project) {
+      update(next);
+      setMessage("Công trình " + project.name + " đã xuất hiện trong thế giới! Hãy khám phá quanh trại.");
+      setPickup("🏡 Xây dựng xong!");
+    }
+  }, [update]);
+  const place = useCallback((material: "wood" | "stone") => {
+    const current = latest.current;
+    const pos = selected && Math.abs(selected.x-current.x)+Math.abs(selected.y-current.y)===1
+      ? selected : { x: current.x+facing.current[0], y: current.y+facing.current[1] };
+    const next = placeBlock(current, pos.x, pos.y, material);
+    if (!next) {
+      setMessage("Đứng cạnh ô đất trống và chuẩn bị 1 " +
+        (material === "wood" ? "gỗ" : "đá") + " để đặt khối.");
+      return;
+    }
+    update(next);
+    setSelected(null);
+    setMessage("Đã đặt một khối " + (material === "wood" ? "gỗ" : "đá") +
+      " trong thế giới! Nhấn Q khi đứng cạnh để lấy lại.");
+    setPickup(material === "wood" ? "🪵 Đặt khối gỗ!" : "🪨 Đặt khối đá!");
+  }, [selected, update]);
+  const dismantle = useCallback((target?: { x:number; y:number }) => {
+    const current = latest.current;
+    const positions = target ? [target] : [
+      ...(selected ? [selected] : []),
+      { x:current.x+facing.current[0], y:current.y+facing.current[1] },
+      { x:current.x,y:current.y-1 },{ x:current.x+1,y:current.y },
+      { x:current.x,y:current.y+1 },{ x:current.x-1,y:current.y },
+    ];
+    for (const pos of positions) {
+      const next = removeBlock(current,pos.x,pos.y);
+      if (next) {
+        update(next);
+        setPickup("✨ +1 vật liệu");
+        setMessage("Đã lấy lại khối xây dựng! Vật liệu đã trở về túi đồ.");
+        setSelected(null);
+        return;
+      }
+    }
+    setMessage("Đứng cạnh khối gỗ hoặc đá đã đặt, rồi nhấn Q để tháo khối.");
+  }, [selected, update]);
+  const rest = useCallback(() => {
+    const next = restWorld(latest.current);
+    const atHome = next.day > latest.current.day;
+    update(next);
+    setMessage(atHome
+      ? "Một ngày mới! Cây và đá đã hồi phục, Buddy lại sẵn sàng."
+      : "Bạn đã nghỉ ngơi và lấy lại 35 năng lượng.");
+  }, [update]);
+
+  useEffect(() => {
+    const handler = (event: KeyboardEvent) => {
+      const target = event.target as HTMLElement | null;
+      if (target?.closest("input, textarea, select, [contenteditable=true]")) return;
+      const direction = DIRECTIONS[event.code];
+      if (direction) { event.preventDefault(); move(...direction); }
+      else if (event.code === "KeyE") { event.preventDefault(); gather(); }
+      else if (event.code === "KeyB") { event.preventDefault(); build(); }
+      else if (event.code === "KeyR") { event.preventDefault(); rest(); }
+      else if (event.code === "Digit1") { event.preventDefault(); place("wood"); }
+      else if (event.code === "Digit2") { event.preventDefault(); place("stone"); }
+      else if (event.code === "KeyQ") { event.preventDefault(); dismantle(); }
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, [move, gather, build, rest, place, dismantle]);
+
+  // All scenery and movement animation happen in one Canvas loop; React does not
+  // render a JSX element for each terrain tile, tree, water block or frame.
+  useEffect(() => {
+    const canvas = surface.current;
+    const avatar = actor.current;
+    if (!canvas || !avatar) return;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+    let raf = 0;
+    let width = 800, height = 540;
+    let last = 0;
+    let dpr = 1;
+    function resize() {
+      if (!canvas) return;
+      const bounds = canvas.getBoundingClientRect();
+      width = Math.max(300, bounds.width);
+      height = Math.max(300, bounds.height);
+      dpr = Math.min(window.devicePixelRatio || 1, width < 650 ? 1.25 : 1.65);
+      const pixelWidth = Math.round(width * dpr), pixelHeight = Math.round(height * dpr);
+      if (canvas.width !== pixelWidth) canvas.width = pixelWidth;
+      if (canvas.height !== pixelHeight) canvas.height = pixelHeight;
+    }
+    resize();
+    const observer = typeof ResizeObserver !== "undefined" ? new ResizeObserver(resize) : null;
+    if (observer) observer.observe(canvas);
+    else window.addEventListener("resize", resize);
+    function frame(now: number) {
+      raf = window.requestAnimationFrame(frame);
+      if (document.visibilityState === "hidden" || now - last < 1000 / MAX_FPS) return;
+      const elapsed = Math.min(now - last || 33, 75);
+      last = now;
+      if (!ctx || !avatar) return;
+      const goal = latest.current;
+      // Frame-independent smoothing gives a sense of motion and camera weight.
+      const follow = 1 - Math.exp(-elapsed / 85);
+      const cameraFollow = 1 - Math.exp(-elapsed / 260);
+      const player = playerAnimation.current, cam = camera.current;
+      player.x += (goal.x - player.x) * follow;
+      player.y += (goal.y - player.y) * follow;
+      cam.x += (player.x - cam.x) * cameraFollow;
+      cam.y += (player.y - cam.y) * cameraFollow;
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      drawIsland(ctx, width, height, cam.x, cam.y, goal, now / 1000, effectsRef.current);
+      const pos = isoPoint(player.x, player.y, cam.x, cam.y, width, height);
+      const elevation = tileAt(goal.x, goal.y).elevation * 9;
+      avatar.style.left = String(pos.x) + "px";
+      avatar.style.top = String(pos.y - elevation + 6) + "px";
+      avatar.style.setProperty("--wander", Math.abs(goal.x - player.x) + Math.abs(goal.y - player.y) > .06 ? "1" : "0");
+    }
+    raf = window.requestAnimationFrame(frame);
+    return () => {
+      window.cancelAnimationFrame(raf);
+      observer?.disconnect();
+      if (!observer) window.removeEventListener("resize", resize);
+    };
+  }, []);
+
+  useEffect(() => {
+    const canvas = mini.current;
+    const ctx = canvas?.getContext("2d");
+    if (canvas && ctx) drawMiniMap(ctx, canvas.width, canvas.height, world);
+  }, [world]);
+
+  useEffect(() => {
+    if (!pickup) return;
+    const timeout = window.setTimeout(() => setPickup(""), 1300);
+    return () => window.clearTimeout(timeout);
+  }, [pickup]);
+
+  const interactWithMap = (event: PointerEvent<HTMLCanvasElement>) => {
+    if (event.button !== 0 || !surface.current) return;
+    const bounds = surface.current.getBoundingClientRect();
+    const pos = tileFromScreen(event.clientX - bounds.left, event.clientY - bounds.top,
+      camera.current.x, camera.current.y, bounds.width, bounds.height);
+    if (pos.x < 0 || pos.y < 0 || pos.x >= WORLD_SIZE || pos.y >= WORLD_SIZE) return;
+    const worldNow = latest.current;
+    const distance = Math.abs(pos.x - worldNow.x) + Math.abs(pos.y - worldNow.y);
+    if (distance === 1) {
+      if (!isBlocked(worldNow, pos.x, pos.y)) move(pos.x - worldNow.x, pos.y - worldNow.y);
+      else if (worldNow.placed.some((b) => b.x===pos.x && b.y===pos.y)) dismantle(pos);
+      else gather(pos);
+    } else if (distance === 0) gather(pos);
+    else {
+      setSelected(pos);
+      const resource = resourceAt(pos.x, pos.y);
+      setMessage(resource
+        ? "Đã chọn " + RESOURCE_LABELS[resource].toLowerCase() + ". Hãy đến gần để thu thập."
+        : "Bạn đã chọn một vị trí. Chạm ô bên cạnh hoặc dùng WASD để đi tới đó.");
+    }
+  };
+
+  const next = PROJECTS[world.projects];
+  const mayBuild = canBuild(world);
+  const atCamp = Math.abs(world.x - HOME) + Math.abs(world.y - HOME) <= 3;
+  const progress = Math.round(world.projects / PROJECTS.length * 100);
   return (
-    <div className="survival-page">
-      <header className="survival-hero">
-        <span><Compass size={18}/> BUDDY SURVIVAL · LƯU TIẾN ĐỘ TRÊN THIẾT BỊ</span>
-        <h1>Đảo Xanh phiêu lưu</h1>
-        <p>Khám phá, thu thập tài nguyên và xây dựng khu trại ấm áp cùng Buddy. Mười chương phiêu lưu với bản đồ nổi 2.5D. Mỗi bước và công trình chỉ lưu trên thiết bị, không dùng cloud.</p>
+    <div className="survival-world">
+      <header className="voxel-heading">
+        <div>
+          <span className="voxel-eyebrow"><Trees size={16}/> BUDDY SURVIVAL · THẾ GIỚI KHỐI 2.5D</span>
+          <h1>Đảo Xanh: Thế giới khám phá</h1>
+          <p>Đi giữa những cánh rừng, tìm hồ nước, thu thập vật liệu và dựng một ngôi làng thật sự cùng Buddy.</p>
+        </div>
+        <div className="voxel-heading-actions">
+          <button className="voxel-small-button" type="button" onClick={() => setEffects((value) => !value)}
+            aria-pressed={!effects}><VolumeX size={16}/>{effects ? "Giảm hiệu ứng" : "Hiệu ứng nhẹ"}</button>
+          <button className="voxel-small-button" type="button" onClick={() => setShowHelp((value) => !value)}>
+            <Compass size={16}/> Hướng dẫn
+          </button>
+        </div>
       </header>
-      <section className="survival-dashboard">
-        <span><Sun size={17}/> Ngày <b>{world.day}</b></span>
-        <span><Sparkles size={17}/> Chương <b>{Math.min(world.projects+1,PROJECTS.length)}/{PROJECTS.length}</b></span>
-        <span><Heart size={17}/> Năng lượng <b>{world.energy}/12</b></span>
-        <span><Compass size={17}/> Bước đi <b>{world.steps}</b></span>
-      </section>
-      <div className="survival-layout">
-        <section className={`survival-map-panel survival-season-${world.day % 3}`}>
-          <div className="survival-scenery" aria-hidden="true"><span className="survival-sun"/><span className="survival-cloud cloud-one"/><span className="survival-cloud cloud-two"/><span className="survival-mountain mountain-one"/><span className="survival-mountain mountain-two"/></div>
-          <h2><Trees size={19}/> Bản đồ hòn đảo <small>Nhấn ô sáng bên cạnh để di chuyển</small></h2>
-          <div className="survival-map" role="group" aria-label="Bản đồ Đảo Xanh, chạm ô liền kề để di chuyển">
-            {LAND.map((row,y) => [...row].map((land,x) => {
-              const code = land as Tile;
-              const here = world.x === x && world.y === y;
-              const cleared = world.harvested.includes(coord(x,y));
-              const adjacent = Math.abs(world.x - x) + Math.abs(world.y - y) === 1;
-              return <button type="button" key={coord(x,y)}
-                disabled={!adjacent || world.energy === 0}
-                onClick={() => move(x - world.x, y - world.y)}
-                aria-label={`${TILE_LABELS[code]}${here ? ", Buddy ở đây" : ""}${adjacent ? ", chạm để đi tới" : ""}`}
-                className={`survival-tile tile-${code.toLowerCase()}${here ? " is-buddy" : ""}${cleared ? " was-collected" : ""}${adjacent ? " is-neighbor" : ""}`}>
-                {here ? <Companion kind={profile.companion} color={profile.color} accessory={profile.accessory} size={62} sprite paused/> : <span aria-hidden="true">{cleared ? "🌱" : ICONS[code]}</span>}
-              </button>;
-            }))}
+
+      <div className="voxel-viewport" ref={viewport}>
+        <canvas
+          ref={surface}
+          className="voxel-canvas"
+          aria-label="Thế giới sinh tồn với địa hình, rừng, sông hồ, cây, đá và các công trình"
+          onPointerDown={interactWithMap}
+        />
+        <div ref={actor} className="voxel-buddy" aria-hidden="true">
+          <Companion kind={profile.companion} color={profile.color}
+            accessory={profile.accessory} size={82} sprite paused />
+        </div>
+        <div className="voxel-world-brand"><Sparkles size={14}/> Đảo Xanh · World 01</div>
+
+        <div className="voxel-top-hud">
+          <div className="voxel-hud-chip">☀️ Ngày <b>{world.day}</b></div>
+          <div className="voxel-hud-chip">🏡 Công trình <b>{world.projects}/{PROJECTS.length}</b></div>
+          <div className="voxel-hud-chip voxel-energy">
+            <Heart size={15}/><b>{world.energy}%</b>
+            <span className="voxel-energy-track"><i style={{ width: String(world.energy) + "%" }}/></span>
           </div>
-          <p className="survival-status" role="status">{notice}</p>
-          <div className="survival-controls">
-            <button aria-label="Lên" onClick={() => move(0,-1)} disabled={world.energy === 0}><ArrowUp/></button>
-            <div>
-              <button aria-label="Trái" onClick={() => move(-1,0)} disabled={world.energy === 0}><ArrowLeft/></button>
-              <button aria-label="Xuống" onClick={() => move(0,1)} disabled={world.energy === 0}><ArrowDown/></button>
-              <button aria-label="Phải" onClick={() => move(1,0)} disabled={world.energy === 0}><ArrowRight/></button>
-            </div>
-            <small>Dùng WASD hoặc phím mũi tên trên máy tính.</small>
-          </div>
-          <div className="survival-map-actions">
-            <button className="button primary" disabled={!resource || already || world.energy === 0} onClick={gather} type="button">
-              <Leaf size={17}/> {resource ? already ? "Đã thu thập hôm nay" : `Thu thập ${LABELS[resource].toLowerCase()} (+2)` : "Di chuyển tới điểm tài nguyên"}
-            </button>
-            <button className="button secondary" onClick={rest} type="button">
-              <BedDouble size={17}/> {current === "C" ? "Nghỉ qua ngày" : "Nghỉ nhanh"}
+        </div>
+        <div className="voxel-mini-map" aria-label="Bản đồ nhỏ của hòn đảo">
+          <span><MapIcon size={14}/> BẢN ĐỒ</span>
+          <canvas ref={mini} width={128} height={128} aria-label="Bản đồ nhỏ, chấm đỏ là Buddy" role="img"/>
+        </div>
+        <div className="voxel-viewport-bottom">
+          <p className="voxel-notice" role="status">{message}</p>
+          {pickup && <div className="voxel-pickup" role="status">{pickup}</div>}
+          <div className="voxel-hotbar" aria-label="Túi đồ Buddy">
+            {(Object.keys(RESOURCE_LABELS) as Resource[]).map((resource) => (
+              <div key={resource} className="voxel-inventory-slot" title={RESOURCE_LABELS[resource]}>
+                <span aria-hidden="true">{RESOURCE_ICONS[resource]}</span>
+                <b>{world.supplies[resource]}</b>
+              </div>
+            ))}
+            <button className="voxel-inventory-slot voxel-gather" type="button"
+              onClick={() => gather()} title="Thu thập (E)">
+              <Leaf size={25}/><small>E</small>
             </button>
           </div>
-        </section>
-        <aside className="survival-sidebar">
-          <section className="survival-box">
-            <h2>🎒 Túi đồ của Buddy</h2>
-            <div className="survival-supplies">
-              {(["wood","stone","water","food"] as const).map((key) => (
-                <div key={key}><span>{key === "wood" ? "🪵" : key === "stone" ? "🪨" : key === "water" ? "💧" : "🍓"} {LABELS[key]}</span><b>{world.supplies[key]}</b></div>
-              ))}
-            </div>
-          </section>
-          <section className="survival-box">
-            <h2><Hammer size={19}/> Dự án tiếp theo</h2>
-            {nextProject ? (
-              <>
-                <h3>Chương {world.projects+1}: {nextProject.title}</h3>
-                <p>{nextProject.description}</p>
-                <div className="survival-progress" role="progressbar" aria-label="Tiến độ mở khóa công trình"
-                  aria-valuemin={0} aria-valuemax={PROJECTS.length} aria-valuenow={world.projects}>
-                  <i style={{ width: `${(world.projects / PROJECTS.length) * 100}%` }}/>
-                </div>
-                <p className="survival-chapter-note">Đã hoàn thành {world.projects}/{PROJECTS.length} công trình</p>
-                <div className="survival-costs">
-                  {Object.entries(nextProject.need).map(([key,value]) => (
-                    <span key={key} className={world.supplies[key as Resource] >= (value || 0) ? "ready" : ""}>
-                      {LABELS[key as Resource]} {world.supplies[key as Resource]}/{value}
-                    </span>
-                  ))}
-                </div>
-                <button className="button primary" type="button" disabled={current !== "C" || !canBuild} onClick={craft}>
-                  <Hammer size={17}/> {current !== "C" ? "Về trại để xây dựng" : canBuild ? "Xây công trình" : "Chưa đủ vật liệu"}
-                </button>
-              </>
-            ) : <div className="survival-finale"><Sparkles size={29}/><h3>Hoàn thành chuyến phiêu lưu!</h3><p>Đảo Xanh đã phát triển nhờ sự kiên trì của bạn và Buddy. Bạn vẫn có thể tiếp tục khám phá.</p></div>}
-          </section>
-          <section className="survival-box">
-            <h2>📘 Nhật ký khu trại</h2>
-            <p>{world.projects} công trình đã hoàn thành · ngày {world.day} · {world.steps} bước khám phá.</p>
-            <p>Trò chơi tự lưu sau mỗi hành động vào bộ nhớ của trình duyệt này, không gửi dữ liệu trò chơi lên Supabase.</p>
-            <button className="survival-reset" type="button" onClick={reset}><RotateCcw size={15}/> Bắt đầu lại (xóa bản lưu)</button>
-          </section>
-          <Link className="survival-return" to="/tap-trung">Quay lại giờ tập trung <ArrowRight size={16}/></Link>
-        </aside>
+        </div>
+        {showHelp && (
+          <div className="voxel-help" role="dialog" aria-label="Hướng dẫn sinh tồn">
+            <button className="voxel-help-close" type="button" aria-label="Đóng hướng dẫn" onClick={() => setShowHelp(false)}><X size={18}/></button>
+            <h2>Đi vào thế giới của Buddy</h2>
+            <p><strong>WASD / phím mũi tên:</strong> Di chuyển qua rừng và đồng cỏ.</p>
+            <p><strong>E:</strong> Chặt cây, lấy đá, hái quả hoặc lấy nước khi đứng cạnh.</p>
+            <p><strong>1 / 2:</strong> Đặt khối gỗ / đá ngay phía trước.</p>
+            <p><strong>Q:</strong> Tháo khối đã đặt để lấy lại vật liệu.</p>
+            <p><strong>B:</strong> Xây công trình khi ở gần trại và đủ vật liệu.</p>
+            <p><strong>R:</strong> Nghỉ để hồi sức. Nghỉ tại trại mở ngày mới.</p>
+            <p><strong>Chạm bản đồ:</strong> Đi sang ô kề bên, chạm vật cản kề bên để thu thập.</p>
+            <p>Tiến độ lưu tự động trên thiết bị. Không cần tài khoản.</p>
+            <button className="voxel-action primary" onClick={() => setShowHelp(false)}>Bắt đầu khám phá</button>
+          </div>
+        )}
       </div>
+
+      <div className="voxel-controls">
+        <div className="voxel-dpad" aria-label="Điều khiển Buddy">
+          <button style={{ gridArea: "up" }} aria-label="Đi lên" onClick={() => move(0,-1)}><ArrowUp/></button>
+          <button style={{ gridArea: "left" }} aria-label="Đi trái" onClick={() => move(-1,0)}><ArrowLeft/></button>
+          <button style={{ gridArea: "down" }} aria-label="Đi xuống" onClick={() => move(0,1)}><ArrowDown/></button>
+          <button style={{ gridArea: "right" }} aria-label="Đi phải" onClick={() => move(1,0)}><ArrowRight/></button>
+        </div>
+        <div className="voxel-control-main">
+          <div className="voxel-control-title"><span>🧭 Vị trí {world.x}, {world.y}</span><span><Save size={14}/> Tự lưu trên thiết bị</span></div>
+          <div className="voxel-action-row">
+            <button className="voxel-action primary" type="button" onClick={() => gather()}><Leaf size={17}/> Thu thập <kbd>E</kbd></button>
+            <button className="voxel-action" type="button" onClick={rest}><BedDouble size={17}/> Nghỉ ngơi <kbd>R</kbd></button>
+            <button className="voxel-action voxel-place-wood" type="button" onClick={() => place("wood")}><span aria-hidden="true">🪵</span> Đặt gỗ <kbd>1</kbd></button>
+            <button className="voxel-action voxel-place-stone" type="button" onClick={() => place("stone")}><span aria-hidden="true">🪨</span> Đặt đá <kbd>2</kbd></button>
+            <button className="voxel-action" type="button" onClick={() => dismantle()}><span aria-hidden="true">⛏️</span> Tháo khối <kbd>Q</kbd></button>
+            <button className="voxel-action" type="button" onClick={build} disabled={!next}><Hammer size={17}/> Xây dựng <kbd>B</kbd></button>
+          </div>
+          <p className="voxel-control-tip">WASD hoặc phím mũi tên để di chuyển. Tìm cây, đá, quả và nước; đặt khối bằng phím 1/2, tháo khối với Q, và xây làng quanh trại lửa.</p>
+        </div>
+      </div>
+
+      <div className="voxel-quest" aria-label="Nhiệm vụ xây dựng">
+        <div className="voxel-quest-icon" aria-hidden="true">🏗️</div>
+        <div className="voxel-quest-content">
+          <span className="voxel-quest-kicker">HÀNH TRÌNH XÂY LÀNG · {world.projects}/{PROJECTS.length}</span>
+          <h2>{next ? next.name : "Ngôi làng đã hoàn thành!"}</h2>
+          <p>{next ? next.hint : "Cả hòn đảo đã phát triển. Bạn có thể tiếp tục khám phá và thu thập."}</p>
+          <div className="voxel-project-progress"><i style={{width:String(progress)+"%"}}/></div>
+          {next && <div className="voxel-project-costs">{(Object.entries(next.costs) as [Resource,number][]).map(([kind,amount]) =>
+            <span key={kind} className={world.supplies[kind] >= amount ? "enough" : ""}>
+              {RESOURCE_ICONS[kind]} {world.supplies[kind]}/{amount}
+            </span>)}</div>}
+        </div>
+        {next && <button className="voxel-action primary" disabled={!mayBuild} type="button" onClick={build}>
+          <Hammer size={16}/>{!atCamp ? "Về trại để xây" : mayBuild ? "Xây ngay" : "Thiếu vật liệu"}
+        </button>}
+      </div>
+
+      <footer className="voxel-footer">
+        <span><Save size={15}/> Chỉ lưu trên máy · Tệp cũ được tự động nâng cấp</span>
+        <span>{world.steps} bước · Chương {Math.min(PROJECTS.length,world.projects+1)}/{PROJECTS.length}</span>
+        <div className="voxel-footer-actions">
+          <Link to="/tap-trung">Trở lại tập trung</Link>
+          <button type="button" onClick={() => {
+            if (!window.confirm("Bắt đầu lại thế giới? Tiến độ sinh tồn đã lưu trên thiết bị sẽ bị thay thế.")) return;
+            const fresh = initialWorld();
+            update(fresh); storeWorld(fresh); camera.current = {x:fresh.x,y:fresh.y};
+            playerAnimation.current = {x:fresh.x,y:fresh.y};
+            setMessage("Thế giới mới đã bắt đầu. Chúc Buddy phiêu lưu vui!");
+          }}><RotateCcw size={15}/> Chơi lại</button>
+        </div>
+      </footer>
     </div>
   );
 }
