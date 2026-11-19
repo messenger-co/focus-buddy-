@@ -1,0 +1,340 @@
+/* Focus Buddy 2.5D visual system.
+ * Keep layout and gameplay 2D; depth comes from layering, light, perspective and shadows. */
+.games-page {
+  --depth-shadow: #1f3a3442;
+  --depth-edge: #aac7ac;
+  --depth-shine: #ffffffae;
+  isolation: isolate;
+}
+.games-page .arcade-lobby-heading {
+  position: relative;
+  border-radius: 26px;
+  padding: 30px clamp(20px,4vw,41px);
+  margin: 0 0 22px;
+  background: radial-gradient(circle at 89% 18%, #fffde3a8, transparent 28%),
+    linear-gradient(115deg,var(--study-mid),var(--study-pale));
+  border: 1px solid var(--study-line);
+  box-shadow: 0 5px 0 #718e7730, 0 16px 36px #234c3614, inset 0 1px #fff;
+  overflow: hidden;
+}
+.games-page .arcade-lobby-heading::after {
+  content:"✦";position:absolute;font-size:125px;line-height:1;right:30px;top:-24px;
+  color:#ffffffa8;text-shadow:0 6px 15px #e4ebc9;pointer-events:none;
+}
+.games-page .arcade-lobby-heading h1,
+.games-page .arcade-lobby-heading p { position:relative;z-index:1 }
+.games-page .arcade-lobby-heading h1 {font-size:clamp(28px,4vw,43px);font-weight:750}
+.games-page .arcade-lobby-heading p {max-width:660px;font-size:14px}
+.game-graphics-bar {
+  display:flex;align-items:center;justify-content:space-between;gap:14px;
+  flex-wrap:wrap;margin:0 0 18px;padding:11px 16px;
+  background:#fffdfaf0;border:1px solid var(--study-line);border-radius:16px;
+  box-shadow:0 3px 0 #dae5d5a8,0 9px 19px #244c3710;
+}
+.game-graphics-bar > span {display:flex;align-items:center;gap:9px;color:var(--study-accent);font-size:12px;font-weight:700}
+.game-graphics-bar button {
+  display:inline-flex;align-items:center;gap:8px;font-size:12px;font-weight:700;
+  background:linear-gradient(180deg,#fff,var(--study-pale));
+  border:1px solid var(--study-line);border-radius:99px;padding:9px 14px;
+  box-shadow:0 3px 0 #abc1ad79;transition:transform .15s,box-shadow .15s;
+}
+.game-graphics-bar button:hover {transform:translateY(-1px);box-shadow:0 4px 0 #abc1ad79}
+.game-graphics-bar button:active {transform:translateY(2px);box-shadow:0 1px 0 #abc1ad79}
+.games-page .game-card,.games-page .adventure-card {
+  transform-style:preserve-3d;
+  background:linear-gradient(160deg,#fff 0%,#fffefa 62%,var(--study-pale) 100%);
+  box-shadow:0 6px 0 #bacfbd9b,0 16px 27px #173e361f,inset 0 1px #fff;
+  border:1px solid #c7d8c9;
+  border-radius:21px;
+  overflow:hidden;
+  transition:transform .23s cubic-bezier(.2,.8,.25,1),box-shadow .23s;
+  position:relative;
+}
+.games-page .game-card::after,.games-page .adventure-card::after {
+  content:"";pointer-events:none;position:absolute;inset:0;
+  background:linear-gradient(115deg,#ffffff42,transparent 48%);
+  border-radius:inherit;
+}
+.games-page .game-cover {filter:saturate(1.1);transform:translateZ(0);box-shadow:inset 0 -8px 20px #203e3815}
+.games-page .game-cover .cover-pieces {filter:drop-shadow(0 8px 6px #26372f28)}
+.games-page .game-card-copy h2 {color:var(--study-ink);letter-spacing:-.5px}
+.games-page .game-card .game-play,.games-page .adventure-card-arrow {
+  box-shadow:0 4px 0 #b0cbb4a8,0 7px 14px #203b321e;
+}
+.games-page .play-table {
+  background:radial-gradient(circle at 100% 0,var(--study-pale),transparent 50%),#fffefb;
+  border:1px solid #c9dccb;border-radius:23px;
+  box-shadow:0 8px 0 #b0cbb4a1,0 22px 45px #24473821,inset 0 1px #fff;
+}
+.games-page .tile {
+  transform:translate3d(0,-3px,0);
+  background:linear-gradient(160deg,#ffffff,#f0f6e9);
+  border:1px solid #b8cdbd;
+  box-shadow:0 6px 0 #aac7b5,0 12px 18px #24473924,inset 0 2px 2px #fff;
+  transition:transform .16s,box-shadow .16s,filter .16s;
+  position:relative;
+}
+.games-page .tile:hover:not(:disabled){transform:translate3d(0,-6px,0);filter:saturate(1.12)}
+.games-page .tile:active:not(:disabled) {
+  transform:translate3d(0,2px,0);
+  box-shadow:0 1px 0 #aac7b5,0 3px 7px #24473921,inset 0 2px 3px #99ae9c32;
+}
+.games-page .tile.revealed {
+  background:linear-gradient(150deg,#fdfceb,#e8f1d8);
+  box-shadow:0 4px 0 #b8cfa5,0 11px 18px #24473915,inset 0 1px #fff;
+}
+
+/* Featured shelf: toy-like physical game cards. */
+.games-page .buddy-feature-game,.games-page .garden-promo {
+  position:relative;
+  border:1px solid #bed3c1;
+  box-shadow:0 7px 0 #a2c3b3,0 17px 30px #22463527,inset 0 1px #fff;
+  overflow:hidden;
+  transform:translate3d(0,0,0);
+  transition:transform .23s,box-shadow .23s;
+}
+.games-page .buddy-feature-game::after,.games-page .garden-promo::after{
+  content:"✦";position:absolute;font-size:78px;right:13px;top:-28px;color:#ffffff70;
+  pointer-events:none;text-shadow:0 4px 12px #fff;
+}
+.games-page .buddy-feature-emoji,.games-page .garden-promo-icon {
+  filter:drop-shadow(0 9px 6px #30462c31);
+}
+.games-page .garden-promo strong {letter-spacing:-.3px}
+
+/* Runner: framed panoramic diorama with layered motion. */
+.runner-page .runner-header {
+  background:radial-gradient(ellipse at 84% 19%,#fff7c4,transparent 25%),
+    linear-gradient(113deg,var(--study-mid),var(--study-pale));
+  box-shadow:0 6px 0 #a6c0b6a8,0 17px 30px #264f3a17,inset 0 1px #fff;
+}
+.runner-page .runner-panel {
+  background:linear-gradient(145deg,#ffffff,#f5faf4);
+  box-shadow:0 9px 0 #c1d8cb,0 23px 37px #264f3a28;
+}
+.runner-page .runner-score span {
+  background:linear-gradient(150deg,#fff,var(--study-pale));
+  border:1px solid #d1e1d1;
+  box-shadow:0 3px 0 #afcbb18a,inset 0 1px #fff;
+}
+.runner-page .runner-stage {
+  border:5px solid #ffffff;
+  outline:1px solid #afc9c2;
+  box-shadow:0 9px 0 #a3bfb6,0 20px 26px #284a412f,inset 0 0 28px #ffffff23;
+  isolation:isolate;
+}
+.runner-page .runner-stage::after {
+  content:"";position:absolute;pointer-events:none;inset:0;z-index:4;
+  border-radius:14px;
+  background:linear-gradient(122deg,#ffffff4d,transparent 25% 75%,#ffffff18),
+    radial-gradient(ellipse at 50% 0%,#ffffff26,transparent 66%);
+  box-shadow:inset 0 2px 4px #ffffff5c,inset 0 -8px 18px #283c4514;
+}
+.runner-page .runner-stage.impact {animation:runner-impact .33s ease-out}
+.runner-page .runner-buddy {
+  filter:drop-shadow(0 9px 3px #2545412d);
+  transform-origin:50% 95%;
+  z-index:3;
+}
+.runner-page .runner-buddy.buddy-striding .sprite-foot-left {
+  animation: runner-foot-left .22s ease-in-out infinite alternate;
+}
+.runner-page .runner-buddy.buddy-striding .sprite-foot-right {
+  animation: runner-foot-right .22s ease-in-out infinite alternate;
+}
+.runner-page .runner-buddy.buddy-striding .sprite-scarf {
+  transform-origin:185px 196px;
+  animation: runner-scarf .42s ease-in-out infinite alternate;
+}
+.runner-page .runner-overlay {
+  z-index:5;backdrop-filter:blur(7px);
+  background:linear-gradient(135deg,#f8fbf3ea,#fffbe0dd);
+}
+.runner-page .runner-overlay h2 {text-shadow:0 2px 0 #fff,0 6px 15px #678b7340}
+.runner-action-buttons{display:flex;justify-content:center;align-items:center;gap:12px;flex-wrap:wrap}
+.runner-page .runner-jump {box-shadow:0 6px 0 #2c5d47,0 13px 20px #284a372e}
+.runner-page .runner-jump:active:not(:disabled){transform:translateY(4px);box-shadow:0 2px 0 #2c5d47}
+@keyframes runner-foot-left {from{transform:translateY(0)}to{transform:translateY(-5px) rotate(3deg)}}
+@keyframes runner-foot-right {from{transform:translateY(-5px) rotate(-3deg)}to{transform:translateY(0)}}
+@keyframes runner-scarf {from{transform:rotate(9deg)}to{transform:rotate(18deg)}}
+@keyframes runner-impact {0%{transform:translateX(0)}25%{transform:translateX(-3px)}60%{transform:translateX(3px)}100%{transform:translateX(0)}}
+
+/* Survival: hand-painted raised diorama tiles remain a 2D grid. */
+.survival-page .survival-hero{
+  background:radial-gradient(circle at 85% 14%,#fff9cda8,transparent 32%),linear-gradient(118deg,var(--study-mid),var(--study-pale));
+  box-shadow:0 6px 0 #b5cdbda1,0 17px 33px #1d4a381a;
+}
+.survival-page .survival-map-panel{
+  position:relative;isolation:isolate;overflow:hidden;
+  background:linear-gradient(155deg,#fdfef9,#e9f4e7);
+  border:1px solid #bbd5bd;
+  box-shadow:0 8px 0 #aac8ad,0 23px 36px #2d51422a;
+}
+.survival-page .survival-map-panel::before {
+  content:"";position:absolute;z-index:-1;pointer-events:none;
+  top:-120px;right:-140px;width:280px;height:280px;border-radius:50%;
+  background:radial-gradient(circle,#fff6c9ad,transparent 70%);
+}
+.survival-page .survival-map{
+  position:relative;transform:perspective(1100px) rotateX(14deg);
+  transform-style:preserve-3d;
+  background:linear-gradient(145deg,#c6e8c0,#95be9d);
+  border:9px solid #dbe9cd;
+  border-bottom-color:#85a88c;
+  border-radius:25px;
+  box-shadow:0 7px 0 #80aa8f,0 13px 0 #678e79,0 27px 37px #1f554232,
+    inset 0 0 0 2px #ffffff55,inset 0 5px 18px #285b3321;
+  margin:8px 4px 19px;
+  padding:15px;
+}
+.survival-page .survival-tile{
+  position:relative;isolation:isolate;
+  background:linear-gradient(140deg,#ecf8d8 0%,#b5d9a4 100%);
+  border:1px solid #bad4af;
+  border-radius:11px;
+  box-shadow:0 5px 0 #78ae7d,0 8px 10px #2855423b,inset 0 2px 2px #ffffffa8;
+  transform:translateY(-3px);
+  transition:transform .18s,box-shadow .18s,filter .18s;
+}
+.survival-page .survival-tile::before{
+  content:"";position:absolute;inset:2px 2px auto 2px;height:45%;border-radius:9px 9px 50% 50%;
+  background:linear-gradient(#ffffff59,transparent);
+  pointer-events:none;z-index:0;
+}
+.survival-page .survival-tile>span,.survival-page .survival-tile>.companion-art {
+  position:relative;z-index:1;filter:drop-shadow(0 4px 2px #30503953);
+}
+.survival-page .survival-tile.tile-f{background:linear-gradient(145deg,#d7edb1,#9bbb79);box-shadow:0 5px 0 #65945e,0 8px 12px #27543840,inset 0 2px #effddd}
+.survival-page .survival-tile.tile-s{background:linear-gradient(135deg,#f4f0e3,#bbc2bb);box-shadow:0 5px 0 #8b9b94,0 8px 12px #27543838,inset 0 2px #fff}
+.survival-page .survival-tile.tile-w{
+  background:linear-gradient(120deg,#e1f9ff,#79c5e2,#bce9f7);
+  box-shadow:0 5px 0 #5ca3c5,0 8px 13px #2754823d,inset 0 2px #f0ffff;
+}
+.survival-page .survival-tile.tile-b{background:linear-gradient(145deg,#fff6cc,#e5ce84);box-shadow:0 5px 0 #b59d53,0 8px 12px #5f4a2640,inset 0 2px #fff}
+.survival-page .survival-tile.tile-c{background:linear-gradient(145deg,#fff9db,#eac989);box-shadow:0 5px 0 #bd9153,0 8px 12px #6e4c274d,inset 0 2px #fff}
+.survival-page .survival-tile.is-buddy{
+  transform:translateY(-9px);z-index:3;border:2px solid #fffbe1;
+  outline:2px solid #4d9379;outline-offset:1px;
+  box-shadow:0 7px 0 #7aa88b,0 14px 20px #224f4977,0 0 14px #ffe8a1c9;
+}
+.survival-page .survival-tile.is-buddy .companion-art{filter:drop-shadow(0 5px 2px #234b4a66)}
+.survival-page .survival-tile.tile-w>span {animation:survival-water 2.6s ease-in-out infinite}
+.survival-page .survival-tile.is-neighbor{cursor:pointer}
+.survival-page .survival-tile.is-neighbor:hover {
+  transform:translateY(-8px);
+  box-shadow:0 8px 0 #75a477,0 17px 19px #2b594b45;
+  filter:brightness(1.05);
+}
+.survival-page .survival-tile.is-neighbor:focus-visible{outline:3px solid #3e6c59;outline-offset:3px}
+.survival-page .survival-tile.was-collected:not(.is-buddy){opacity:.7;filter:saturate(.7)}
+.survival-page .survival-dashboard span,.survival-page .survival-box{
+  background:linear-gradient(155deg,#fff,var(--study-paper));
+  border:1px solid #d0e1cf;
+  box-shadow:0 5px 0 #b7d1b9b0,0 13px 20px #1d4b3915;
+}
+.survival-progress {height:10px;background:#daebd4;border-radius:999px;overflow:hidden;box-shadow:inset 0 2px 4px #284f3825;margin:12px 0}
+.survival-progress>i{display:block;height:100%;border-radius:inherit;background:linear-gradient(90deg,#7abd9d,#ffe2a1);transition:width .3s;box-shadow:0 0 10px #d2df9280}
+.survival-page .survival-map-actions .button,.survival-page .survival-controls button{
+  box-shadow:0 4px 0 #aacbb0,0 9px 12px #2b53341c;
+}
+.survival-page .survival-controls button:active:not(:disabled){transform:translateY(3px);box-shadow:0 1px 0 #aacbb0}
+.survival-page .survival-status{
+  background:linear-gradient(150deg,var(--study-pale),#fff);
+  border:1px solid #d2e4ce;box-shadow:inset 0 1px #fff;
+}
+.survival-page .survival-costs span {border:1px solid #e7d4c3;box-shadow:0 3px 0 #d5bca080}
+.survival-page .survival-costs span.ready {border-color:#b4d2b6;box-shadow:0 3px 0 #a7cfa280}
+@keyframes survival-water {0%,100%{transform:translateY(0) scale(1)}50%{transform:translateY(-2px) scale(1.09)}}
+
+/* Garden: tactile illuminated flowers with depth, not flat buttons. */
+.garden-play .garden-heading {
+  background:radial-gradient(circle at 85% 14%,#fff9d4a9,transparent 28%),linear-gradient(118deg,var(--study-mid),var(--study-pale));
+  box-shadow:0 6px 0 #b5cdbda1,0 16px 30px #1d4a3819;
+}
+.garden-play .garden-panel{
+  background:linear-gradient(160deg,#fff,#f6fbf1);
+  box-shadow:0 8px 0 #bbd1bd,0 20px 35px #244a3325;
+}
+.garden-play .garden-plot {
+  position:relative;
+  background:radial-gradient(ellipse at 28% 16%,#f4ffed,transparent 55%),linear-gradient(145deg,#e2f1d2,#a5cca7);
+  border:2px solid #c0d5a8;
+  box-shadow:0 7px 0 #6f9d77,0 14px 18px #2846363b,inset 0 3px #ffffffb8;
+  transform:translate3d(0,-4px,0);
+  transition:transform .16s,box-shadow .16s;
+}
+.garden-play .garden-plot.golden{
+  color:#bc8431;
+  border-color:#ffe7a3;
+  background:radial-gradient(circle at 40% 31%,#fffef0,#ffe39d 66%,#e9b76c);
+  box-shadow:0 8px 0 #d7a45f,0 16px 20px #ad7c3e58,0 0 27px #fff6b6;
+}
+.garden-play .garden-plot:hover:not(:disabled){transform:translate3d(0,-8px,0)}
+.garden-play .garden-plot:active:not(:disabled){transform:translate3d(0,3px,0);box-shadow:0 2px 0 #6f9d77,0 6px 10px #28463636}
+.garden-play .garden-buddy-bubble{
+  box-shadow:0 4px 0 #c5d8ba,0 9px 15px #2b513b16;
+}
+.garden-play .garden-overlay{
+  background:radial-gradient(circle at 50% 0%,#fffdec,transparent 70%),linear-gradient(145deg,var(--study-paper),var(--study-pale));
+  box-shadow:inset 0 3px #fff,0 5px 0 #c7dcc5;
+}
+
+/* Existing platform / glide levels share the new depth treatment. */
+.games-page .adventure-poster,.games-page .arcade-stage{
+  box-shadow:inset 0 0 25px #192f4024;
+}
+.games-page .adventure-card:hover .adventure-poster canvas{filter:saturate(1.12)}
+.games-page .arcade-stage{border:4px solid #fff;border-radius:18px;box-shadow:0 7px 0 #93adab,0 17px 24px #29463e36}
+.games-page .adventure-card-copy{background:linear-gradient(155deg,#fffefc,var(--study-paper))}
+.games-page .arcade-actor{filter:drop-shadow(0 4px 4px #233d4933)}
+
+/* Reduced effects option and OS reduced-motion preference. */
+.games-page.fx-lite .game-card,
+.games-page.fx-lite .buddy-feature-game,
+.games-page.fx-lite .garden-promo,
+.games-page.fx-lite .adventure-card,
+.games-page.fx-lite .tile,
+.games-page.fx-lite .garden-plot,
+.games-page.fx-lite .survival-map,
+.games-page.fx-lite .survival-tile {
+  transform:none;transition:none;
+}
+.games-page.fx-lite .survival-tile.tile-w>span,
+.games-page.fx-lite .runner-buddy .sprite-foot-left,
+.games-page.fx-lite .runner-buddy .sprite-foot-right,
+.games-page.fx-lite .runner-buddy .sprite-scarf,
+.games-page.fx-lite .garden-plot.golden {animation:none}
+@media(hover:hover) and (prefers-reduced-motion:no-preference) {
+  .games-page .game-card:hover,.games-page .adventure-card:hover {
+    transform:perspective(750px) rotateX(2deg) translateY(-6px);
+    box-shadow:0 9px 0 #a9c9b7,0 24px 36px #1d3a332b;
+  }
+  .games-page .buddy-feature-game:hover,.games-page .garden-promo:hover{
+    transform:perspective(800px) rotateX(2deg) translateY(-5px);
+    box-shadow:0 10px 0 #a2c3b3,0 25px 36px #22463528;
+  }
+  .games-page.fx-lite .game-card:hover,
+  .games-page.fx-lite .adventure-card:hover,
+  .games-page.fx-lite .buddy-feature-game:hover,
+  .games-page.fx-lite .garden-promo:hover {transform:none}
+}
+@media(max-width:680px) {
+  .games-page .arcade-lobby-heading{padding:23px 20px}
+  .games-page .arcade-lobby-heading::after{right:-10px;font-size:90px;opacity:.5}
+  .survival-page .survival-map{padding:6px;border-width:5px;transform:perspective(1000px) rotateX(8deg);gap:3px}
+  .survival-page .survival-tile{border-radius:7px;box-shadow:0 3px 0 #79a67b,0 6px 8px #26533c33}
+  .survival-page .survival-tile.is-buddy{transform:translateY(-4px)}
+  .game-graphics-bar{padding:10px}
+}
+@media(prefers-reduced-motion:reduce) {
+  .games-page *, .games-page *::before, .games-page *::after{
+    animation:none!important;
+    transition:none!important;
+    scroll-behavior:auto!important;
+  }
+  .games-page .game-card:hover,.games-page .adventure-card:hover,
+  .games-page .buddy-feature-game:hover,.games-page .garden-promo:hover,
+  .games-page .tile:hover,.games-page .garden-plot:hover{
+    transform:none;
+  }
+}
