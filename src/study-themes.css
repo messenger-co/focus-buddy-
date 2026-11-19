@@ -22,6 +22,46 @@
   --study-line: #dcd0df;
   --study-paper: #f7f3f8;
 }
+.app[data-theme="sakura"] {
+  --study-ink: #754661;
+  --study-accent: #a65782;
+  --study-pale: #fff0f6;
+  --study-mid: #f1c9de;
+  --study-line: #eed6e2;
+  --study-paper: #fff7fa;
+}
+.app[data-theme="cocoa"] {
+  --study-ink: #5b4334;
+  --study-accent: #846044;
+  --study-pale: #f8f1e7;
+  --study-mid: #e4d1b8;
+  --study-line: #eadccd;
+  --study-paper: #fcf8f2;
+}
+.app[data-theme="starlight"] {
+  --study-ink: #3b4775;
+  --study-accent: #606aa0;
+  --study-pale: #edf0ff;
+  --study-mid: #d0d7f7;
+  --study-line: #dfe3f1;
+  --study-paper: #f7f8ff;
+}
+.app[data-theme="frost"] {
+  --study-ink: #2d5b70;
+  --study-accent: #367d93;
+  --study-pale: #e9f7fb;
+  --study-mid: #c8e9ee;
+  --study-line: #d0e6ed;
+  --study-paper: #f4fbfd;
+}
+.app[data-theme="sunrise"] {
+  --study-ink: #865548;
+  --study-accent: #a56a54;
+  --study-pale: #fff3e8;
+  --study-mid: #f3ddbb;
+  --study-line: #f0e0d1;
+  --study-paper: #fffaf5;
+}
 .app {
   --dark: var(--study-ink);
   --green: var(--study-accent);
