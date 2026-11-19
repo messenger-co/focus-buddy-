@@ -251,9 +251,13 @@ export default function TankDefense({ onExit }: { onExit:()=>void }) {
         <div>
           <span className="tank-eyebrow">★ ЗИМНИЙ РУБЕЖ · 1943 ★</span>
           <h2>THE WINTER FRONT</h2>
-          <p>Fictional Soviet winter defense • Five waves of flag-bearing enemy tanks • No gore</p>
+          <p>True 3D winter battlefield · Easier waves · Missile support · Allied soldier cards</p>
         </div>
         <div className="tank-header-buttons">
+          <button type="button" onClick={()=>setRenderMode(mode=>mode==="3d"?"2d":"3d")}
+            aria-label="Toggle 3D and 2D rendering"><Box size={16}/>
+            {renderMode==="3d"?"3D ON · SWITCH 2D":"2D FALLBACK · TRY 3D"}
+          </button>
           <button type="button" onClick={()=>setEffects(x=>!x)}
             aria-pressed={!effects}><Gauge size={16}/>{effects?"LIGHT FX":"LOW FX"}</button>
           <button type="button" onClick={togglePause} disabled={view.phase==="ready"||finished}>
@@ -266,7 +270,9 @@ export default function TankDefense({ onExit }: { onExit:()=>void }) {
         </div>
       </div>
       <div className="tank-board">
-        <canvas ref={canvas} className="tank-canvas"
+        <div ref={webglMount} className="tank-3d-mount" aria-hidden="true"/>
+        <canvas ref={canvas}
+          className={"tank-canvas" + (renderMode==="3d"?" tank-3d-input-layer":"")}
           role="img" aria-label="Winter battlefield: tank defending an outpost against enemy tanks carrying USA flags"
           onPointerMove={pointerAim}
           onPointerDown={event=>{
@@ -284,10 +290,17 @@ export default function TankDefense({ onExit }: { onExit:()=>void }) {
           <span>WAVE <b>{view.wave}/5</b></span>
           <span>TIME <b>{view.seconds}s</b></span>
           <span>SCORE <b>{view.score.toLocaleString("en-US")}</b></span>
+          <span><Users size={14}/> ALLIES <b>{view.allies}/6</b></span>
         </div>
         <div className="tank-heat" role="progressbar" aria-label="Weapon heat"
           aria-valuenow={view.heat} aria-valuemin={0} aria-valuemax={100}>
           <small>HEAT</small><span><i style={{width:String(view.heat)+"%"}}/></span>
+        </div>
+        <div className="tank-missile-hud" aria-label="Missile cooldown status">
+          <Zap size={17}/>
+          <span>{view.missiles<=0?"MISSILE READY":"RECHARGE "+view.missiles.toFixed(1)+"s"}</span>
+          <div className="tank-missile-track"><i
+            style={{width:String(100*(1-view.missiles/MISSILE_COOLDOWN))+"%"}}/></div>
         </div>
         {view.phase!=="running" && (
           <div className="tank-overlay" role="status">
@@ -298,7 +311,7 @@ export default function TankDefense({ onExit }: { onExit:()=>void }) {
                 view.phase==="won"?"ПОБЕДА!":"МИССИЯ ПРОВАЛЕНА"}
               </h3>
               <p>{view.phase==="ready"
-                ?"DEFEND THE OUTPOST! Enemy tanks carrying USA flags advance in increasingly hard waves. Move, aim and defend the outpost for 95 seconds."
+                ?"Defend your base for 95 seconds! Easier enemy waves, a rechargeable M missile and soldier squad cards help you survive."
                 :view.phase==="paused"?"Take a short break. The battle is frozen."
                 :view.phase==="won"?"You survived all five winter waves. Impressive!"
                 :"Your tank or the outpost was overwhelmed. Try again!"}
@@ -309,7 +322,7 @@ export default function TankDefense({ onExit }: { onExit:()=>void }) {
               <div className="tank-start-actions">
                 <button type="button" onClick={view.phase==="paused"?togglePause:start}>
                   {view.phase==="paused"?<Play size={18}/>:<Crosshair size={18}/>}
-                  {view.phase==="ready"?"START HARD MODE":
+                  {view.phase==="ready"?"START DEFENSE":
                     view.phase==="paused"?"RESUME":"RETRY MISSION"}
                 </button>
                 <button type="button" className="tank-secondary" onClick={onExit}>
@@ -338,8 +351,9 @@ export default function TankDefense({ onExit }: { onExit:()=>void }) {
         <div className="tank-control-copy">
           <strong>УДЕРЖИВАЙ РУБЕЖ! • DEFEND THE LINE</strong>
           <span><kbd>WASD</kbd> / <kbd>↑↓←→</kbd> Move</span>
-          <span><kbd>Mouse</kbd> Aim · <kbd>Space</kbd> Shoot (auto-aim for keyboard)</span>
-          <span>Mobile: move with arrows, tap/hold the battlefield or FIRE button.</span>
+          <span><kbd>Mouse</kbd> Aim · <kbd>Space</kbd> Fire · <kbd>M</kbd> Missile</span>
+          <span><kbd>1</kbd> Rifle · <kbd>2</kbd> Rangers · <kbd>3</kbd> Guards</span>
+          <span>Mobile: movement pad, FIRE/MISSILE buttons, tap squad cards.</span>
         </div>
         <button className="tank-fire-button" type="button"
           disabled={view.phase!=="running"}
@@ -352,13 +366,43 @@ export default function TankDefense({ onExit }: { onExit:()=>void }) {
           onLostPointerCapture={()=>{firing.current=false;}}>
           <Crosshair size={25}/> FIRE
         </button>
+        <button className="tank-missile-button" type="button" onClick={missile}
+          disabled={view.phase!=="running"||view.missiles>0}
+          title="Launch area missile (M)">
+          <Zap size={24}/>
+          {view.missiles>0?view.missiles.toFixed(1)+"s":"MISSILE"}
+        </button>
         <button className="tank-retry-mini" type="button" onClick={start}>
           <RotateCcw size={16}/> RESTART
         </button>
       </div>
+      <section className="tank-recruit-panel" aria-label="Recruit allied soldier cards">
+        <div className="tank-recruit-heading">
+          <div><span>★ ALLIED SUPPORT ★</span><h3>Recruit soldier cards</h3>
+            <p>Recruit up to six cartoon allies. They automatically help protect your base.</p>
+          </div>
+          <strong className="tank-credit-wallet">★ {view.credits} credits</strong>
+        </div>
+        <div className="tank-recruit-cards">
+          {ALLY_CARDS.map((card,index)=>{
+            const owned=view.allyKinds.filter(kind=>kind===card.kind).length;
+            const affordable=view.phase==="running"&&view.credits>=card.cost&&owned<2&&view.allies<6;
+            return <button type="button" key={card.kind}
+              className={"tank-recruit-card"+(affordable?" available":"")}
+              disabled={!affordable}
+              onClick={()=>recruit(card.kind)}
+              aria-label={"Recruit "+card.name+" for "+card.cost+" credits"}>
+              <span className="tank-card-number">{index+1}</span>
+              <span className="tank-card-icon" aria-hidden="true">{card.icon}</span>
+              <strong>{card.name}</strong><small>{card.description}</small>
+              <span className="tank-card-price">{owned}/2 · ★ {card.cost}</span>
+            </button>;
+          })}
+        </div>
+      </section>
       <p className="tank-game-note">
-        Fictional alternate-history winter arcade: opposing tanks use the exact usa flag.webp
-        image from the repository. Not a historical depiction. No gore, cloud saves or purchases.
+        Fictional, non-graphic winter arcade: opposing tanks carry usa flag.webp from the repository.
+        Real WebGL 3D with a 2D fallback, simplified arcade mechanics, no cloud saves or purchases.
         The game pauses when its tab is hidden.
       </p>
     </div>
