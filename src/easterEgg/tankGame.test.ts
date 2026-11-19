@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { USA_TANK_FLAG_URL } from "./tankPaint";
 import {
   createTankState, IDLE_INPUT, LAST_WAVE, spawnDelayForWave, stepTank,
   TANK_DURATION, TANK_HEIGHT, TANK_WIDTH, waveAt,
@@ -7,6 +8,21 @@ import {
 
 const random = () => .5;
 describe("Winter Front tank defense", () => {
+  it("loads the exact USA flag artwork for enemy tanks from the repo root", () => {
+    expect(decodeURIComponent(USA_TANK_FLAG_URL)).toContain("/main/usa flag.webp");
+    expect(USA_TANK_FLAG_URL).toContain("usa%20flag.webp");
+  });
+  it("spawns enemy tanks with distinct scout, regular and armored hit points", () => {
+    const regular=createTankState();regular.phase="running";
+    stepTank(regular,IDLE_INPUT,.045,()=>.5);
+    regular.spawnDelay=0;
+    stepTank(regular,IDLE_INPUT,.045,()=>.5);
+    expect(regular.troops[0]?.hp).toBe(2);
+
+    const armored=createTankState();armored.phase="running";armored.spawnDelay=0;
+    stepTank(armored,IDLE_INPUT,.045,()=>.99);
+    expect(armored.troops[0]?.hp).toBe(4);
+  });
   it("starts ready with health, base and zero score", () => {
     const game=createTankState();
     expect(game.phase).toBe("ready");
