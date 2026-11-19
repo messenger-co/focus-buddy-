@@ -5,6 +5,7 @@ import {
   ArrowRight,
   Check,
   Clock3,
+  Sparkles,
   Feather,
   Flower2,
   Footprints,
@@ -13,7 +14,6 @@ import {
   Moon,
   RotateCcw,
   ScanEye,
-  Sparkles,
   Sprout,
   Star,
   Sun,
@@ -30,6 +30,7 @@ import {
   type GameId,
 } from "./puzzles";
 import "./games.css";
+import "./game-depth.css";
 import { adventures } from "./arcade/courses";
 import { AdventureShelf } from "./arcade/Gallery";
 const Adventure = lazy(() => import("./arcade/Adventure"));
@@ -435,13 +436,28 @@ export default function Games({
   countdown: string | null;
 }) {
   const { slug } = useParams();
+  const [richEffects, setRichEffects] = useState(() => {
+    try { return localStorage.getItem("focus-buddy-rich-effects-v1") !== "off"; }
+    catch { return true; }
+  });
+  useEffect(() => {
+    try { localStorage.setItem("focus-buddy-rich-effects-v1", richEffects ? "on" : "off"); }
+    catch { /* Device storage is optional. */ }
+  }, [richEffects]);
   const selected = gameShelf.find((g) => g.id === slug);
   const adventure = adventures.find((g) => g.slug === slug);
   const buddyGarden = slug === "vuon-buddy";
   const buddyRunner = slug === "buddy-run";
   const buddySurvival = slug === "dao-xanh";
   return (
-    <div className="games-page">
+    <div className={`games-page ${richEffects ? "fx-rich" : "fx-lite"}`}>
+      <div className="game-graphics-bar">
+        <span><Sparkles size={17}/> Hình ảnh 2.5D · Chiều sâu, ánh sáng và chuyển động</span>
+        <button type="button" aria-pressed={richEffects}
+          onClick={() => setRichEffects((current) => !current)}>
+          {richEffects ? "Hiệu ứng: Bật" : "Hiệu ứng: Tối giản"}
+        </button>
+      </div>
       {countdown && (
         <Link to="/tap-trung" className="game-timer">
           <Clock3 size={17} />
