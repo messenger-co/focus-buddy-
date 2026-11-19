@@ -1,0 +1,163 @@
+/* Lightweight Canvas arcade inside the keyboard-only Russian Easter egg. */
+.tank-defense{
+  width:min(1100px,calc(100vw - 32px));
+  margin:18px auto 34px;
+  color:#fce9cd;
+  font-family: "Be Vietnam Pro",system-ui,Arial,sans-serif;
+}
+.tank-game-heading{
+  display:flex;align-items:end;justify-content:space-between;flex-wrap:wrap;gap:14px;
+  padding:16px 20px 20px;
+  background:linear-gradient(125deg,#781e2a,#3f2b39);
+  border:2px solid #e0b570;border-bottom:0;
+  border-radius:18px 18px 0 0;box-shadow:0 7px 0 #2e1b24;
+}
+.tank-eyebrow{font-size:11px;letter-spacing:2px;font-weight:900;color:#f8d786}
+.tank-game-heading h2{
+  font-family:Impact,"Arial Black",system-ui,sans-serif;
+  margin:5px 0;font-size:clamp(24px,4vw,42px);
+  color:#fff3d8;letter-spacing:2px;
+  text-shadow:2px 3px #241e30;
+}
+.tank-game-heading p{font-size:11px;color:#f4d8c1;line-height:1.7}
+.tank-header-buttons{display:flex;flex-wrap:wrap;align-items:center;gap:6px}
+.tank-header-buttons button,.tank-retry-mini{
+  display:inline-flex;align-items:center;justify-content:center;gap:5px;
+  min-height:36px;padding:8px 11px;
+  background:#e5b66d;color:#482938;
+  border:1px solid #fff1c4;border-radius:9px;
+  box-shadow:0 3px 0 #392634;cursor:pointer;
+  font-size:10px;font-weight:900;
+}
+.tank-header-buttons button:disabled{opacity:.5;cursor:default}
+.tank-board{
+  position:relative;isolation:isolate;overflow:hidden;
+  width:100%;aspect-ratio:5/3;background:#536980;
+  border:5px solid #e4c08c;box-shadow:0 9px 0 #3f2935,0 17px 35px #1a111d78;
+}
+.tank-canvas{display:block;width:100%;height:100%;cursor:crosshair;touch-action:none}
+.tank-game-hud{
+  position:absolute;z-index:2;top:13px;left:13px;right:13px;
+  display:flex;gap:7px;flex-wrap:wrap;
+  pointer-events:none;padding-right:120px;
+}
+.tank-game-hud span{
+  display:inline-flex;align-items:center;gap:6px;
+  border:1px solid #fff3c189;background:#243b4bdf;
+  color:#fcefd6;border-radius:7px;padding:6px 9px;
+  box-shadow:0 3px 0 #29313db8;
+  font-size:10px;font-weight:850;
+}
+.tank-game-hud b{color:#fff0b0;font-variant-numeric:tabular-nums}
+.tank-heat{
+  position:absolute;z-index:2;right:12px;top:13px;
+  width:116px;padding:7px 9px;border-radius:8px;
+  background:#243b4bdf;color:#fee8b1;border:1px solid #fff3c189;
+  display:grid;gap:4px;pointer-events:none;
+}
+.tank-heat small{font-size:9px;font-weight:900;letter-spacing:1px}
+.tank-heat span{display:block;width:100%;height:8px;border-radius:6px;background:#112a31;overflow:hidden}
+.tank-heat i{display:block;height:100%;border-radius:6px;
+  background:linear-gradient(90deg,#b1d1a2,#e5b45b,#d25a57);
+  transition:width .14s}
+.tank-overlay{
+  position:absolute;inset:0;z-index:3;
+  display:grid;place-items:center;
+  background:#121b2ec9;backdrop-filter:blur(4px);
+  padding:15px;
+}
+.tank-start-card{
+  width:min(520px,100%);max-height:100%;
+  overflow:auto;padding:23px clamp(14px,3vw,30px);
+  text-align:center;
+  background:linear-gradient(140deg,#781f30,#452d39);
+  border:3px solid #efcc85;
+  box-shadow:0 10px 0 #302538,0 22px 35px #0a131a77;
+  border-radius:17px;
+}
+.tank-start-star{display:block;font-size:35px;color:#ffe1a0;line-height:1}
+.tank-start-card h3{
+  font-family:Impact,"Arial Black",Arial,sans-serif;
+  font-size:clamp(28px,4vw,46px);
+  line-height:1.17;margin:10px 0;color:#fff6d4;
+  letter-spacing:1.5px;text-shadow:2px 3px #3b1427;
+}
+.tank-start-card p{font-size:12px;line-height:1.7;color:#f9e2d0}
+.tank-final-score{font-weight:900!important;color:#ffe69b!important}
+.tank-start-actions{display:flex;flex-wrap:wrap;justify-content:center;gap:10px;margin-top:19px}
+.tank-start-actions button{
+  display:inline-flex;gap:7px;align-items:center;justify-content:center;
+  padding:11px 15px;border:2px solid #fff3cf;
+  border-radius:11px;background:#f1cb7f;
+  color:#542d32;font-size:11px;font-weight:900;
+  box-shadow:0 4px 0 #8f563c;cursor:pointer;
+}
+.tank-start-actions button.tank-secondary{
+  background:#623a4d;color:#ffedcf;box-shadow:0 4px 0 #361f32;
+}
+.tank-controls{
+  display:flex;align-items:center;gap:18px;flex-wrap:wrap;
+  background:linear-gradient(120deg,#643044,#392c3d);
+  border:2px solid #dfb979;border-top:0;border-radius:0 0 18px 18px;
+  padding:15px 19px;
+  box-shadow:0 6px 0 #302139,0 15px 20px #23132c6b;
+}
+.tank-game-pad{
+  flex:none;display:grid;gap:5px;
+  grid-template-columns:repeat(3,41px);
+  grid-template-rows:repeat(2,40px);
+  grid-template-areas:". up ." "left down right";
+}
+.tank-game-pad button{
+  display:grid;place-items:center;
+  background:linear-gradient(140deg,#f7dca2,#c09f6d);
+  color:#4f3740;border:1px solid #fff5d1;
+  border-radius:9px;box-shadow:0 3px 0 #37253a;
+  cursor:pointer;touch-action:none;
+}
+.tank-game-pad button:active{transform:translateY(2px);box-shadow:0 1px 0 #37253a}
+.tank-control-copy{
+  flex:1;min-width:220px;display:grid;gap:4px;
+  font-size:11px;line-height:1.6;color:#fae8d0;
+}
+.tank-control-copy strong{letter-spacing:1px;color:#ffe29e}
+.tank-control-copy kbd{
+  padding:1px 5px;border-radius:4px;background:#ffebbc22;
+  border:1px solid #f8c98a88;font:inherit;
+}
+.tank-fire-button{
+  flex:none;min-width:100px;min-height:88px;
+  display:grid;justify-items:center;align-content:center;gap:5px;
+  border:3px solid #fff1bc;border-radius:50%;
+  color:#fffbea;background:linear-gradient(145deg,#e86458,#a8333a);
+  box-shadow:0 7px 0 #682839,0 12px 15px #160d1f6e;
+  font-size:16px;font-weight:1000;cursor:pointer;touch-action:none;
+}
+.tank-fire-button:active:not(:disabled){
+  transform:translateY(5px);box-shadow:0 2px 0 #682839;
+}
+.tank-fire-button:disabled{opacity:.55;cursor:not-allowed}
+.tank-game-note{
+  margin-top:14px;padding:12px 16px;
+  color:#ffe6cb;font-size:11px;line-height:1.7;
+  background:#2e20347f;border:1px solid #dfb17b66;border-radius:10px;
+}
+@media(max-width:740px){
+  .tank-game-heading{padding:15px}
+  .tank-game-hud{padding-right:0;top:6px;left:5px;right:5px;gap:3px}
+  .tank-game-hud span{font-size:8px;padding:4px 6px;gap:3px}
+  .tank-heat{top:auto;bottom:8px;right:8px;width:92px;padding:5px}
+  .tank-start-card{padding:15px}
+  .tank-start-card h3{font-size:27px}
+  .tank-start-card p{font-size:10px}
+  .tank-start-actions button{font-size:10px;padding:8px 10px}
+  .tank-controls{gap:12px;padding:12px}
+  .tank-control-copy{order:4;min-width:100%;font-size:10px;text-align:center}
+  .tank-game-pad{grid-template-columns:repeat(3,37px);grid-template-rows:repeat(2,35px)}
+  .tank-fire-button{margin-left:auto;width:78px;min-width:78px;min-height:78px;font-size:12px}
+  .tank-retry-mini{margin-left:auto}
+  .tank-game-note{font-size:10px}
+}
+@media(prefers-reduced-motion:reduce){
+  .tank-defense *{animation:none!important;transition:none!important}
+}
