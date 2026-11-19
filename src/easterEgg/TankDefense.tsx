@@ -1,10 +1,12 @@
 import { useEffect, useRef, useState, type PointerEvent } from "react";
-import { ArrowDown, ArrowLeft, ArrowRight, ArrowUp, Crosshair, Flag, Gauge, Pause, Play, RotateCcw, Shield, X } from "lucide-react";
+import { ArrowDown, ArrowLeft, ArrowRight, ArrowUp, Crosshair, Flag, Gauge, Pause, Play, RotateCcw, Shield, X, Zap, Users, Box } from "lucide-react";
 import {
-  createTankState, stepTank, TANK_DURATION, TANK_HEIGHT, TANK_WIDTH,
-  type TankInput, type TankPhase, type TankState,
+  ALLY_CARDS, canRecruit, createTankState, recruitAlly, stepTank,
+  MISSILE_COOLDOWN, TANK_DURATION, TANK_HEIGHT, TANK_WIDTH,
+  type AllyKind, type TankInput, type TankPhase, type TankState,
 } from "./tankGame";
 import { drawTankGame, USA_TANK_FLAG_URL } from "./tankPaint";
+import { createTank3D, type Tank3DRenderer } from "./tank3d";
 import "./tankDefense.css";
 
 type View = {
@@ -16,11 +18,17 @@ type View = {
   tankHp: number;
   baseHp: number;
   heat: number;
+  missiles: number;
+  credits: number;
+  allies: number;
+  allyKinds: AllyKind[];
 };
 const snapshot=(state:TankState):View=>({
   phase:state.phase,score:state.score,defeated:state.defeated,
   wave:state.wave,seconds:Math.max(0,Math.ceil(TANK_DURATION-state.elapsed)),
   tankHp:state.player.hp,baseHp:state.baseHp,heat:Math.round(state.player.heat),
+  missiles:state.missileCooldown,credits:state.credits,
+  allies:state.allies.length,allyKinds:state.allies.map(ally=>ally.kind),
 });
 type Direction = "left"|"right"|"up"|"down";
 const arrowKeys:Record<string,Direction> = {
@@ -30,13 +38,17 @@ const arrowKeys:Record<string,Direction> = {
 export default function TankDefense({ onExit }: { onExit:()=>void }) {
   const state=useRef(createTankState());
   const canvas=useRef<HTMLCanvasElement>(null);
+  const webglMount=useRef<HTMLDivElement>(null);
+  const visual3d=useRef<Tank3DRenderer|null>(null);
   const enemyFlag=useRef<HTMLImageElement|null>(null);
   const held=useRef(new Set<Direction>());
   const firing=useRef(false);
+  const missileQueued=useRef(false);
   const aim=useRef({x:450,y:40});
   const aimedByPointer=useRef(false);
   const [view,setView]=useState<View>(()=>snapshot(state.current));
   const [effects,setEffects]=useState(true);
+  const [renderMode,setRenderMode]=useState<"3d"|"2d">("3d");
   const previousUpdate=useRef(0);
   const renderedPhase=useRef<TankPhase>("ready");
 
@@ -55,11 +67,19 @@ export default function TankDefense({ onExit }: { onExit:()=>void }) {
     };
   }, []);
 
+  function recruit(kind:AllyKind){
+    if(recruitAlly(state.current,kind))setView(snapshot(state.current));
+  }
+  function missile(){
+    if(state.current.phase==="running"&&state.current.missileCooldown<=0)
+      missileQueued.current=true;
+  }
   function start() {
     state.current=createTankState();
     state.current.phase="running";
     held.current.clear();
     firing.current=false;
+    missileQueued.current=false;
     aimedByPointer.current=false;
     setView(snapshot(state.current));
   }
@@ -69,6 +89,7 @@ export default function TankDefense({ onExit }: { onExit:()=>void }) {
     else if(game.phase==="paused")game.phase="running";
     held.current.clear();
     firing.current=false;
+    missileQueued.current=false;
     setView(snapshot(game));
   }
   useEffect(()=>{
@@ -81,6 +102,14 @@ export default function TankDefense({ onExit }: { onExit:()=>void }) {
       } else if(event.code==="Space"){
         event.preventDefault();
         firing.current=true;
+      } else if(event.code==="KeyM") {
+        event.preventDefault();if(!event.repeat)missile();
+      } else if(event.code==="Digit1") {
+        event.preventDefault();if(!event.repeat)recruit("rifle");
+      } else if(event.code==="Digit2") {
+        event.preventDefault();if(!event.repeat)recruit("ranger");
+      } else if(event.code==="Digit3") {
+        event.preventDefault();if(!event.repeat)recruit("guard");
       } else if(event.code==="KeyP") {
         event.preventDefault();
         togglePause();
@@ -96,6 +125,7 @@ export default function TankDefense({ onExit }: { onExit:()=>void }) {
     };
     const release=()=>{
       firing.current=false;
+      missileQueued.current=false;
       held.current.clear();
       if(document.visibilityState==="hidden" && state.current.phase==="running"){
         state.current.phase="paused";
@@ -116,69 +146,90 @@ export default function TankDefense({ onExit }: { onExit:()=>void }) {
 
   useEffect(()=>{
     const element=canvas.current;
-    const ctx=element?.getContext("2d",{alpha:false});
-    if(!element||!ctx)return;
-    const surface: HTMLCanvasElement = element;
-    const drawing: CanvasRenderingContext2D = ctx;
-    let width=900,height=540,dpr=1;
-    let last=0,raf=0,lastFrame=0;
-    let active=true;
+    const mount=webglMount.current;
+    if(!element||!mount)return;
+    const surface:HTMLCanvasElement=element;
+    let visual:Tank3DRenderer|null=null;
+    let drawing:CanvasRenderingContext2D|null=null;
+    let active=true,raf=0,last=0,lastFrame=0;
+    try {
+      if(renderMode==="3d"){
+        visual=createTank3D(mount);
+        visual3d.current=visual;
+      } else {
+        visual3d.current=null;
+        drawing=surface.getContext("2d",{alpha:false});
+      }
+    } catch {
+      visual3d.current=null;
+      setRenderMode("2d");
+      return;
+    }
+    const scene=visual;
+    const ctx=drawing;
+    if(!scene && !ctx)return;
     const resize=()=>{
-      const rect=surface.getBoundingClientRect();
-      width=Math.max(320,rect.width);
-      height=Math.max(180,rect.height);
-      dpr=Math.min(window.devicePixelRatio||1,1.5);
-      const w=Math.floor(width*dpr),h=Math.floor(height*dpr);
-      if(surface.width!==w)surface.width=w;
-      if(surface.height!==h)surface.height=h;
+      const bounds=surface.getBoundingClientRect();
+      const width=Math.max(320,bounds.width),height=Math.max(180,bounds.height);
+      if(scene)scene.resize(width,height);
+      if(ctx){
+        const dpr=Math.min(window.devicePixelRatio||1,1.4);
+        const w=Math.floor(width*dpr),h=Math.floor(height*dpr);
+        if(surface.width!==w)surface.width=w;
+        if(surface.height!==h)surface.height=h;
+      }
     };
     const observer=typeof ResizeObserver!=="undefined"?new ResizeObserver(resize):null;
-    resize();
-    observer?.observe(element);
+    resize();observer?.observe(surface);
     function frame(time:number){
       if(!active)return;
       raf=requestAnimationFrame(frame);
-      if(document.visibilityState==="hidden" || time-lastFrame<1000/(state.current.phase==="running"?36:16))return;
-      const dt=Math.min(.045,Math.max(0,(time-last)/1000 || .02));
-      lastFrame=time;last=time;
       const game=state.current;
+      const fps=game.phase==="running" ? (renderMode==="3d"?30:36) : 12;
+      if(document.visibilityState==="hidden"||time-lastFrame<1000/fps)return;
+      const dt=Math.min(.045,Math.max(0,(time-last)/1000||.02));
+      lastFrame=time;last=time;
       const input:TankInput={
-        left:held.current.has("left"),
-        right:held.current.has("right"),
-        up:held.current.has("up"),
-        down:held.current.has("down"),
-        firing:firing.current,
+        left:held.current.has("left"),right:held.current.has("right"),
+        up:held.current.has("up"),down:held.current.has("down"),
+        firing:firing.current,missile:missileQueued.current,
         aimX:aim.current.x,aimY:aim.current.y,
       };
-      // Accessible keyboard mode: aim at the closest target if no pointer was used.
-      if(!aimedByPointer.current && game.troops.length){
+      missileQueued.current=false;
+      if(!aimedByPointer.current&&game.troops.length){
         let best=game.troops[0],dist=Infinity;
-        for(const troop of game.troops){
-          const dx=troop.x-game.player.x,dy=troop.y-game.player.y;
+        for(const enemy of game.troops){
+          const dx=enemy.x-game.player.x,dy=enemy.y-game.player.y;
           const next=dx*dx+dy*dy;
-          if(next<dist){dist=next;best=troop;}
+          if(next<dist){dist=next;best=enemy;}
         }
         input.aimX=best.x;input.aimY=best.y;
       }
       stepTank(game,input,dt);
-      drawing.setTransform(surface.width/TANK_WIDTH,0,0,surface.height/TANK_HEIGHT,0,0);
-      drawTankGame(drawing,game,input,time/1000,effects,enemyFlag.current);
-      if(time-previousUpdate.current>135 || game.phase!==renderedPhase.current){
+      if(scene)scene.draw(game,input,time/1000);
+      else if(ctx){
+        ctx.setTransform(surface.width/TANK_WIDTH,0,0,surface.height/TANK_HEIGHT,0,0);
+        drawTankGame(ctx,game,input,time/1000,effects,enemyFlag.current);
+      }
+      if(time-previousUpdate.current>125||game.phase!==renderedPhase.current){
         renderedPhase.current=game.phase;
         previousUpdate.current=time;
         setView(snapshot(game));
       }
     }
     raf=requestAnimationFrame(frame);
-    return ()=>{active=false;cancelAnimationFrame(raf);observer?.disconnect();};
-  },[effects]);
+    return ()=>{
+      active=false;cancelAnimationFrame(raf);observer?.disconnect();
+      if(visual3d.current===scene)visual3d.current=null;
+      scene?.dispose();
+    };
+  },[effects,renderMode]);
 
   function pointerAim(event:PointerEvent<HTMLCanvasElement>){
     const rect=event.currentTarget.getBoundingClientRect();
-    aim.current={
-      x:(event.clientX-rect.left)/rect.width*TANK_WIDTH,
-      y:(event.clientY-rect.top)/rect.height*TANK_HEIGHT,
-    };
+    const u=(event.clientX-rect.left)/rect.width;
+    const v=(event.clientY-rect.top)/rect.height;
+    aim.current=visual3d.current?.pick(u,v) || {x:u*TANK_WIDTH,y:v*TANK_HEIGHT};
     aimedByPointer.current=true;
   }
   function pressDirection(direction:Direction){
