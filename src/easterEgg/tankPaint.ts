@@ -114,39 +114,93 @@ function background(ctx: Canvas, time: number, effects: boolean) {
   ctx.font="10px sans-serif";
   ctx.fillText("СТОЙКОСТЬ · WINTER FRONT",20,47);
 }
-function soldier(ctx: Canvas, soldier: Troop, time: number) {
-  const {x,y,type} = soldier;
-  const scale = type==="armored"?1.2:type==="scout"?.85:1;
-  const bob = Math.sin(time*8+soldier.wobble)*1.4;
+/** Existing root-level repo artwork, read once by TankDefense and reused for all tanks. */
+export const USA_TANK_FLAG_URL =
+  "https://raw.githubusercontent.com/messenger-co/focus-buddy-/main/usa%20flag.webp";
+
+/** Enemy vehicles are stylized 2.5D tanks, not soldiers or robots.
+ * The exact usa flag.webp is drawn on a small mast attached to each hull.
+ */
+function enemyTank(ctx: Canvas, enemy: Troop, time: number, flag: HTMLImageElement | null) {
+  const { x, y, type } = enemy;
+  const scale = type === "armored" ? 1.22 : type === "scout" ? .83 : 1;
+  const bob = Math.sin(time * 4.2 + enemy.wobble) * .7;
   ctx.save();
-  ctx.translate(x,y+bob);
-  ctx.scale(scale,scale);
-  ellipse(ctx,2,12,14,5,"#2b3c4970");
-  const shade=type==="armored"?"#596773":type==="scout"?"#73818b":"#5e6d76";
-  line(ctx,"#3e4d55",4,-6,9,-9,14);
-  line(ctx,"#3e4d55",4,6,9,9,14);
-  ctx.fillStyle=shade;
+  ctx.translate(x, y + bob);
+  ctx.scale(scale, scale);
+  ellipse(ctx, 5, 17, 27, 10, "#263b4669");
+
+  // Tank treads and road wheels provide a clearly recognizable vehicle silhouette.
+  const tracks = ctx.createLinearGradient(-27, 0, 27, 0);
+  tracks.addColorStop(0, "#273540");
+  tracks.addColorStop(.5, "#55636c");
+  tracks.addColorStop(1, "#202c37");
+  ctx.fillStyle = tracks;
   ctx.beginPath();
-  ctx.roundRect(-13,-9,26,22,5);
+  ctx.roundRect(-27, -22, 13, 48, 5);
+  ctx.roundRect(14, -22, 13, 48, 5);
   ctx.fill();
-  ctx.fillStyle="#d1d6cf";
+  for (const wheelX of [-21, 21]) {
+    for (let i = 0; i < 5; i++) {
+      ellipse(ctx, wheelX, -16 + i * 9, 4.6, 3.1, "#9aa3a4");
+      ellipse(ctx, wheelX - 1, -16 + i * 9, 1.6, 1.5, "#46545d");
+    }
+  }
+  // Chassis has a lit top surface and darker side to stay 2.5D.
+  const armor = ctx.createLinearGradient(-17, -24, 18, 25);
+  armor.addColorStop(0, type === "armored" ? "#9dabb5" : "#bec7c8");
+  armor.addColorStop(.48, type === "scout" ? "#9daaad" : "#82929c");
+  armor.addColorStop(1, "#485d6d");
+  ctx.fillStyle = armor;
   ctx.beginPath();
-  ctx.roundRect(-3,-1,6,8,2);
+  ctx.roundRect(-16, -24, 32, 49, 6);
   ctx.fill();
-  // Neutral cross insignia, not a Nazi symbol.
-  line(ctx,"#e5e7df",2,-5,3,5,3);
-  line(ctx,"#e5e7df",2,0,-2,0,8);
-  ctx.fillStyle="#394652";
+  line(ctx, "#dfe6e1", 2, -12, -17, -12, 14);
+  line(ctx, "#465868", 2, 13, -17, 13, 18);
+  // Sloped side armor plates, avoiding any extremist insignia.
+  ctx.fillStyle = "#485965";
   ctx.beginPath();
-  ctx.arc(0,-12,11,Math.PI,pi2);
-  ctx.fill();
-  ctx.fillRect(-12,-13,24,5);
-  ctx.fillStyle="#eef3e5";
-  ctx.fillRect(-7,-15,5,2);
-  line(ctx,"#43505b",3,-14,-2,-19,5);
-  line(ctx,"#43505b",3,14,-2,19,5);
+  ctx.moveTo(-16, 10); ctx.lineTo(-25, 14); ctx.lineTo(-19, 22); ctx.lineTo(-12, 20);
+  ctx.closePath();ctx.fill();
+  ctx.beginPath();
+  ctx.moveTo(16, 10); ctx.lineTo(25, 14); ctx.lineTo(19, 22); ctx.lineTo(12, 20);
+  ctx.closePath();ctx.fill();
+
+  // Main turret and barrel point toward the defended outpost.
+  ctx.fillStyle = "#556c79";
+  ctx.beginPath();
+  ctx.roundRect(-5, 11, 10, 28, 3);ctx.fill();
+  ctx.fillStyle = "#9cb1b5";
+  ctx.fillRect(-3.5, 15, 3, 20);
+  ellipse(ctx, 0, -2, 15, 18, "#586f7b");
+  ellipse(ctx, -5, -8, 7.5, 7.5, "#a9b8b4");
+  line(ctx, "#cadae0", 2, -7, -14, 2, -17);
+
+  // Flag pole is physically attached to the rear-right of the vehicle.
+  line(ctx, "#d6dce1", 2.5, 19, -11, 19, -53);
+  ellipse(ctx, 19, -53, 2.8, 2.8, "#f3dfb6");
+  if (flag && flag.complete && flag.naturalWidth > 0) {
+    // Exact user-provided image: "usa flag.webp" (space is URL-encoded).
+    ctx.drawImage(flag, 20, -53, 29, 17);
+  } else {
+    // Tiny recognizable fallback if GitHub raw image is temporarily unavailable.
+    ctx.fillStyle = "#fff9f2";
+    ctx.fillRect(20, -53, 29, 17);
+    for (let i = 0; i < 6; i++) {
+      ctx.fillStyle = "#c64756";
+      ctx.fillRect(20, -53 + i * 3, 29, 1.6);
+    }
+    ctx.fillStyle = "#2c5388";
+    ctx.fillRect(20, -53, 12, 9);
+  }
+  // A short energy bar visually distinguishes light/armored enemy tanks.
+  if (type === "armored" && enemy.hp > 0) {
+    ctx.fillStyle = "#1e2933bf";ctx.fillRect(-17, -31, 34, 4);
+    ctx.fillStyle = "#d5e4d6";ctx.fillRect(-16, -30, Math.min(32, enemy.hp / 3 * 32), 2);
+  }
   ctx.restore();
 }
+
 function tank(ctx: Canvas, state:TankState, input:TankInput, time:number) {
   const p=state.player;
   ctx.save();
@@ -188,11 +242,11 @@ function tank(ctx: Canvas, state:TankState, input:TankInput, time:number) {
 }
 export function drawTankGame(
   ctx: Canvas, state: TankState, input: TankInput, seconds: number,
-  effects = true,
+  effects = true, flag: HTMLImageElement | null = null,
 ) {
   ctx.clearRect(0,0,W,H);
   background(ctx,seconds,effects);
-  for (const troop of state.troops) soldier(ctx,troop,seconds);
+  for (const troop of state.troops) enemyTank(ctx, troop, seconds, flag);
   for (const shot of state.shots) {
     ellipse(ctx,shot.x,shot.y,7,7,"#ffde8b80");
     ellipse(ctx,shot.x,shot.y,3.2,3.2,"#fff4c8");
