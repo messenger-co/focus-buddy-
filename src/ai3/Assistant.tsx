@@ -6,7 +6,7 @@ import {
   useState,
   type FormEvent,
 } from "react";
-import { ArrowUp, BookOpen, ChevronDown, Square, Trash2 } from "lucide-react";
+import { ArrowUp, BookOpen, ChevronDown, FileText, LoaderCircle, Paperclip, Square, Trash2, X } from "lucide-react";
 import { streamChat, getChatReadiness, ChatRateLimitError } from "../chat";
 import type { Profile } from "../state";
 import {
@@ -18,6 +18,10 @@ import {
   type Turn,
 } from "./history";
 import { modes, type Language, type StudyMode } from "./modes";
+import {
+  ACCEPTED_ATTACHMENTS, MAX_ATTACHMENTS, composeAttachmentMessage,
+  readTextAttachment, type TextAttachment,
+} from "./attachments";
 import { Answer, CopyButton } from "./Answer";
 import "./assistant.css";
 
@@ -37,6 +41,8 @@ export default function Assistant({
     [turns, setTurns] = useState<Turn[]>(readHistory),
     [save, setSave] = useState(keepsHistory);
   const [input, setInput] = useState(""),
+    [attachments, setAttachments] = useState<TextAttachment[]>([]),
+    [readingAttachment, setReadingAttachment] = useState(false),
     [busy, setBusy] = useState(false),
     [error, setError] = useState(""),
     [notice, setNotice] = useState("");
@@ -49,6 +55,8 @@ export default function Assistant({
   > | null>(null);
   const controller = useRef<AbortController | null>(null),
     inputEl = useRef<HTMLTextAreaElement>(null),
+    fileInput = useRef<HTMLInputElement>(null),
+    attachmentIndex = useRef(0),
     log = useRef<HTMLDivElement>(null),
     nearBottom = useRef(true);
   const latest = useRef(turns);
@@ -103,23 +111,87 @@ export default function Assistant({
     saveHistory(rows);
     setNotice(t("Đã dừng trả lời.", "Response stopped."));
   }
+
+  async function chooseFiles(incoming: FileList | File[]) {
+    const files = Array.from(incoming);
+    if (!files.length) return;
+    if (!live) {
+      setError(t(
+        "Cần kết nối AI trực tuyến để gửi nội dung tệp.",
+        "Connect to the online AI to send file contents.",
+      ));
+      return;
+    }
+    if (readingAttachment || busy) return;
+    if (files.length + attachments.length > MAX_ATTACHMENTS) {
+      setError(t("Tối đa 3 tệp cho mỗi câu hỏi.", "Maximum 3 files per message."));
+      return;
+    }
+    setReadingAttachment(true);
+    setError("");
+    try {
+      const loaded: TextAttachment[] = [];
+      for (const file of files) {
+        attachmentIndex.current++;
+        loaded.push(await readTextAttachment(file, String(attachmentIndex.current)));
+      }
+      setAttachments((current) => [...current, ...loaded].slice(0, MAX_ATTACHMENTS));
+      setNotice(t(
+        "Đã đọc văn bản từ tệp trên thiết bị. Chỉ một đoạn trích sẽ được gửi cùng câu hỏi.",
+        "Files read locally. Only a text excerpt will be sent with your question.",
+      ));
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message :
+        t("Không đọc được tệp.", "Could not read this file."));
+    } finally {
+      setReadingAttachment(false);
+      if (fileInput.current) fileInput.current.value = "";
+    }
+  }
   async function send(e?: FormEvent) {
     e?.preventDefault();
     if (
-      !input.trim() ||
+      (!input.trim() && !attachments.length) ||
       busy ||
+      readingAttachment ||
       controller.current ||
       blocked ||
       (live && cooldown > Date.now())
-    )
+    ) return;
+    if (attachments.length && !live) {
+      setError(t("Chỉ gửi tệp khi AI đã kết nối.", "Attachments require a live AI connection."));
       return;
-    const question = input.trim();
+    }
+    const question = input.trim() || t(
+      "Hãy giúp mình đọc và hiểu tài liệu đính kèm.",
+      "Please help me understand the attached document.",
+    );
+    let attachmentPrompt = question;
+    let partial = false;
+    if (attachments.length) {
+      try {
+        const composed = composeAttachmentMessage(question, attachments);
+        attachmentPrompt = composed.content;
+        partial = composed.partial;
+      } catch (cause) {
+        setError(cause instanceof Error ? cause.message : t(
+          "Tệp đính kèm quá dài.", "Attachment is too long.",
+        ));
+        return;
+      }
+    }
+    // Display and (optionally) save only filenames, NEVER extracted file text.
+    const visibleQuestion = question + (attachments.length
+      ? "\n\n📎 " + attachments.map((file) => file.name).join(", ")
+      : "");
+    const submittedFiles = attachments;
     const next = [
       ...turns,
-      { role: "user" as const, content: question, source } as Turn,
+      { role: "user" as const, content: visibleQuestion, source } as Turn,
     ].slice(-38);
     nearBottom.current = true;
     setInput("");
+    setAttachments([]);
     setError("");
     setNotice("");
     setClear(false);
@@ -154,6 +226,8 @@ export default function Assistant({
       const context = next
         .filter((row) => row.source === "live" && !row.incomplete)
         .map(({ role, content }) => ({ role, content }));
+      if (submittedFiles.length && context.length)
+        context[context.length - 1].content = attachmentPrompt;
       // Hàm cũ chỉ đọc danh sách tin nhắn. Gửi lựa chọn như một yêu cầu của học sinh.
       if (!readiness?.studyModes && context.length) {
         const last = context[context.length - 1];
@@ -183,7 +257,11 @@ export default function Assistant({
         const end = response(false);
         update(end);
         saveHistory(end);
-        setNotice(t("Đã trả lời xong.", "Answer complete."));
+        setNotice(partial
+          ? t("AI chỉ nhận một đoạn trích từ tài liệu. Muốn hỏi phần khác, hãy đính kèm lại tệp.", "The AI received only an excerpt. Reattach the file to ask about another section.")
+          : submittedFiles.length
+            ? t("Đã trả lời theo đoạn trích đính kèm. Hãy đính kèm lại khi hỏi tiếp về tệp.", "Answered using the attached excerpt. Reattach it for file-specific follow-ups.")
+            : t("Đã trả lời xong.", "Answer complete."));
       }
     } catch (cause) {
       if (controller.current !== req || req.signal.aborted) return;
@@ -215,7 +293,7 @@ export default function Assistant({
                 "The request did not finish. Check your connection and session, then try again.",
               ),
         );
-      if (!reply) setInput(question);
+      if (!reply) { setInput(input); setAttachments(submittedFiles); }
     } finally {
       if (controller.current === req) {
         controller.current = null;
@@ -426,7 +504,45 @@ export default function Assistant({
           {error}
         </p>
       )}
-      <form onSubmit={send} className="ai-composer">
+      {!!attachments.length && (
+        <div className="ai-attachments" aria-label={t("Tệp đã chọn", "Selected files")}>
+          {attachments.map((file) => (
+            <div className="ai-attachment-chip" key={file.id}>
+              <FileText size={16} />
+              <span><strong>{file.name}</strong>
+                <small>{file.totalCharacters > file.excerpt.length
+                  ? t("Tài liệu dài · chỉ gửi đoạn trích", "Long file · excerpt only")
+                  : t("Văn bản đã đọc", "Text extracted")}</small>
+              </span>
+              <button type="button" disabled={busy || readingAttachment}
+                aria-label={t("Bỏ tệp ", "Remove file ") + file.name}
+                onClick={() => setAttachments((current) => current.filter((entry) => entry.id !== file.id))}>
+                <X size={15}/>
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+      {readingAttachment && <p className="ai-file-status" role="status"><LoaderCircle size={15} className="ai-spin"/> {t("Đang đọc tệp trên thiết bị…", "Reading files on your device…")}</p>}
+      <form onSubmit={send} className="ai-composer"
+        onDragOver={(event) => { if (event.dataTransfer.types.includes("Files")) event.preventDefault(); }}
+        onDrop={(event) => {
+          if (!event.dataTransfer.files.length) return;
+          event.preventDefault();
+          void chooseFiles(event.dataTransfer.files);
+        }}>
+        <input ref={fileInput} type="file" className="ai-file-input"
+          tabIndex={-1} accept={ACCEPTED_ATTACHMENTS} multiple
+          aria-label={t("Chọn tệp tài liệu", "Choose document files")}
+          disabled={!live || busy || readingAttachment || attachments.length >= MAX_ATTACHMENTS}
+          onChange={(event) => { if (event.target.files) void chooseFiles(event.target.files); }}/>
+        <button type="button" className="ai-attach-button"
+          disabled={!live || busy || readingAttachment || attachments.length >= MAX_ATTACHMENTS}
+          title={t("Đính kèm TXT, DOCX, MD, CSV, JSON hoặc mã nguồn", "Attach TXT, DOCX, MD, CSV, JSON or code")}
+          aria-label={t("Đính kèm tài liệu", "Attach document")}
+          onClick={() => fileInput.current?.click()}>
+          <Paperclip size={19}/>
+        </button>
         <textarea
           aria-label={t("Tin nhắn cho bạn đồng hành", "Message for Buddy")}
           ref={inputEl}
@@ -460,7 +576,7 @@ export default function Assistant({
           <button
             type="submit"
             disabled={
-              !input.trim() || blocked || (live && cooldown > Date.now())
+              (!input.trim() && !attachments.length) || blocked || readingAttachment || (live && cooldown > Date.now())
             }
             aria-label={t("Gửi tin nhắn", "Send message")}
           >
@@ -468,6 +584,10 @@ export default function Assistant({
           </button>
         )}
       </form>
+      <p className="ai-attachment-help">{t(
+        "📎 Tối đa 3 tệp, 2 MB/tệp: TXT, DOCX, MD, CSV, JSON, mã nguồn. PDF và ảnh chưa hỗ trợ; hãy chuyển thành văn bản. Chỉ trích đoạn được gửi tới Groq, không lưu tệp lên cloud.",
+        "📎 Up to 3 files, 2 MB each: TXT, DOCX, MD, CSV, JSON, code. PDF/images are not supported yet; convert them to text. Only excerpts go to Groq; files are not stored in the cloud.",
+      )}</p>
       <div className="ai-footer">
         <small>
           {live
