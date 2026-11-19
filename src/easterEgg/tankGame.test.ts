@@ -52,7 +52,7 @@ describe("Winter Front tank defense", () => {
     const input:TankInput={...IDLE_INPUT,firing:true};
     for(let i=0;i<100;i++)stepTank(game,input,.04,random);
     expect(game.elapsed).toBeGreaterThan(3);
-    expect(game.troops.length).toBeGreaterThan(0);
+    expect(game.nextId).toBeGreaterThan(0); // An enemy spawned; a successful shot may already have cleared it.
     expect(game.player.heat).toBeGreaterThanOrEqual(0);
     expect(game.player.heat).toBeLessThanOrEqual(102);
     expect(game.shots.length).toBeLessThanOrEqual(26);
