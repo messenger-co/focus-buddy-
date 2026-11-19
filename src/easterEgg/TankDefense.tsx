@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, type PointerEvent } from "react";
 import { ArrowDown, ArrowLeft, ArrowRight, ArrowUp, Crosshair, Flag, Gauge, Pause, Play, RotateCcw, Shield, X } from "lucide-react";
 import {
-  createTankState, IDLE_INPUT, stepTank, TANK_DURATION, TANK_HEIGHT, TANK_WIDTH,
+  createTankState, stepTank, TANK_DURATION, TANK_HEIGHT, TANK_WIDTH,
   type TankInput, type TankPhase, type TankState,
 } from "./tankGame";
 import { drawTankGame } from "./tankPaint";
@@ -102,17 +102,19 @@ export default function TankDefense({ onExit }: { onExit:()=>void }) {
     const element=canvas.current;
     const ctx=element?.getContext("2d",{alpha:false});
     if(!element||!ctx)return;
+    const surface: HTMLCanvasElement = element;
+    const drawing: CanvasRenderingContext2D = ctx;
     let width=900,height=540,dpr=1;
     let last=0,raf=0,lastFrame=0;
     let active=true;
     const resize=()=>{
-      const rect=element.getBoundingClientRect();
+      const rect=surface.getBoundingClientRect();
       width=Math.max(320,rect.width);
       height=Math.max(180,rect.height);
       dpr=Math.min(window.devicePixelRatio||1,1.5);
       const w=Math.floor(width*dpr),h=Math.floor(height*dpr);
-      if(element.width!==w)element.width=w;
-      if(element.height!==h)element.height=h;
+      if(surface.width!==w)surface.width=w;
+      if(surface.height!==h)surface.height=h;
     };
     const observer=typeof ResizeObserver!=="undefined"?new ResizeObserver(resize):null;
     resize();
@@ -143,8 +145,8 @@ export default function TankDefense({ onExit }: { onExit:()=>void }) {
         input.aimX=best.x;input.aimY=best.y;
       }
       stepTank(game,input,dt);
-      ctx.setTransform(element.width/TANK_WIDTH,0,0,element.height/TANK_HEIGHT,0,0);
-      drawTankGame(ctx,game,input,time/1000,effects);
+      drawing.setTransform(surface.width/TANK_WIDTH,0,0,surface.height/TANK_HEIGHT,0,0);
+      drawTankGame(drawing,game,input,time/1000,effects);
       if(time-previousUpdate.current>135 || game.phase!==renderedPhase.current){
         renderedPhase.current=game.phase;
         previousUpdate.current=time;
