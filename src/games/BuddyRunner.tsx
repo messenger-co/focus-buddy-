@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { ArrowRight, Clock3, Footprints, Gamepad2, RotateCcw, Sparkles, Trophy } from "lucide-react";
+import { ArrowRight, Footprints, Gamepad2, RotateCcw, Sparkles, Trophy } from "lucide-react";
 import { Link } from "react-router-dom";
 import Companion from "../components/Companion";
 import type { Profile } from "../state";
