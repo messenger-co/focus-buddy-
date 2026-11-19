@@ -1,9 +1,10 @@
-import { useEffect, useRef, useState } from "react";
-import { Phone, PhoneIncoming, RefreshCw, Volume2, VolumeX, X } from "lucide-react";
-import { callerImageUrl, danceGifUrl, meowImageUrl, trackUrl } from "./russianShortcut";
+import { lazy, Suspense, useEffect, useRef, useState } from "react";
+import { Gamepad2, Phone, PhoneIncoming, RefreshCw, Volume2, VolumeX, X } from "lucide-react";
+import { callerImageUrl, danceGifUrl, meowImageUrl, swowImageUrl, trackUrl } from "./russianShortcut";
+const TankDefense = lazy(() => import("./TankDefense"));
 import "./russianEgg.css";
 
-type Stage = "party" | "incoming" | "answered" | "crashed";
+type Stage = "party" | "incoming" | "answered" | "tank" | "crashed";
 type Sound = "loading" | "playing" | "manual" | "missing";
 const CORNERS = ["top-right", "bottom-right", "bottom-left", "top-left"] as const;
 
@@ -14,6 +15,7 @@ export default function RussianEgg({ close }: { close: () => void }) {
   const [pictureFailed, setPictureFailed] = useState(false);
   const [gifFailed, setGifFailed] = useState(false);
   const [meowFailed, setMeowFailed] = useState(false);
+  const [swowFailed, setSwowFailed] = useState(false);
   const [corner, setCorner] = useState(0);
   const [shout, setShout] = useState(0);
   const [prankCount, setPrankCount] = useState(0);
@@ -150,9 +152,19 @@ export default function RussianEgg({ close }: { close: () => void }) {
         {meowFailed ? <span>🐈</span> :
           <img src={meowImageUrl} alt="" onError={() => setMeowFailed(true)}/>}
       </div>
+      <div className={"russian-swow-corner corner-" + CORNERS[(corner + 2) % CORNERS.length]} aria-hidden="true">
+        {swowFailed ? <span>⭐</span> :
+          <img src={swowImageUrl} alt="" onError={() => setSwowFailed(true)}/>}
+      </div>
+      {stage === "tank" ? (
+        <Suspense fallback={<p className="russian-tank-loading">ЗАГРУЗКА · Loading winter tank defense…</p>}>
+          <TankDefense onExit={() => setStage("party")}/>
+        </Suspense>
+      ) : (
+        <>
       <header className="russian-egg-header">
         <div className="russian-egg-label"><span className="russian-flag" aria-hidden="true"/>
-          СЕКРЕТНЫЙ РЕЖИМ
+          ★ СОВЕТСКАЯ ЗИМА · СЕКРЕТНЫЙ РЕЖИМ ★
         </div>
         <div className="russian-egg-top-actions">
           {sound === "manual" && <button className="russian-music-button"
@@ -181,11 +193,23 @@ export default function RussianEgg({ close }: { close: () => void }) {
             ЭЙ! ТАНЦУЕМ! ТРИ ПОЛОСКИ!
           </div>
           <p className="russian-egg-desc">
-            The dancing GIF has taken over. The spinning cat haunts every corner.
-            A random call might interrupt at any moment. Press <strong>C</strong> fast enough!
+            Суровая зима! Two spinning images, Russian music and a secret winter battlefield.
+            Random calls may interrupt this screen. Press <strong>C</strong> quickly, or enter the game.
           </p>
           <div className="russian-chaos-tags" aria-hidden="true">
-            <span>ТАНЦУЙ!</span><span>НЕ СПИ!</span><span>МЯУ!</span>
+            <span>ЗИМА!</span><span>ВПЕРЁД!</span><span>МЯУ!</span>
+          </div>
+          <div className="russian-tank-invite">
+            <span className="russian-tank-invite-kicker">★ СЕКРЕТНАЯ МИССИЯ ★</span>
+            <strong>WINTER FRONT: TANK DEFENSE</strong>
+            <p>Fight five escalating waves of stylized grey-uniform infantry in a fictional Soviet winter-front setting. Extremely hard, no gore.</p>
+            <button type="button" className="russian-tank-launch" onClick={() => {
+              audio.current?.pause();
+              setSound("manual");
+              setStage("tank");
+            }}>
+              <Gamepad2 size={21}/> ИГРАТЬ · PLAY TANK GAME
+            </button>
           </div>
           <p className="russian-sip-counter" role="status">
             Calls answered: {prankCount}. Do not miss the next call.
@@ -245,6 +269,8 @@ export default function RussianEgg({ close }: { close: () => void }) {
             )}
           </div>
         </div>
+      )}
+        </>
       )}
     </section>
   );
