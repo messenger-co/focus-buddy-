@@ -4,7 +4,7 @@ import {
   createTankState, stepTank, TANK_DURATION, TANK_HEIGHT, TANK_WIDTH,
   type TankInput, type TankPhase, type TankState,
 } from "./tankGame";
-import { drawTankGame } from "./tankPaint";
+import { drawTankGame, USA_TANK_FLAG_URL } from "./tankPaint";
 import "./tankDefense.css";
 
 type View = {
@@ -30,6 +30,7 @@ const arrowKeys:Record<string,Direction> = {
 export default function TankDefense({ onExit }: { onExit:()=>void }) {
   const state=useRef(createTankState());
   const canvas=useRef<HTMLCanvasElement>(null);
+  const enemyFlag=useRef<HTMLImageElement|null>(null);
   const held=useRef(new Set<Direction>());
   const firing=useRef(false);
   const aim=useRef({x:450,y:40});
@@ -38,6 +39,21 @@ export default function TankDefense({ onExit }: { onExit:()=>void }) {
   const [effects,setEffects]=useState(true);
   const previousUpdate=useRef(0);
   const renderedPhase=useRef<TankPhase>("ready");
+
+  // Preload the exact usa flag.webp once. Never request the image per enemy/frame.
+  useEffect(() => {
+    const image = new Image();
+    image.decoding = "async";
+    image.crossOrigin = "anonymous";
+    image.onload = () => { enemyFlag.current = image; };
+    image.onerror = () => { enemyFlag.current = null; };
+    image.src = USA_TANK_FLAG_URL;
+    return () => {
+      image.onload = null;
+      image.onerror = null;
+      enemyFlag.current = null;
+    };
+  }, []);
 
   function start() {
     state.current=createTankState();
@@ -146,7 +162,7 @@ export default function TankDefense({ onExit }: { onExit:()=>void }) {
       }
       stepTank(game,input,dt);
       drawing.setTransform(surface.width/TANK_WIDTH,0,0,surface.height/TANK_HEIGHT,0,0);
-      drawTankGame(drawing,game,input,time/1000,effects);
+      drawTankGame(drawing,game,input,time/1000,effects,enemyFlag.current);
       if(time-previousUpdate.current>135 || game.phase!==renderedPhase.current){
         renderedPhase.current=game.phase;
         previousUpdate.current=time;
@@ -184,7 +200,7 @@ export default function TankDefense({ onExit }: { onExit:()=>void }) {
         <div>
           <span className="tank-eyebrow">★ ЗИМНИЙ РУБЕЖ · 1943 ★</span>
           <h2>THE WINTER FRONT</h2>
-          <p>Fictional Soviet winter defense • Five brutal waves • No gore or extremist symbols</p>
+          <p>Fictional Soviet winter defense • Five waves of flag-bearing enemy tanks • No gore</p>
         </div>
         <div className="tank-header-buttons">
           <button type="button" onClick={()=>setEffects(x=>!x)}
@@ -200,7 +216,7 @@ export default function TankDefense({ onExit }: { onExit:()=>void }) {
       </div>
       <div className="tank-board">
         <canvas ref={canvas} className="tank-canvas"
-          role="img" aria-label="Winter battlefield: tank defending an outpost against advancing infantry"
+          role="img" aria-label="Winter battlefield: tank defending an outpost against enemy tanks carrying USA flags"
           onPointerMove={pointerAim}
           onPointerDown={event=>{
             pointerAim(event);
@@ -231,7 +247,7 @@ export default function TankDefense({ onExit }: { onExit:()=>void }) {
                 view.phase==="won"?"ПОБЕДА!":"МИССИЯ ПРОВАЛЕНА"}
               </h3>
               <p>{view.phase==="ready"
-                ?"DEFEND THE OUTPOST! Enemy infantry advances in increasingly fast waves. Move the tank, aim, and fire. Survive 95 seconds."
+                ?"DEFEND THE OUTPOST! Enemy tanks carrying USA flags advance in increasingly hard waves. Move, aim and defend the outpost for 95 seconds."
                 :view.phase==="paused"?"Take a short break. The battle is frozen."
                 :view.phase==="won"?"You survived all five winter waves. Impressive!"
                 :"Your tank or the outpost was overwhelmed. Try again!"}
@@ -290,8 +306,8 @@ export default function TankDefense({ onExit }: { onExit:()=>void }) {
         </button>
       </div>
       <p className="tank-game-note">
-        Original arcade fiction inspired by a snowy 1943 eastern-front setting. Opponents use
-        neutral grey cross markings, with no Nazi symbols. No gore, cloud saves or purchases.
+        Fictional alternate-history winter arcade: opposing tanks use the exact usa flag.webp
+        image from the repository. Not a historical depiction. No gore, cloud saves or purchases.
         The game pauses when its tab is hidden.
       </p>
     </div>
