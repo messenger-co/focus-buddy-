@@ -9,3 +9,4 @@ export const SPECIAL_TRACK = "YTSave.to_YouTube_Media_QiFBgtgUtfw_ТРИ-ПОЛ�
 const ROOT = "https://raw.githubusercontent.com/messenger-co/focus-buddy-/main/";
 export const trackUrl = ROOT + encodeURIComponent(SPECIAL_TRACK + ".m4a");
 export const callerImageUrl = ROOT + "image.png";
+export const meowImageUrl = ROOT + "meowpng.webp";
