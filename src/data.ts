@@ -34,7 +34,7 @@ export const THEMES = [
   { id: "dusk", name: "Chạng vạng", tones: ["#554465", "#b59ac8", "#efc6aa"] },
   { id: "sakura", name: "Hoa anh đào", tones: ["#8a4d70", "#dda6c9", "#ffe9f1"] },
   { id: "cocoa", name: "Cà phê ấm", tones: ["#5b4334", "#c6aa8e", "#f5eadb"] },
-  { id: "starlight", name: "Ngân hà dịu", tones: ["#4d557e", "#a8b6e1", "#eff0ff"] },
+  { id: "starlight", name: "Đêm sao dịu", tones: ["#4d557e", "#a8b6e1", "#eff0ff"] },
   { id: "frost", name: "Băng tuyết", tones: ["#2e6076", "#a0d5db", "#e8f6fb"] },
   { id: "sunrise", name: "Bình minh", tones: ["#925748", "#e6b488", "#fff1c9"] },
 ] as const;
