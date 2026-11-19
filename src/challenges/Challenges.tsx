@@ -21,7 +21,7 @@ function loadRun(): ChallengeRun | null {
     if (!stored || typeof stored !== "object") return null;
     const data = stored as Partial<ChallengeRun>;
     if (!CHALLENGES.some((challenge) => challenge.id === data.id) ||
-        !Number.isFinite(data.startedAt) || !Array.isArray(data.answers) ||
+        (typeof data.startedAt !== "number" || !Number.isFinite(data.startedAt)) || !Array.isArray(data.answers) ||
         !Array.isArray(data.marks) || !["writing", "review"].includes(data.phase || "")) return null;
     return {
       id: data.id!,
