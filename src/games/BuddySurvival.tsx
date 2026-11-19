@@ -139,7 +139,7 @@ export default function BuddySurvival({ profile }: { profile: Profile }) {
   useEffect(() => {
     const handler = (event: KeyboardEvent) => {
       const target = event.target as HTMLElement | null;
-      if (target?.closest("input, textarea, select, [contenteditable=true], button")) return;
+      if (target?.closest("input, textarea, select, [contenteditable=true]")) return;
       const direction = DIRECTIONS[event.code];
       if (direction) { event.preventDefault(); move(...direction); }
       else if (event.code === "KeyE") { event.preventDefault(); gather(); }
