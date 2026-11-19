@@ -674,7 +674,7 @@ function App() {
         {chat && <ChatModal buddy={buddy} close={() => setChat(false)} />}
         {russianEgg && (
           <Suspense fallback={<div className="russian-egg-loading" role="status">Открываем секретный режим…</div>}>
-            <RussianEgg profile={buddy.progress.profile} close={() => setRussianEgg(false)} />
+            <RussianEgg close={() => setRussianEgg(false)} />
           </Suspense>
         )}
       </div>
