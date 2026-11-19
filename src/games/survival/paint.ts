@@ -199,6 +199,7 @@ export function drawIsland(
   const sunY=height*.14;
   ellipse(ctx,sunX,sunY,46,46,evening?"#ffe4be57":"#fff4c875");
   ellipse(ctx,sunX,sunY,24,24,evening?"#ffe4b3":"#fff8d6");
+  const placedBlocks = new Map(world.placed.map((b) => [keyOf(b.x, b.y), b]));
   const radius=Math.min(26,Math.ceil(Math.max(width/64,height/32)/2)+8);
   // Painter's algorithm: back rows first, each tile owns its scenery objects.
   const xmin=Math.max(0,Math.floor(camX-radius)),xmax=Math.min(WORLD_SIZE-1,Math.ceil(camX+radius));
@@ -215,7 +216,16 @@ export function drawIsland(
       tileFace(ctx,point.x,point.y,t,time,rich);
       const base=point.y-elevation+9;
       const built=projectSite(x,y);
-      if(built!==-1 && built<world.projects)building(ctx,point.x,base,built,time);
+      const placed=placedBlocks.get(keyOf(x,y));
+      if(placed) {
+        const colors=placed.material==="wood"
+          ? {top:"#f0ce94",left:"#bf8955",right:"#936141",edge:"#ffe4b3"}
+          : {top:"#dce6e5",left:"#8ca9a9",right:"#678c9b",edge:"#f4f8f2"};
+        box(ctx,point.x,base,20,23,colors);
+        line(ctx,placed.material==="wood"?"#ffe4b184":"#ffffff80",2,
+          [point.x-12,base-11,point.x-4,base-8,point.x+4,base-12]);
+      }
+      else if(built!==-1 && built<world.projects)building(ctx,point.x,base,built,time);
       else if(x===HOME&&y===HOME)campfire(ctx,point.x,base,time,rich);
       else if(!world.harvested.includes(keyOf(x,y)) && t.object){
         resourceObject(ctx,point.x,base,t.object,x*137+y*67,time,rich);
@@ -253,6 +263,10 @@ export function drawMiniMap(ctx:Ctx,width:number,height:number,world:WorldSave){
         t.terrain==="rock"?"#9fa9a7":t.object==="tree"||t.object==="pine"?"#4c9870":"#91c37c";
       ctx.fillRect(x*scale,y*scale,scale+0.1,scale+0.1);
     }
+  }
+  for(const b of world.placed){
+    ctx.fillStyle=b.material==="wood"?"#b88154":"#dce5e7";
+    ctx.fillRect(b.x*scale,b.y*scale,scale+0.2,scale+0.2);
   }
   for(let i=0;i<world.projects;i++){
     const p=PROJECTS[i];
