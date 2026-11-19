@@ -10,6 +10,7 @@ type TankVisual = { root:THREE.Group; turret:THREE.Group };
 export type Tank3DRenderer = {
   draw: (state:TankState,input:TankInput,time:number) => void;
   resize: (width:number,height:number) => void;
+  pick: (u:number,v:number) => {x:number;y:number};
   dispose: () => void;
 };
 const rnd=(n:number)=>{const x=Math.sin(n*78.233)*43758.5453;return x-Math.floor(x);};
@@ -273,6 +274,15 @@ export function createTank3D(mount:HTMLElement):Tank3DRenderer {
     }
     renderer.render(scene,camera);
   }
+  const raycaster=new THREE.Raycaster();
+  const surfacePlane=new THREE.Plane(new THREE.Vector3(0,1,0),0);
+  const hit=new THREE.Vector3();
+  function pick(u:number,v:number){
+    raycaster.setFromCamera(new THREE.Vector2(u*2-1,1-v*2),camera);
+    const point=raycaster.ray.intersectPlane(surfacePlane,hit);
+    if(!point)return {x:TANK_WIDTH/2,y:30};
+    return {x:point.x*34+TANK_WIDTH/2,y:point.z*27+TANK_HEIGHT/2};
+  }
   function dispose(){
     renderer.dispose();
     // Shared geometries/materials from scene and unique meshes released.
@@ -289,5 +299,5 @@ export function createTank3D(mount:HTMLElement):Tank3DRenderer {
     flagMaterial.map?.dispose();
     renderer.domElement.remove();
   }
-  return {draw,resize,dispose};
+  return {draw,resize,pick,dispose};
 }
