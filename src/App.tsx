@@ -45,7 +45,15 @@ import {
   X,
 } from "lucide-react";
 import FocusPage from "./focus3/FocusPage";
-import { clockText, elapsedMs, faceMs, latestBreak, sessionMinutes, studyReward, type FocusPlan } from "./focus3/model";
+import {
+  clockText,
+  elapsedMs,
+  faceMs,
+  latestBreak,
+  sessionMinutes,
+  studyReward,
+  type FocusPlan,
+} from "./focus3/model";
 import { useBuddy, vietnamDay } from "./state";
 import Assistant from "./ai3/Assistant";
 import {
@@ -55,16 +63,16 @@ import {
   type CompanionColor,
   type Mood,
 } from "./data";
-import {Palette, Box as BoxIcon} from "lucide-react";
-import {MotionConfig} from "motion/react";
-import {palette,paletteLibrary} from "./foundation/themes";
-import {useAppearance} from "./foundation/appearance";
-import {english as inEnglish} from "./foundation/language";
+import { Palette, Box as BoxIcon } from "lucide-react";
+import { MotionConfig } from "motion/react";
+import { palette, paletteLibrary } from "./foundation/themes";
+import { useAppearance } from "./foundation/appearance";
+import { english as inEnglish } from "./foundation/language";
 import Boundary from "./foundation/Boundary";
 import StudyNook from "./foundation/StudyNook";
-const ThemeStudio=lazy(()=>import("./foundation/ThemeStudio"));
-const World=lazy(()=>import("./world3/World"));
-const Journal=lazy(()=>import("./foundation/Journal"));
+const ThemeStudio = lazy(() => import("./foundation/ThemeStudio"));
+const World = lazy(() => import("./world3/World"));
+const Journal = lazy(() => import("./foundation/Journal"));
 const Games = lazy(() => import("./games/Games"));
 const Music = lazy(() => import("./music/Music"));
 const Challenges = lazy(() => import("./challenges/Challenges"));
@@ -87,12 +95,18 @@ const navItems = [
 ];
 const number = (n: number) => n.toLocaleString("vi-VN");
 const today = () => vietnamDay();
-function useNow() {
-  const [now, setNow] = useState(Date.now());
+function useNow(ticking: boolean) {
+  const [now, setNow] = useState(Date.now);
   useEffect(() => {
-    const id = setInterval(() => setNow(Date.now()), 1000);
-    return () => clearInterval(id);
-  }, []);
+    const update = () => setNow(Date.now());
+    update();
+    const id = setInterval(update, ticking ? 1000 : 60_000);
+    document.addEventListener("visibilitychange", update);
+    return () => {
+      clearInterval(id);
+      document.removeEventListener("visibilitychange", update);
+    };
+  }, [ticking]);
   return now;
 }
 function timerText(ms: number) {
@@ -206,11 +220,15 @@ function Modal({
 function App() {
   const buddy = useBuddy();
   const appearance = useAppearance();
-  const dark=Boolean(paletteLibrary.find(t=>t[0]===buddy.progress.profile.theme)?.[3]);
-  useEffect(()=>{document.documentElement.dataset.motion=appearance.motion; document.documentElement.dataset.palette=dark?"dark":"light";},[appearance.motion,dark]);
+  const dark = Boolean(
+    paletteLibrary.find((t) => t[0] === buddy.progress.profile.theme)?.[3],
+  );
+  useEffect(() => {
+    document.documentElement.dataset.motion = appearance.motion;
+    document.documentElement.dataset.palette = dark ? "dark" : "light";
+  }, [appearance.motion, dark]);
   const navigate = useNavigate();
   const location = useLocation();
-  const now = useNow();
   const [menu, setMenu] = useState(false);
   const [settings, setSettings] = useState(false);
   const [chat, setChat] = useState(false);
@@ -221,15 +239,24 @@ function App() {
   const active = buddy.progress.focus_sessions.find(
     (s) => s.status === "active",
   );
-  const remaining = active ? faceMs(active,now) : 1200000;
   const rest = latestBreak(buddy.progress.focus_sessions);
-  const restLeft=rest ? Math.max(0,Date.parse(rest.break_ends_at!)-now):0;
-  const notifiedBreak=useRef("");
-  useEffect(()=>{
-    if(!rest || restLeft>0 || notifiedBreak.current===rest.id)return;
-    notifiedBreak.current=rest.id;
-    if(now-Date.parse(rest.break_ends_at!)<60000)setToast("Giờ nghỉ đã kết thúc. Bàn học đang chờ bạn.");
-  },[rest?.id,restLeft]);
+  const now = useNow(
+    Boolean(
+      (active && !active.paused_at) ||
+      (rest && Date.parse(rest.break_ends_at!) > Date.now()),
+    ),
+  );
+  const remaining = active ? faceMs(active, now) : 1200000;
+  const restLeft = rest
+    ? Math.max(0, Date.parse(rest.break_ends_at!) - now)
+    : 0;
+  const notifiedBreak = useRef("");
+  useEffect(() => {
+    if (!rest || restLeft > 0 || notifiedBreak.current === rest.id) return;
+    notifiedBreak.current = rest.id;
+    if (now - Date.parse(rest.break_ends_at!) < 60000)
+      setToast("Giờ nghỉ đã kết thúc. Bàn học đang chờ bạn.");
+  }, [rest?.id, restLeft]);
   const act = async (fn: () => Promise<unknown>, message?: string) => {
     setBusy(true);
     try {
@@ -252,11 +279,17 @@ function App() {
     return () => clearTimeout(id);
   }, [toast]);
   useEffect(() => {
-    if (active && !active.paused_at && active.mode!=="stopwatch" && remaining <= 0 && completed.current !== active.id) {
+    if (
+      active &&
+      !active.paused_at &&
+      active.mode !== "stopwatch" &&
+      remaining <= 0 &&
+      completed.current !== active.id
+    ) {
       completed.current = active.id;
       void act(
         () => buddy.completeFocus(),
-        `Đã hoàn thành phiên học · +${studyReward(elapsedMs(active,now))} điểm.`,
+        `Đã hoàn thành phiên học · +${studyReward(elapsedMs(active, now))} điểm.`,
       );
     }
   }, [active?.id, remaining]);
@@ -266,7 +299,7 @@ function App() {
       setSleepy(false);
       navigate("/tap-trung");
     });
-  const start=()=>startWithPlan();
+  const start = () => startWithPlan();
   const checkIn = (mood: Mood) =>
     act(
       () => buddy.checkIn(mood),
@@ -281,284 +314,351 @@ function App() {
         (item.to !== "/" && location.pathname.startsWith(item.to + "/")),
     )?.label || "Góc của bạn";
   return (
-    <MotionConfig reducedMotion={appearance.motion==="off"||appearance.motion==="minimal"?"always":"user"}><div
-      data-theme={buddy.progress.profile.theme} data-palette={dark?"dark":"light"} data-motion={appearance.motion} data-backdrop={appearance.backdrop}
-      style={palette(buddy.progress.profile.theme,appearance.accent) as CSSProperties}
-      className={`app ${active ? "focus-active" : ""}`}
+    <MotionConfig
+      reducedMotion={
+        appearance.motion === "off" || appearance.motion === "minimal"
+          ? "always"
+          : "user"
+      }
     >
-      <a className="skip-link" href="#main-content" onClick={e=>{e.preventDefault();document.getElementById("main-content")?.focus();}}>Bỏ qua điều hướng</a>
-      {menu && (
-        <button
-          className="sidebar-scrim"
-          aria-label="Đóng trình đơn"
-          onClick={() => setMenu(false)}
-        />
-      )}
-      <aside className={`sidebar ${menu ? "sidebar-open" : ""}`}>
-        <NavLink to="/" className="brand">
-          <span className="brand-mark">
-            <Sprout size={25} />
-          </span>
-          <span>
-            Bạn Đồng Hành<small>CÙNG BẠN MỖI NGÀY</small>
-          </span>
-        </NavLink>
-        <div className="sidebar-label">KHÔNG GIAN HỌC TẬP</div>
-        <nav aria-label="Điều hướng chính">
-          {navItems.map(({ to, icon: Icon, label }) => (
-            <NavLink
-              key={to}
-              to={to}
-              end={to === "/"}
-              className={({ isActive }) =>
-                `nav-item ${isActive ? "selected" : ""}`
-              }
-            >
-              <Icon size={19} strokeWidth={1.7} />
-              <span>{label}</span>
-              {to === "/tap-trung" && active && <span className="live-dot" />}
-            </NavLink>
-          ))}
-        </nav>
-        <div className="sidebar-bottom">
-          <div className="gentle-note">
-            <Flower2 size={24} />
-            <p>
-              Mỗi bước nhỏ đều
-              <br />
-              là một bước tiến.
-            </p>
-            <span>Bạn đang làm rất tốt rồi.</span>
-          </div>
-          <button className="nav-item" onClick={() => setSettings(true)}>
-            <Settings size={19} />
-            <span>Cài đặt & tài khoản</span>
-          </button>
-          <div className="sidebar-profile">
-            <span className="avatar">
-              <Leaf size={21} />
+      <div
+        data-theme={buddy.progress.profile.theme}
+        data-palette={dark ? "dark" : "light"}
+        data-motion={appearance.motion}
+        data-backdrop={appearance.backdrop}
+        style={
+          palette(
+            buddy.progress.profile.theme,
+            appearance.accent,
+          ) as CSSProperties
+        }
+        className={`app ${active ? "focus-active" : ""}`}
+      >
+        <a
+          className="skip-link"
+          href="#main-content"
+          onClick={(e) => {
+            e.preventDefault();
+            document.getElementById("main-content")?.focus();
+          }}
+        >
+          Bỏ qua điều hướng
+        </a>
+        {menu && (
+          <button
+            className="sidebar-scrim"
+            aria-label="Đóng trình đơn"
+            onClick={() => setMenu(false)}
+          />
+        )}
+        <aside className={`sidebar ${menu ? "sidebar-open" : ""}`}>
+          <NavLink to="/" className="brand">
+            <span className="brand-mark">
+              <Sprout size={25} />
             </span>
-            <div>
-              <strong>{buddy.progress.profile.display_name}</strong>
-              <small>
-                Cấp {buddy.progress.profile.level} · Mầm nhỏ chăm chỉ
-              </small>
-            </div>
-            <button
-              className="icon-button"
-              aria-label="Mở tài khoản"
-              onClick={() => setSettings(true)}
-            >
-              <ChevronRight size={16} />
-            </button>
-          </div>
-        </div>
-      </aside>
-      <div className="workspace">
-        <header className="topbar">
-          <div className="breadcrumb">
-            <button
-              className="icon-button mobile-menu"
-              aria-label="Mở trình đơn"
-              onClick={() => setMenu(true)}
-            >
-              <Menu size={21} />
-            </button>
-            <span>Không gian học tập</span>
-            <ChevronRight size={14} />
-            <strong>{page}</strong>
-          </div>
-          <div className="topbar-right">
-            <span
-              className={`mode-tag ${buddy.mode === "online" ? "online" : ""}`}
-            >
-              <span />
-              Lưu trên thiết bị
+            <span>
+              Bạn Đồng Hành<small>CÙNG BẠN MỖI NGÀY</small>
             </span>
-            <button
-              className="avatar small"
-              onClick={() => setSettings(true)}
-              aria-label="Tài khoản của bạn"
-            >
-              <Leaf size={17} />
+          </NavLink>
+          <div className="sidebar-label">KHÔNG GIAN HỌC TẬP</div>
+          <nav aria-label="Điều hướng chính">
+            {navItems.map(({ to, icon: Icon, label }) => (
+              <NavLink
+                key={to}
+                to={to}
+                end={to === "/"}
+                className={({ isActive }) =>
+                  `nav-item ${isActive ? "selected" : ""}`
+                }
+              >
+                <Icon size={19} strokeWidth={1.7} />
+                <span>{label}</span>
+                {to === "/tap-trung" && active && <span className="live-dot" />}
+              </NavLink>
+            ))}
+          </nav>
+          <div className="sidebar-bottom">
+            <div className="gentle-note">
+              <Flower2 size={24} />
+              <p>
+                Mỗi bước nhỏ đều
+                <br />
+                là một bước tiến.
+              </p>
+              <span>Bạn đang làm rất tốt rồi.</span>
+            </div>
+            <button className="nav-item" onClick={() => setSettings(true)}>
+              <Settings size={19} />
+              <span>Cài đặt & tài khoản</span>
             </button>
+            <div className="sidebar-profile">
+              <span className="avatar">
+                <Leaf size={21} />
+              </span>
+              <div>
+                <strong>{buddy.progress.profile.display_name}</strong>
+                <small>
+                  Cấp {buddy.progress.profile.level} · Mầm nhỏ chăm chỉ
+                </small>
+              </div>
+              <button
+                className="icon-button"
+                aria-label="Mở tài khoản"
+                onClick={() => setSettings(true)}
+              >
+                <ChevronRight size={16} />
+              </button>
+            </div>
           </div>
-        </header>
-        <main id="main-content" tabIndex={-1}>
-          {buddy.loading && (
-            <div className="inline-notice">
-              <LoaderCircle size={16} className="spin" /> Đang tải góc học tập
-              của bạn…
+        </aside>
+        <div className="workspace">
+          <header className="topbar">
+            <div className="breadcrumb">
+              <button
+                className="icon-button mobile-menu"
+                aria-label="Mở trình đơn"
+                onClick={() => setMenu(true)}
+              >
+                <Menu size={21} />
+              </button>
+              <span>Không gian học tập</span>
+              <ChevronRight size={14} />
+              <strong>{page}</strong>
             </div>
-          )}
-          {buddy.error && (
-            <div className="inline-notice error" role="alert">
-              {buddy.error}
+            <div className="topbar-right">
+              <span
+                className={`mode-tag ${buddy.mode === "online" ? "online" : ""}`}
+              >
+                <span />
+                Lưu trên thiết bị
+              </span>
+              <button
+                className="avatar small"
+                onClick={() => setSettings(true)}
+                aria-label="Tài khoản của bạn"
+              >
+                <Leaf size={17} />
+              </button>
             </div>
-          )}
-          <Boundary key={location.pathname}><Routes>
-            <Route
-              path="/"
-              element={
-                <Dashboard
-                  buddy={buddy}
-                  now={now}
-                  sleepy={sleepy}
-                  setSleepy={setSleepy}
-                  busy={busy}
-                  start={start}
-                  checkIn={checkIn}
-                  remaining={remaining}
-                  openChat={() => setChat(true)}
-                />
-              }
-            />
-            <Route
-              path="/tap-trung"
-              element={
-                <FocusPage
-                  buddy={buddy}
-                  now={now}
-                  busy={busy}
-                  start={startWithPlan}
-                  cancel={() =>
-                    act(
-                      () => buddy.cancelFocus(),
-                      "Phiên đã kết thúc. Hãy quay lại khi bạn sẵn sàng.",
-                    )
-                  }
-                  finish={() =>
-                    act(
-                      () => buddy.completeFocus(),
-                      "Đã lưu phiên tập trung.",
-                    )
+          </header>
+          <main id="main-content" tabIndex={-1}>
+            {buddy.loading && (
+              <div className="inline-notice">
+                <LoaderCircle size={16} className="spin" /> Đang tải góc học tập
+                của bạn…
+              </div>
+            )}
+            {buddy.error && (
+              <div className="inline-notice error" role="alert">
+                {buddy.error}
+              </div>
+            )}
+            <Boundary key={location.pathname}>
+              <Routes>
+                <Route
+                  path="/"
+                  element={
+                    <Dashboard
+                      buddy={buddy}
+                      now={now}
+                      sleepy={sleepy}
+                      setSleepy={setSleepy}
+                      busy={busy}
+                      start={start}
+                      checkIn={checkIn}
+                      remaining={remaining}
+                      openChat={() => setChat(true)}
+                    />
                   }
                 />
-              }
-            />
-            <Route
-              path="/nhiem-vu"
-              element={<MissionsPage buddy={buddy} busy={busy} />}
-            />
-            <Route
-              path="/ban-dong-hanh"
-              element={
-                <Suspense
-                  fallback={
-                    <div className="inline-notice">
-                      Đang mở khu vườn của bạn…
+                <Route
+                  path="/tap-trung"
+                  element={
+                    <FocusPage
+                      buddy={buddy}
+                      now={now}
+                      busy={busy}
+                      start={startWithPlan}
+                      cancel={() =>
+                        act(
+                          () => buddy.cancelFocus(),
+                          "Phiên đã kết thúc. Hãy quay lại khi bạn sẵn sàng.",
+                        )
+                      }
+                      finish={() =>
+                        act(
+                          () => buddy.completeFocus(),
+                          "Đã lưu phiên tập trung.",
+                        )
+                      }
+                    />
+                  }
+                />
+                <Route
+                  path="/nhiem-vu"
+                  element={<MissionsPage buddy={buddy} busy={busy} />}
+                />
+                <Route
+                  path="/ban-dong-hanh"
+                  element={
+                    <Suspense
+                      fallback={
+                        <div className="inline-notice">
+                          Đang mở khu vườn của bạn…
+                        </div>
+                      }
+                    >
+                      <BuddyStudio
+                        profile={buddy.progress.profile}
+                        paused={!!active}
+                        onSave={(changes) =>
+                          buddy.savePreferences({
+                            ...buddy.progress.profile,
+                            ...changes,
+                          })
+                        }
+                      />
+                    </Suspense>
+                  }
+                />
+                <Route
+                  path="/tro-choi/:slug?"
+                  element={
+                    <Suspense fallback={<p>Đang mở trò chơi…</p>}>
+                      <>
+                        {rest && (
+                          <NavLink className="f3-break-banner" to="/tap-trung">
+                            <Clock3 size={17} />
+                            {restLeft > 0
+                              ? `Giờ nghỉ còn ${clockText(restLeft)}`
+                              : "Hết giờ nghỉ. Trở lại bàn học"}
+                            <ArrowRight size={16} />
+                          </NavLink>
+                        )}
+                        <Games
+                          profile={buddy.progress.profile}
+                          countdown={
+                            active
+                              ? clockText(
+                                  remaining,
+                                  active.mode === "stopwatch",
+                                )
+                              : null
+                          }
+                        />
+                      </>
+                    </Suspense>
+                  }
+                />
+                <Route
+                  path="/thu-thach"
+                  element={
+                    <Suspense fallback={<p>Đang mở thử thách…</p>}>
+                      <Challenges />
+                    </Suspense>
+                  }
+                />
+                <Route
+                  path="/am-nhac"
+                  element={
+                    <Suspense fallback={<p>Đang mở góc âm nhạc…</p>}>
+                      <Music />
+                    </Suspense>
+                  }
+                />
+                <Route
+                  path="/thao-luan"
+                  element={
+                    <Suspense fallback={<p>Đang mở phòng thảo luận…</p>}>
+                      <Discussion />
+                    </Suspense>
+                  }
+                />
+                <Route
+                  path="/hanh-trinh"
+                  element={<ProgressPage buddy={buddy} />}
+                />
+                <Route
+                  path="/giao-dien"
+                  element={
+                    <Suspense fallback={<p>Đang tải giao diện…</p>}>
+                      <ThemeStudio
+                        theme={buddy.progress.profile.theme}
+                        onTheme={(theme) =>
+                          act(() =>
+                            buddy.savePreferences({
+                              ...buddy.progress.profile,
+                              theme,
+                            }),
+                          )
+                        }
+                      />
+                    </Suspense>
+                  }
+                />
+                <Route
+                  path="/the-gioi-3d/*"
+                  element={
+                    <Suspense fallback={<p>Đang mở phòng học…</p>}>
+                      <World profile={buddy.progress.profile} />
+                    </Suspense>
+                  }
+                />
+                <Route
+                  path="*"
+                  element={
+                    <div className="empty-state">
+                      <Sprout size={40} />
+                      <h1>Về góc học tập của bạn nhé</h1>
+                      <p>
+                        Trang này chưa có. Những điều thú vị vẫn đang chờ bạn ở
+                        trang chính.
+                      </p>
+                      <NavLink className="button primary" to="/">
+                        Trở về
+                      </NavLink>
                     </div>
                   }
-                >
-                  <BuddyStudio
-                    profile={buddy.progress.profile}
-                    paused={!!active}
-                    onSave={(changes) =>
-                      buddy.savePreferences({
-                        ...buddy.progress.profile,
-                        ...changes,
-                      })
-                    }
-                  />
-                </Suspense>
-              }
-            />
-            <Route
-              path="/tro-choi/:slug?"
-              element={
-                <Suspense fallback={<p>Đang mở trò chơi…</p>}>
-                  <>
-                  {rest && <NavLink className="f3-break-banner" to="/tap-trung"><Clock3 size={17}/>{restLeft>0?`Giờ nghỉ còn ${clockText(restLeft)}`:"Hết giờ nghỉ. Trở lại bàn học"}<ArrowRight size={16}/></NavLink>}
-                  <Games
-                    profile={buddy.progress.profile}
-                    countdown={active ? clockText(remaining,active.mode==="stopwatch") : null}
-                  /></>
-                </Suspense>
-              }
-            />
-            <Route
-              path="/thu-thach"
-              element={
-                <Suspense fallback={<p>Đang mở thử thách…</p>}>
-                  <Challenges />
-                </Suspense>
-              }
-            />
-            <Route
-              path="/am-nhac"
-              element={
-                <Suspense fallback={<p>Đang mở góc âm nhạc…</p>}>
-                  <Music />
-                </Suspense>
-              }
-            />
-            <Route
-              path="/thao-luan"
-              element={
-                <Suspense fallback={<p>Đang mở phòng thảo luận…</p>}>
-                  <Discussion />
-                </Suspense>
-              }
-            />
-            <Route
-              path="/hanh-trinh"
-              element={<ProgressPage buddy={buddy} />}
-            />
-            <Route path="/giao-dien" element={<Suspense fallback={<p>Đang tải giao diện…</p>}><ThemeStudio theme={buddy.progress.profile.theme} onTheme={theme=>act(()=>buddy.savePreferences({...buddy.progress.profile,theme}))}/></Suspense>}/>
-            <Route path="/the-gioi-3d/*" element={<Suspense fallback={<p>Đang mở phòng học…</p>}><World profile={buddy.progress.profile}/></Suspense>}/>
-            <Route
-              path="*"
-              element={
-                <div className="empty-state">
-                  <Sprout size={40} />
-                  <h1>Về góc học tập của bạn nhé</h1>
-                  <p>
-                    Trang này chưa có. Những điều thú vị vẫn đang chờ bạn ở
-                    trang chính.
-                  </p>
-                  <NavLink className="button primary" to="/">
-                    Trở về
-                  </NavLink>
-                </div>
-              }
-            />
-          </Routes></Boundary>
-          <footer className="page-footer">
-            <Sprout size={14} />
-            <span>
-              Không cần hoàn hảo. Chỉ cần tiến bộ hơn một chút mỗi ngày.
-            </span>
-            <span className="footer-version">Focus Buddy · 3.0</span>
-          </footer>
-        </main>
-      </div>
-      {!chat &&
-        !location.pathname.startsWith("/the-gioi-3d") &&
-        location.pathname !== "/thao-luan" &&
-        !location.pathname.startsWith("/tro-choi/") && (
-          <button className="chat-launch" onClick={() => setChat(true)}>
-            <Sparkles size={18} />
-            <span>Trò chuyện cùng bạn</span>
-          </button>
-        )}
-      {toast && (
-        <div className="toast" role="status">
-          <CheckCheck size={20} />
-          <span>{toast}</span>
-          <button
-            className="icon-button"
-            aria-label="Đóng thông báo"
-            onClick={() => setToast("")}
-          >
-            <X size={16} />
-          </button>
+                />
+              </Routes>
+            </Boundary>
+            <footer className="page-footer">
+              <Sprout size={14} />
+              <span>
+                Không cần hoàn hảo. Chỉ cần tiến bộ hơn một chút mỗi ngày.
+              </span>
+              <span className="footer-version">Focus Buddy · 3.0</span>
+            </footer>
+          </main>
         </div>
-      )}
-      {settings && (
-        <SettingsModal buddy={buddy} close={() => setSettings(false)} />
-      )}
-      {chat && <ChatModal buddy={buddy} close={() => setChat(false)} />}
-    </div></MotionConfig>
+        {!chat &&
+          !location.pathname.startsWith("/the-gioi-3d") &&
+          location.pathname !== "/thao-luan" &&
+          !location.pathname.startsWith("/tro-choi/") && (
+            <button className="chat-launch" onClick={() => setChat(true)}>
+              <Sparkles size={18} />
+              <span>Trò chuyện cùng bạn</span>
+            </button>
+          )}
+        {toast && (
+          <div className="toast" role="status">
+            <CheckCheck size={20} />
+            <span>{toast}</span>
+            <button
+              className="icon-button"
+              aria-label="Đóng thông báo"
+              onClick={() => setToast("")}
+            >
+              <X size={16} />
+            </button>
+          </div>
+        )}
+        {settings && (
+          <SettingsModal buddy={buddy} close={() => setSettings(false)} />
+        )}
+        {chat && <ChatModal buddy={buddy} close={() => setChat(false)} />}
+      </div>
+    </MotionConfig>
   );
 }
 function PageTitle({
@@ -612,7 +712,7 @@ function Dashboard({
     (s) => s.status === "completed",
   );
   const mood = buddy.progress.check_ins.find((c) => c.day === today());
-  const useWidgets=useAppearance().widgets.join(" ");
+  const visibleWidgets = useAppearance().widgets.join(" ");
   const companionName =
     buddy.progress.profile.buddy_name ||
     COMPANIONS.find((c) => c.id === buddy.progress.profile.companion)?.name ||
@@ -621,7 +721,7 @@ function Dashboard({
     <>
       <PageTitle
         eyebrow="MỘT NGÀY MỚI, MỘT KHỞI ĐẦU NHỎ"
-        title={`${inEnglish?"Hello":"Chào"} ${buddy.progress.profile.display_name},`}
+        title={`${inEnglish ? "Hello" : "Chào"} ${buddy.progress.profile.display_name},`}
         description="Hôm nay, mình cùng tiến bộ một chút nhé."
       >
         <div className="date-chip">
@@ -647,7 +747,9 @@ function Dashboard({
         <Stat
           icon={<Clock3 size={21} />}
           label="Thời gian đã tập trung"
-          value={number(sessions.reduce((sum,s)=>sum+sessionMinutes(s),0))}
+          value={number(
+            sessions.reduce((sum, s) => sum + sessionMinutes(s), 0),
+          )}
           unit="phút"
           color="mint"
         />
@@ -659,8 +761,18 @@ function Dashboard({
           color="lavender"
         />
       </div>
-      <div className="desk-links"><NavLink to="/the-gioi-3d"><BoxIcon size={18}/> Khám phá phòng 3D <ChevronRight size={15}/></NavLink><NavLink to="/ban-dong-hanh"><Heart size={18}/> Ghé xưởng Buddy <ChevronRight size={15}/></NavLink><NavLink to="/giao-dien"><Palette size={18}/> Đổi giao diện <ChevronRight size={15}/></NavLink></div>
-      <div className="dashboard-grid" data-widgets={useWidgets}>
+      <div className="desk-links">
+        <NavLink to="/the-gioi-3d">
+          <BoxIcon size={18} /> Khám phá phòng 3D <ChevronRight size={15} />
+        </NavLink>
+        <NavLink to="/ban-dong-hanh">
+          <Heart size={18} /> Ghé xưởng Buddy <ChevronRight size={15} />
+        </NavLink>
+        <NavLink to="/giao-dien">
+          <Palette size={18} /> Đổi giao diện <ChevronRight size={15} />
+        </NavLink>
+      </div>
+      <div className="dashboard-grid" data-widgets={visibleWidgets}>
         <div className="dashboard-main">
           <section className="focus-hero">
             <div className="hero-copy">
@@ -687,7 +799,9 @@ function Dashboard({
               </h2>
               <p>
                 {active
-                  ? active.mode==="stopwatch"?`Đã học ${clockText(remaining,true)} trong phiên bấm giờ.`:`Còn ${timerText(remaining)} để hoàn thành mục tiêu hôm nay.`
+                  ? active.mode === "stopwatch"
+                    ? `Đã học ${clockText(remaining, true)} trong phiên bấm giờ.`
+                    : `Còn ${timerText(remaining)} để hoàn thành mục tiêu hôm nay.`
                   : "Gác lại những xao nhãng. Cùng người bạn nhỏ hoàn thành điều bạn muốn làm."}
               </p>
               <button
@@ -703,7 +817,9 @@ function Dashboard({
                 <Sparkles size={13} /> Hoàn thành phiên · +50 điểm
               </span>
             </div>
-            <StudyNook><BuddyArt buddy={buddy} sleepy={sleepy} size={190}/></StudyNook>
+            <StudyNook>
+              <BuddyArt buddy={buddy} sleepy={sleepy} size={190} />
+            </StudyNook>
           </section>
           <section className="card missions-card">
             <div className="section-heading">
@@ -1130,7 +1246,9 @@ function ProgressPage({ buddy }: { buddy: Buddy }) {
           </p>
         )}
       </section>
-      <Suspense fallback={null}><Journal/></Suspense>
+      <Suspense fallback={null}>
+        <Journal />
+      </Suspense>
       <div className="section-heading standalone">
         <h2>Những dấu mốc đáng nhớ</h2>
         <Award size={22} />
@@ -1240,8 +1358,21 @@ function SettingsModal({ buddy, close }: { buddy: Buddy; close: () => void }) {
   );
 }
 function ChatModal({ buddy, close }: { buddy: Buddy; close: () => void }) {
-  return <Modal title={document.documentElement.lang.startsWith("en") ? "Study with Buddy" : "Mình cùng gỡ rối nhé"} close={close} wide>
-    <Assistant configured={buddy.apiConfigured} profile={buddy.progress.profile}/>
-  </Modal>;
+  return (
+    <Modal
+      title={
+        document.documentElement.lang.startsWith("en")
+          ? "Study with Buddy"
+          : "Mình cùng gỡ rối nhé"
+      }
+      close={close}
+      wide
+    >
+      <Assistant
+        configured={buddy.apiConfigured}
+        profile={buddy.progress.profile}
+      />
+    </Modal>
+  );
 }
 export default App;

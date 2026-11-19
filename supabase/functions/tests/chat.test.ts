@@ -203,10 +203,7 @@ test("ẩn lỗi chi tiết và bí mật từ nhà cung cấp AI", async () => 
   const response = await handleRequest(request(), env, async (url) =>
     String(url).includes("supabase")
       ? Response.json({ id: USER_ID })
-      : Response.json(
-          { error: `debug ${env.GROQ_API_KEY}` },
-          { status: 403 },
-        ),
+      : Response.json({ error: `debug ${env.GROQ_API_KEY}` }, { status: 403 }),
   );
   assert.equal(response.status, 502);
   assert.ok(!(await response.text()).includes(env.GROQ_API_KEY));
@@ -268,6 +265,7 @@ test("kiểm tra sức khỏe không công khai cấu hình hoặc khóa", async
   );
   assert.deepEqual(await response.json(), {
     ready: true,
+    studyModes: true,
     model: env.GROQ_MODEL,
     message: "Trợ lý đã sẵn sàng.",
   });
@@ -345,4 +343,48 @@ test("lỗi chính sách dữ liệu được giải thích an toàn, không l�
   assert.match(text, /chưa trả lời được/);
   assert.ok(!text.includes(env.GROQ_API_KEY));
   assert.ok(!text.includes("debug="));
+});
+
+test("chế độ thẻ ghi nhớ dùng hướng dẫn phía máy chủ và đúng mô hình", async () => {
+  const body = {
+    mode: "cards",
+    language: "en",
+    messages: [{ role: "user", content: "Photosynthesis" }],
+  };
+  let providerCalls = 0;
+  const res = await handleRequest(request(body), env, async (url, init) => {
+    if (String(url).includes("supabase")) return Response.json({ id: USER_ID });
+    assert.equal(
+      String(url),
+      "https://api.groq.com/openai/v1/chat/completions",
+    );
+    const payload = JSON.parse(String(init?.body));
+    assert.equal(payload.model, CHAT_MODEL);
+    assert.match(payload.messages[0].content, /sáu thẻ ghi nhớ/);
+    assert.match(payload.messages[0].content, /Respond in clear English/);
+    assert.equal(payload.max_tokens, LIMITS.maxOutputTokens);
+    providerCalls++;
+    return new Response("data: [DONE]\n\n", {
+      headers: { "Content-Type": "text/event-stream" },
+    });
+  });
+  await res.text();
+  assert.equal(res.status, 200);
+  assert.equal(providerCalls, 1);
+});
+test("từ chối chế độ không hỗ trợ trước khi dùng hạn mức", async () => {
+  for (const options of [
+    { mode: "custom" },
+    { mode: "constructor" },
+    { language: "other" },
+  ]) {
+    const response = await handleRequest(
+      request({ ...options, messages: [{ role: "user", content: "Chào" }] }),
+      env,
+      async () => {
+        throw Error("Yêu cầu không được rời máy chủ");
+      },
+    );
+    assert.equal(response.status, 400);
+  }
 });

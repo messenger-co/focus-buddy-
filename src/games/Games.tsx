@@ -1,3 +1,4 @@
+import { useGameSound } from "./useGameSound";
 import { lazy, Suspense, useEffect, useRef, useState } from "react";
 import { Link, Navigate, useParams } from "react-router-dom";
 import {
@@ -37,11 +38,20 @@ import {
 } from "./puzzles";
 import "./games.css";
 import { expeditions } from "./arcade/boards";
-import { LevelPicker, LevelCount, levelKey, recordScore } from "./levels";
+import {
+  LevelPicker,
+  LevelCount,
+  levelKey,
+  readScore,
+  recordScore,
+} from "./levels";
 import "./game-depth.css";
 import { adventures } from "./arcade/courses";
 import { AdventureShelf } from "./arcade/Gallery";
 const Expedition = lazy(() => import("./arcade/Expedition"));
+import { clubGames } from "./club/catalog";
+import "./club/club.css";
+const Club = lazy(() => import("./club/Club"));
 const Adventure = lazy(() => import("./arcade/Adventure"));
 const BuddyGarden = lazy(() => import("./BuddyGarden"));
 const BuddyRunner = lazy(() => import("./BuddyRunner"));
@@ -83,9 +93,9 @@ function Cover({ id }: { id: GameId }) {
     </div>
   );
 }
-type PlayProps = { finish: () => void; level: number };
+type PlayProps = { finish: () => void; level: number; paused: boolean };
 
-function MemoryGame({ finish, level }: PlayProps) {
+function MemoryGame({ finish, level, paused }: PlayProps) {
   const target = pairsAt(level);
   const [deck] = useState(() => {
     const faces = Array.from({ length: target }, (_, i) => i);
@@ -96,10 +106,10 @@ function MemoryGame({ finish, level }: PlayProps) {
   const [feedback, setFeedback] = useState("Lật một thẻ để bắt đầu.");
   const mismatch = flipped.length === 2;
   useEffect(() => {
-    if (!mismatch) return;
+    if (!mismatch || paused) return;
     const id = setTimeout(() => setFlipped([]), 1050);
     return () => clearTimeout(id);
-  }, [mismatch]);
+  }, [mismatch, paused]);
   function pick(index: number) {
     const value = deck[index];
     if (mismatch || flipped.includes(index) || pairs.includes(value)) return;
@@ -424,7 +434,17 @@ function PlayTable({ id, profile }: { id: GameId; profile: Profile }) {
   const [done, setDone] = useState(false);
   const [level, setLevel] = useState(0);
   const started = useRef(performance.now());
+  const [paused, setPaused] = useState(false);
+  const pausedAt = useRef(0);
+  const { audio, sound, toggleSound } = useGameSound();
+  function togglePause() {
+    const now = performance.now();
+    if (paused) started.current += now - pausedAt.current;
+    else pausedAt.current = now;
+    setPaused(!paused);
+  }
   function restart(next: number) {
+    setPaused(false);
     started.current = performance.now();
     setLevel(next);
     setVersion((v) => v + 1);
@@ -449,6 +469,7 @@ function PlayTable({ id, profile }: { id: GameId; profile: Profile }) {
   const game = gameShelf.find((g) => g.id === id)!;
   const Game = games[id];
   const Icon = icons[id];
+  const best = readScore(levelKey(id, level));
   return (
     <section className={`play-table activity-${id}`}>
       <div className="play-header">
@@ -468,6 +489,26 @@ function PlayTable({ id, profile }: { id: GameId; profile: Profile }) {
           if (i !== level) restart(i);
         }}
       />
+      <div className="club-toolbar">
+        <button
+          className="button secondary"
+          aria-pressed={audio}
+          onClick={toggleSound}
+        >
+          {audio ? "Tắt âm" : "Bật âm"}
+        </button>
+        {!done && (
+          <>
+            <button className="button secondary" onClick={togglePause}>
+              {paused ? "Tiếp tục chơi" : "Tạm dừng"}
+            </button>
+            <button className="button secondary" onClick={() => restart(level)}>
+              Chơi lại
+            </button>
+          </>
+        )}
+        {best && <span>Kỷ lục: {Math.round(best.seconds * 10) / 10} giây</span>}
+      </div>
       {done ? (
         <div className="game-result">
           <Companion
@@ -505,7 +546,10 @@ function PlayTable({ id, profile }: { id: GameId; profile: Profile }) {
       ) : (
         <>
           <p className="game-instructions">{game.detail}</p>
-          <Game key={version} level={level} finish={finish} />
+          {paused && <p role="status">Ván chơi đang tạm dừng.</p>}
+          <div hidden={paused} onClick={() => sound()}>
+            <Game key={version} level={level} paused={paused} finish={finish} />
+          </div>
         </>
       )}
     </section>
@@ -521,25 +565,41 @@ export default function Games({
 }) {
   const { slug } = useParams();
   const [richEffects, setRichEffects] = useState(() => {
-    try { return localStorage.getItem("focus-buddy-rich-effects-v1") !== "off"; }
-    catch { return true; }
+    try {
+      return localStorage.getItem("focus-buddy-rich-effects-v1") !== "off";
+    } catch {
+      return true;
+    }
   });
   useEffect(() => {
-    try { localStorage.setItem("focus-buddy-rich-effects-v1", richEffects ? "on" : "off"); }
-    catch { /* Device storage is optional. */ }
+    try {
+      localStorage.setItem(
+        "focus-buddy-rich-effects-v1",
+        richEffects ? "on" : "off",
+      );
+    } catch {
+      /* Device storage is optional. */
+    }
   }, [richEffects]);
   const selected = gameShelf.find((g) => g.id === slug);
   const expedition = expeditions.find((g) => g.slug === slug);
   const adventure = adventures.find((g) => g.slug === slug);
+  const club = clubGames.find((g) => g.slug === slug);
   const buddyGarden = slug === "vuon-buddy";
   const buddyRunner = slug === "buddy-run";
-  if (slug === "dao-xanh") return <Navigate replace to="/tro-choi"/>;
+  if (slug === "dao-xanh") return <Navigate replace to="/tro-choi" />;
   return (
     <div className={`games-page ${richEffects ? "fx-rich" : "fx-lite"}`}>
       <div className="game-graphics-bar">
-        <span><Sparkles size={17}/> Hình ảnh 2.5D · Chiều sâu, ánh sáng và chuyển động</span>
-        <button type="button" aria-pressed={richEffects}
-          onClick={() => setRichEffects((current) => !current)}>
+        <span>
+          <Sparkles size={17} /> Hình ảnh 2.5D · Chiều sâu, ánh sáng và chuyển
+          động
+        </span>
+        <button
+          type="button"
+          aria-pressed={richEffects}
+          onClick={() => setRichEffects((current) => !current)}
+        >
           {richEffects ? "Hiệu ứng: Bật" : "Hiệu ứng: Tối giản"}
         </button>
       </div>
@@ -550,19 +610,28 @@ export default function Games({
           <ArrowRight size={16} />
         </Link>
       )}
-      {selected || adventure || expedition || buddyGarden || buddyRunner ? (
+      {selected ||
+      adventure ||
+      expedition ||
+      buddyGarden ||
+      buddyRunner ||
+      club ? (
         <>
           <Link className="back-to-shelf" to="/tro-choi">
             <ArrowLeft size={16} />
             Tất cả trò chơi
           </Link>
-          {buddyRunner ? (
+          {club ? (
+            <Suspense fallback={<p>Đang mở trò chơi…</p>}>
+              <Club key={club.slug} entry={club} profile={profile} />
+            </Suspense>
+          ) : buddyRunner ? (
             <Suspense fallback={<p>Đang mở đường chạy Buddy…</p>}>
-              <BuddyRunner profile={profile}/>
+              <BuddyRunner profile={profile} />
             </Suspense>
           ) : buddyGarden ? (
             <Suspense fallback={<p>Đang mở vườn hoa…</p>}>
-              <BuddyGarden profile={profile}/>
+              <BuddyGarden profile={profile} />
             </Suspense>
           ) : expedition || adventure ? (
             <Suspense fallback={<p>Đang mở đường chơi…</p>}>
@@ -598,17 +667,51 @@ export default function Games({
             </p>
           </header>
           <Link className="garden-promo" to="/tro-choi/vuon-buddy">
-            <span className="garden-promo-icon"><Flower2 size={31}/></span>
-            <span><small>TRÒ CHƠI CÙNG BUDDY · 1 PHÚT</small><strong>Vườn hoa lấp lánh</strong><em>Tìm 10 bông hoa phát sáng. Một cuộc phiêu lưu nhỏ trong giờ nghỉ!</em></span>
-            <ArrowRight size={21}/>
+            <span className="garden-promo-icon">
+              <Flower2 size={31} />
+            </span>
+            <span>
+              <small>TRÒ CHƠI CÙNG BUDDY · 1 PHÚT</small>
+              <strong>Vườn hoa lấp lánh</strong>
+              <em>
+                Tìm 10 bông hoa phát sáng. Một cuộc phiêu lưu nhỏ trong giờ
+                nghỉ!
+              </em>
+            </span>
+            <ArrowRight size={21} />
           </Link>
           <div className="buddy-big-games">
-            <Link to="/tro-choi/buddy-run" className="buddy-feature-game runner-feature">
-              <span className="buddy-feature-emoji" aria-hidden="true">🏃</span>
-              <div><small>NHẢY · THỬ PHẢN XẠ · CẤP ĐỘ TĂNG DẦN</small><h2>Buddy Runner</h2><p>Trò chơi giống khủng long offline, nhưng chính Buddy của bạn chạy và nhảy. Có kỷ lục lưu cục bộ.</p><span>Chơi ngay <ArrowRight size={15}/></span></div>
+            <Link
+              to="/tro-choi/buddy-run"
+              className="buddy-feature-game runner-feature"
+            >
+              <span className="buddy-feature-emoji" aria-hidden="true">
+                🏃
+              </span>
+              <div>
+                <small>NHẢY · THỬ PHẢN XẠ · CẤP ĐỘ TĂNG DẦN</small>
+                <h2>Buddy Runner</h2>
+                <p>
+                  Trò chơi giống khủng long offline, nhưng chính Buddy của bạn
+                  chạy và nhảy. Có kỷ lục lưu cục bộ.
+                </p>
+                <span>
+                  Chơi ngay <ArrowRight size={15} />
+                </span>
+              </div>
             </Link>
           </div>
           <AdventureShelf profile={profile} />
+          <h2 className="shelf-caption">Câu lạc bộ Buddy</h2>
+          <div className="club-shelf">
+            {clubGames.map((g) => (
+              <Link key={g.slug} to={`/tro-choi/${g.slug}`}>
+                <i aria-hidden="true">{g.mark}</i>
+                <strong>{g.title}</strong>
+                <small>{g.group}</small>
+              </Link>
+            ))}
+          </div>
           <h2 className="shelf-caption">Thử thách nhanh</h2>
           <div className="game-shelf">
             {gameShelf.map((game) => (

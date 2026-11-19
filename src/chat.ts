@@ -5,7 +5,10 @@ import type { StudyMode } from "../supabase/functions/chat/modes";
 export type ChatOptions = { mode: StudyMode; language: "vi" | "en" };
 export class ChatRateLimitError extends Error {
   retryAfter: number;
-  constructor(message: string, seconds: number) {super(message);this.retryAfter=seconds;}
+  constructor(message: string, seconds: number) {
+    super(message);
+    this.retryAfter = seconds;
+  }
 }
 
 export const CHAT_MODEL = "openai/gpt-oss-120b";
@@ -13,7 +16,10 @@ export const CHAT_MODEL = "openai/gpt-oss-120b";
 export type ChatMessage = { role: "user" | "assistant"; content: string };
 
 /** Giữ ngữ cảnh gần nhất trong hạn mức của Edge Function, luôn giữ nguyên câu hỏi mới. */
-export function prepareChatMessages(messages: ChatMessage[], options?: ChatOptions): ChatMessage[] {
+export function prepareChatMessages(
+  messages: ChatMessage[],
+  options?: ChatOptions,
+): ChatMessage[] {
   const last = messages.at(-1);
   if (!last || last.role !== "user" || !last.content.trim())
     throw new Error("Bạn viết câu hỏi trước khi gửi nhé.");
@@ -38,7 +44,13 @@ export function prepareChatMessages(messages: ChatMessage[], options?: ChatOptio
       .byteLength > 24000
   )
     selected.shift();
-  if (new TextEncoder().encode(JSON.stringify({ ...options, messages: selected })).byteLength > 24000) throw new Error("Câu hỏi vượt quá dung lượng cho phép. Bạn hãy rút gọn nội dung.");
+  if (
+    new TextEncoder().encode(JSON.stringify({ ...options, messages: selected }))
+      .byteLength > 24000
+  )
+    throw new Error(
+      "Câu hỏi vượt quá dung lượng cho phép. Bạn hãy rút gọn nội dung.",
+    );
   return selected;
 }
 
@@ -182,7 +194,12 @@ export async function streamChat(
     }
     if (response.status === 429) {
       const retry = Number(response.headers.get("Retry-After"));
-      throw new ChatRateLimitError(message, Number.isFinite(retry) && retry > 0 ? Math.min(86400,Math.ceil(retry)) : 60);
+      throw new ChatRateLimitError(
+        message,
+        Number.isFinite(retry) && retry > 0
+          ? Math.min(86400, Math.ceil(retry))
+          : 60,
+      );
     }
     throw new Error(message);
   }
@@ -197,7 +214,12 @@ export async function streamChat(
 export async function getChatReadiness(
   endpoint = apiConfigured ? `${apiBaseUrl}/chat/health` : "",
   fetcher: typeof fetch = fetch,
-): Promise<{ ready: boolean; message: string; model?: string }> {
+): Promise<{
+  ready: boolean;
+  message: string;
+  model?: string;
+  studyModes?: boolean;
+}> {
   if (!endpoint)
     return {
       ready: false,
@@ -213,7 +235,11 @@ export async function getChatReadiness(
         message:
           "Hàm trò chuyện chưa được triển khai. Chủ trang cần triển khai hàm chat và thêm khóa Groq trong Supabase Secrets.",
       };
-    const data = (await response.json()) as { ready?: boolean; model?: string };
+    const data = (await response.json()) as {
+      ready?: boolean;
+      model?: string;
+      studyModes?: boolean;
+    };
     if (response.ok && data.ready === true && data.model !== CHAT_MODEL)
       return {
         ready: false,
@@ -223,6 +249,7 @@ export async function getChatReadiness(
     return response.ok && data.ready === true
       ? {
           ready: true,
+          ...(data.studyModes === true ? { studyModes: true } : {}),
           message: "Đã kết nối dịch vụ AI.",
           model: typeof data.model === "string" ? data.model : undefined,
         }

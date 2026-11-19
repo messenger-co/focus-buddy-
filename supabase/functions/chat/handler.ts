@@ -124,8 +124,12 @@ function jsonError(
 
 function retrySeconds(value: string | null): number {
   if (!value) return 60;
-  const wait = /^\d+$/.test(value) ? Number(value) : (Date.parse(value) - Date.now()) / 1000;
-  return Number.isFinite(wait) && wait > 0 ? Math.min(86400, Math.ceil(wait)) : 60;
+  const wait = /^\d+$/.test(value)
+    ? Number(value)
+    : (Date.parse(value) - Date.now()) / 1000;
+  return Number.isFinite(wait) && wait > 0
+    ? Math.min(86400, Math.ceil(wait))
+    : 60;
 }
 
 const INTERRUPTED_EVENT = `data: ${JSON.stringify({ error: { message: "Phản hồi bị gián đoạn. Bạn hãy thử lại." } })}\n\ndata: [DONE]\n\n`;
@@ -333,7 +337,7 @@ export async function handleRequest(
     return new Response(
       JSON.stringify({
         ready,
-        ...(ready ? { model: env.GROQ_MODEL } : {}),
+        ...(ready ? { model: env.GROQ_MODEL, studyModes: true } : {}),
         message: ready
           ? "Trợ lý đã sẵn sàng."
           : "Trợ lý chưa được cấu hình đầy đủ.",
@@ -368,10 +372,15 @@ export async function handleRequest(
     messages = validateMessages(body);
     const options = body as Record<string, unknown>;
     if (options.mode !== undefined) {
-      if (!isMode(options.mode)) throw new InputError("Chế độ học chưa được hỗ trợ.");
+      if (!isMode(options.mode))
+        throw new InputError("Chế độ học chưa được hỗ trợ.");
       mode = options.mode;
     }
-    if (options.language !== undefined && options.language !== "vi" && options.language !== "en")
+    if (
+      options.language !== undefined &&
+      options.language !== "vi" &&
+      options.language !== "en"
+    )
       throw new InputError("Ngôn ngữ trả lời chưa được hỗ trợ.");
     english = options.language === "en";
   } catch (error) {
@@ -399,7 +408,8 @@ export async function handleRequest(
       headers,
     );
 
-  if (request.signal.aborted) return jsonError("Đã dừng yêu cầu.", 408, headers);
+  if (request.signal.aborted)
+    return jsonError("Đã dừng yêu cầu.", 408, headers);
   try {
     const quota = env.QUOTA.consume(userId);
     if (!quota.allowed)
@@ -435,10 +445,19 @@ export async function handleRequest(
         },
         body: JSON.stringify({
           model: env.GROQ_MODEL,
-          messages: [{
-            role: "system",
-            content: [SYSTEM_PROMPT, english ? "Respond in clear English." : "Trả lời bằng tiếng Việt rõ ràng, có dấu.", instructions[mode]].join("\n"),
-          }, ...messages],
+          messages: [
+            {
+              role: "system",
+              content: [
+                SYSTEM_PROMPT,
+                english
+                  ? "Respond in clear English."
+                  : "Trả lời bằng tiếng Việt rõ ràng, có dấu.",
+                instructions[mode],
+              ].join("\n"),
+            },
+            ...messages,
+          ],
           stream: true,
           max_tokens: LIMITS.maxOutputTokens,
           temperature: 0.65,
@@ -458,11 +477,13 @@ export async function handleRequest(
       request.signal.removeEventListener("abort", cancel);
       return jsonError(
         upstream.status === 429
-            ? "Trợ lý đang có nhiều người sử dụng. Bạn hãy thử lại sau."
-            : "Trợ lý chưa trả lời được. Người quản trị vui lòng kiểm tra mô hình và cấu hình dịch vụ AI.",
+          ? "Trợ lý đang có nhiều người sử dụng. Bạn hãy thử lại sau."
+          : "Trợ lý chưa trả lời được. Người quản trị vui lòng kiểm tra mô hình và cấu hình dịch vụ AI.",
         upstream.status === 429 ? 429 : 502,
         headers,
-        upstream.status === 429 ? retrySeconds(upstream.headers.get("Retry-After")) : undefined,
+        upstream.status === 429
+          ? retrySeconds(upstream.headers.get("Retry-After"))
+          : undefined,
       );
     }
     const reader = upstream.body.getReader();

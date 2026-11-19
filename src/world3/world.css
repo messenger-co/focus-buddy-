@@ -1,0 +1,129 @@
+.world-page {
+  max-width: 1040px;
+  margin: auto;
+  color: var(--text);
+}
+.world-title,
+.world-status,
+.world-objects,
+.world-actions,
+.world-decor,
+.world-camera,
+.world-camera > div,
+.world-inputs,
+.world-pad {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.world-title,
+.world-status,
+.world-camera {
+  justify-content: space-between;
+}
+.world-title {
+  margin-bottom: 14px;
+}
+.world-title h1 {
+  font-size: clamp(25px, 4vw, 40px);
+}
+.world-frame,
+.world-console,
+.world-decor {
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  overflow: hidden;
+  background: var(--panel);
+}
+.world-canvas {
+  position: relative;
+  height: clamp(255px, 38vw, 440px);
+  background: radial-gradient(ellipse at 50% 60%, #f3e6cd, #c6d9ce);
+  isolation: isolate;
+}
+.world-frame[data-night="true"] .world-canvas {
+  background: radial-gradient(ellipse at 50% 55%, #68647d, #2d394a);
+}
+.world-canvas canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+  touch-action: none;
+}
+.world-buddy {
+  position: absolute;
+  transform: translate(-50%, -97%);
+  pointer-events: none;
+}
+.world-buddy svg {
+  width: 100%;
+  height: 100%;
+}
+.world-camera,
+.world-status,
+.world-inputs,
+.world-decor,
+.world-objects {
+  padding: 10px;
+}
+.world-page button,
+.world-page select {
+  padding: 8px 11px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--panel);
+  color: var(--text);
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  min-height: 38px;
+}
+.world-page button[aria-pressed="true"] {
+  border-color: var(--highlight);
+  background: var(--study-pale);
+}
+.world-games {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(165px, 1fr));
+  gap: 10px;
+  margin-block: 12px;
+}
+.world-games button {
+  align-items: flex-start;
+  flex-direction: column;
+  text-align: left;
+  padding: 17px;
+  background: linear-gradient(125deg, var(--panel), var(--study-pale));
+}
+.world-games-heading,
+.world-decor {
+  margin-block: 15px;
+}
+.world-playfield {
+  position: relative;
+}
+.world-cover {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-content: center;
+  text-align: center;
+  justify-items: center;
+  background: #1c343a9e;
+  color: white;
+  gap: 8px;
+}
+.world-note,
+.world-fallback,
+.world-record {
+  padding: 6px 12px;
+}
+.world-loading {
+  position: absolute;
+  left: 12px;
+  top: 12px;
+}
+.world-back {
+  margin-bottom: 12px;
+}

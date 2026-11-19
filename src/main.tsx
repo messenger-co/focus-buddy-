@@ -15,7 +15,17 @@ import App from "./App";
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
     <HashRouter>
-      <Boundary><App /></Boundary>
+      <Boundary>
+        <App />
+      </Boundary>
     </HashRouter>
   </React.StrictMode>,
 );
+
+if (import.meta.env.PROD && "serviceWorker" in navigator) {
+  window.addEventListener("load", () => {
+    void navigator.serviceWorker
+      .register(import.meta.env.BASE_URL + "offline.js")
+      .catch(() => {});
+  });
+}

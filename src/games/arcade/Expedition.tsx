@@ -1,3 +1,4 @@
+import { useGameSound } from "../useGameSound";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import {
@@ -12,6 +13,8 @@ import {
   Play,
   RotateCcw,
   Undo2,
+  Volume2,
+  VolumeX,
 } from "lucide-react";
 import type { Profile } from "../../state";
 import { LevelPicker, levelKey, readScore, recordScore } from "../levels";
@@ -65,6 +68,7 @@ function BoardStage({
     );
   const [, refresh] = useState(0),
     [best, setBest] = useState(() => readScore(recordKey, b.gems.length));
+  const { audio, sound, toggleSound } = useGameSound();
   const shell = useRef<HTMLDivElement>(null),
     swipe = useRef<{ x: number; y: number; id: number } | null>(null);
   const river = b.mode === "river",
@@ -113,9 +117,10 @@ function BoardStage({
     begin();
   }
   function step(d: Direction) {
-    if (phase === "playing") moveBoard(b, run, d);
+    if (phase === "playing" && moveBoard(b, run, d)) sound(river ? 480 : 620);
   }
   function undo() {
+    shell.current?.focus({ preventScroll: true });
     if (!river && phase === "playing" && undoSlide(run)) refresh((v) => v + 1);
   }
   return (
@@ -162,6 +167,13 @@ function BoardStage({
             <Item size={16} />
             {bitCount(run.mask)} / {b.gems.length}
           </span>
+          <button
+            aria-label={audio ? "Tắt âm thanh" : "Bật âm thanh"}
+            aria-pressed={audio}
+            onClick={toggleSound}
+          >
+            {audio ? <Volume2 size={18} /> : <VolumeX size={18} />}
+          </button>
           {phase === "playing" && (
             <button aria-label="Tạm dừng trò chơi" onClick={pause}>
               <Pause size={18} />

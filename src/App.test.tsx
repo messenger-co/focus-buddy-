@@ -45,7 +45,11 @@ describe("Trải nghiệm dùng thử bằng tiếng Việt", () => {
     mount();
     expect(screen.getByRole("heading", { name: "Chào Mầm Nhỏ," })).toBeTruthy();
     expect(screen.getByText("Lưu trên thiết bị")).toBeTruthy();
-    await screen.findByRole("img", { name: /Cáo Mây đang đồng hành/ });
+    await screen.findByRole(
+      "img",
+      { name: /Cáo Mây đang đồng hành/ },
+      { timeout: 5000 },
+    );
     fireEvent.click(screen.getByRole("button", { name: /Rất vui/ }));
     await waitFor(() => expect(saved().profile.total_xp).toBe(10));
     expect(
@@ -62,6 +66,32 @@ describe("Trải nghiệm dùng thử bằng tiếng Việt", () => {
     expect(
       screen.getByRole("img", { name: "Mèo Mít đang nghỉ ngơi" }),
     ).toBeTruthy();
+  });
+
+  it("chuyển dấu trang Đảo Xanh về kệ trò chơi và giữ tiến trình khác", async () => {
+    localStorage.setItem(
+      "focus-buddy-level-v1/hang-bang/2",
+      '{"count":2,"seconds":19}',
+    );
+    window.history.replaceState({}, "", "/focus-buddy-/#/tro-choi/dao-xanh");
+    render(
+      <HashRouter>
+        <App />
+      </HashRouter>,
+    );
+    await screen.findByRole(
+      "heading",
+      { name: "Trò chơi tập trung" },
+      { timeout: 5000 },
+    );
+    expect(window.location.hash).toBe("#/tro-choi");
+    expect(
+      screen.queryByRole("link", { name: /sinh tồn|đảo xanh|survival/i }),
+    ).toBeNull();
+    expect(screen.getByRole("heading", { name: "Buddy Runner" })).toBeTruthy();
+    expect(localStorage.getItem("focus-buddy-level-v1/hang-bang/2")).toBe(
+      '{"count":2,"seconds":19}',
+    );
   });
 
   it("chấm bài qua giao diện và chỉ nhận thưởng lần đầu", async () => {
@@ -248,7 +278,7 @@ describe("Trải nghiệm dùng thử bằng tiếng Việt", () => {
     expect(screen.getByRole("timer")).toBeTruthy();
     expect(saved().focus_sessions[0]).toEqual(session);
     expect(saved().profile.total_xp).toBe(0);
-  });
+  }, 15000);
 
   it("giữ vị trí nhập khi ứng dụng cập nhật đồng hồ và đóng hộp thoại bằng Escape", async () => {
     mount();

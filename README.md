@@ -1,51 +1,38 @@
-# Triển khai trợ lý Groq
+# Focus Buddy 3.0
 
-Giao diện tiếng Việt chạy trên GitHub Pages tại https://messenger-co.github.io/focus-buddy-/ với base `/focus-buddy-/`. Tiến trình và bạn đồng hành lưu cục bộ; không dùng bảng dữ liệu học tập hoặc bảng xếp hạng.
+Học cùng một bạn nhỏ biết đọc sách, nhảy và ăn mừng khi bạn hoàn thành phiên tập trung. Mở [ứng dụng tiếng Việt](https://messenger-co.github.io/focus-buddy-/) trên máy tính hoặc điện thoại. Tiến trình, trang phục và kỷ lục trò chơi được lưu trong trình duyệt đang dùng.
 
-Chatbot dùng `openai/gpt-oss-120b` qua `https://api.groq.com/openai/v1/chat/completions`. Khi gửi câu hỏi cho AI, trình duyệt chỉ gọi Supabase Edge Function; khóa Groq chỉ được lưu phía máy chủ.
+- **Đồng hồ** có chín chế độ, mục tiêu, ghi chú và giờ nghỉ. Khi tải lại trang, đồng hồ tính tiếp theo mốc thời gian đã lưu. Trong giờ nghỉ, bạn có thể chủ động mở trò chơi rồi quay lại học.
+- **Bạn đồng hành** có phòng thử đồ, các lớp phụ kiện, vị trí tùy chỉnh, bộ đồ lưu sẵn và phản ứng cục bộ. Trang **Giao diện** cho đổi chủ đề, màu nhấn, nền và mức chuyển động.
+- **Trò chơi** có thử thách nhảy đảo, lượn qua vòng, vượt suối, giải đố hang băng, nhảy theo nhạc, luyện gõ, săn kho báu và nhiều hoạt động khác. Các trò theo chặng lưu kỷ lục riêng. Phòng 3D có năm trò, camera xoay và chế độ bản đồ 2D.
+- **Trợ lý** có 11 chế độ học, hỗ trợ trả lời bằng tiếng Việt hoặc tiếng Anh, dừng tạo câu trả lời và tùy chọn lưu lịch sử trên thiết bị. Groq chạy mô hình `openai/gpt-oss-120b` sau Supabase Edge Function. Phần điều hướng có tùy chọn tiếng Anh. Một số học liệu và trò chơi dùng tiếng Việt.
+- **Phòng học sinh** mở sẵn các đề tự học. Để tổ chức thảo luận trực tuyến, quản trị viên triển khai migration, phân công kiểm duyệt và mở dịch vụ theo hướng dẫn Supabase.
 
-Trong Supabase dự án `lrihuhrfsnmkwcvouudd`, bật Anonymous Sign-Ins và đặt Edge Function secrets:
+## Chạy tại máy
 
-- `GROQ_API_KEY`: khóa Groq riêng tư.
-- `GROQ_MODEL`: `openai/gpt-oss-120b`.
-- `ALLOWED_ORIGIN`: `https://messenger-co.github.io`.
+Dùng Node.js 22.12 trở lên. Từ thư mục gốc, chạy các lệnh sau.
 
-Không đưa khóa Groq vào Git hoặc biến Vite. Khóa publishable Supabase được phép dùng ở frontend. Biến GitHub Actions: `VITE_BASE_PATH=/focus-buddy-/`, `VITE_SUPABASE_URL=https://lrihuhrfsnmkwcvouudd.supabase.co`, `VITE_SUPABASE_PUBLISHABLE_KEY`.
-
-Từ thư mục gốc kho đã cập nhật:
-
-```bash
+```sh
 npm ci
-npm test
-npm run test:edge
-npm run build
-supabase login
-supabase functions deploy chat --project-ref lrihuhrfsnmkwcvouudd
+cp .env.example .env.local
+npm run dev
 ```
 
-GitHub Actions tự xuất bản giao diện khi push main; không tự triển khai Supabase. Người có quyền quản trị cần đặt secrets và triển khai hàm. Kiểm tra `/functions/v1/chat/health` trả đúng mô hình, sau đó thử câu hỏi thật bằng phiên khách.
+Điền URL và khóa **publishable** của dự án Supabase trong `.env.local` để thử tính năng trực tuyến. Đồng hồ, nhật ký, Buddy và các trò chơi dùng được ở chế độ cục bộ. Sau lần mở trực tuyến, trình duyệt hỗ trợ service worker có thể tải lại giao diện và hoạt động đã ghé khi mất mạng.
 
-Handler xác minh JWT qua Supabase Auth, kiểm tra nguồn và đầu vào, giới hạn 1.800 token, thời gian chờ 60 giây và che lỗi nhà cung cấp. Hạn mức RAM 20 lượt/người/giờ và 200 lượt/isolate/giờ không bền vững qua khởi động lại hoặc chia sẻ giữa isolate. Giới hạn và phí sử dụng phụ thuộc gói Groq; ứng dụng không bảo đảm miễn phí. Không tự chuyển mô hình hoặc nhà cung cấp.
+## Xuất bản lên GitHub Pages
 
-## Bạn đồng hành và trò chơi
+1. Chọn **GitHub Actions** ở **Settings → Pages → Build and deployment** của kho `messenger-co/focus-buddy-`.
+2. Trong **Settings → Secrets and variables → Actions → Variables**, đặt `VITE_BASE_PATH` thành `/focus-buddy-/`, `VITE_SUPABASE_URL` thành `https://lrihuhrfsnmkwcvouudd.supabase.co` và `VITE_SUPABASE_PUBLISHABLE_KEY` thành khóa công khai của dự án. Mọi biến Vite đã biên dịch đều có thể đọc được trong trình duyệt.
+3. Chạy các lệnh kiểm thử bên dưới rồi đẩy mã lên nhánh tính năng. Khi thay đổi vào `main`, workflow **Triển khai GitHub Pages** chạy kiểm thử, tạo bản dựng rồi xuất bản thư mục `dist`.
+4. Mở trang, tải lại một đường dẫn như `/#/tro-choi/hang-bang`, rồi mở đồng hồ trên điện thoại. Đường dẫn cũ của trò Đảo Xanh chuyển về kệ trò chơi. Hướng dẫn cấp quyền và triển khai dịch vụ phía máy chủ có trong [tài liệu Supabase](supabase/README.md).
 
-Mở **Bạn đồng hành** để chọn nhân vật và đặt tên. Thẻ **Phong cách** đổi khăn và phụ kiện. Trong thẻ **Không gian**, chọn chủ đề Đồng cỏ, Thủy triều hoặc Chạng vạng cho ứng dụng và chọn riêng cảnh nền của bạn nhỏ. Các lựa chọn được lưu cùng tiến trình trên trình duyệt.
+```sh
+npm test
+npm run test:edge
+npm run test:community
+VITE_BASE_PATH=/focus-buddy-/ npm run build
+npm run preview
+```
 
-Trong **Trò chơi tập trung**, bạn điều khiển chính bạn đồng hành đã chọn, với màu khăn và phụ kiện đang đeo. Mỗi trò phiêu lưu có ba chặng.
-
-- **Bước nhảy Đảo Mây** dùng phím trái/phải hoặc A/D để chạy. Nhấn phím Cách hoặc mũi tên lên để nhảy, nhấn lần nữa trên không để nhảy đôi. Bật nấm lò xo, đón đảo đang trôi và thu tinh thể trên đường đến cổng sao.
-- **Cánh lượn ngân hà** dùng phím Cách hoặc mũi tên lên để điều khiển cánh diều. Giữ để bay lên, thả để hạ xuống. Bay qua các vòng sáng và tránh mây giông để tới vạch đích.
-
-Điện thoại có các nút điều khiển ngay dưới khung chơi. Dùng nút tạm dừng hoặc phím Esc khi muốn nghỉ. Nếu trượt sau khi qua cờ giữa chặng, bạn sẽ tiếp tục ở cờ cùng số vật phẩm đã nhặt. Trình duyệt lưu kỷ lục riêng của mỗi chặng theo số vật phẩm, rồi theo thời gian về đích.
-
-Mục **Thử thách nhanh** có năm trò luyện trí nhớ, quan sát, chú ý, suy luận và ngôn ngữ. Bạn có thể mở bất kỳ trò nào từ đồng hồ rồi quay về. Đồng hồ vẫn đếm đến thời điểm kết thúc của phiên học.
-
-## Phòng thảo luận công khai
-
-Trang `/#/thao-luan` có ba phòng tiếng Việt. Khi học sinh chọn **Vào phòng**, trình duyệt đăng ký một kênh Broadcast công khai của Supabase Realtime trên WebSocket. Bạn cần biến Vite công khai của dự án Supabase và bật quyền truy cập kênh công khai trong cấu hình Realtime. Các phòng dùng luôn khóa publishable. Không có bước SQL hay triển khai Edge Function riêng cho tính năng này.
-
-Tin nhắn chỉ xuất hiện với người đang ở cùng phòng. Ứng dụng giữ tối đa 80 tin gần nhất trong bộ nhớ và xóa chúng khỏi màn hình khi rời phòng. Biệt danh được tạo cho lần mở trang. Trình duyệt ký từng tin bằng Web Crypto và kiểm tra chữ ký cùng tên phòng khi nhận. Một biệt danh đại diện cho một phiên trình duyệt. Phòng công khai cho phép mọi người có đường dẫn tham gia.
-
-Mỗi tin dài tối đa 320 ký tự. Ứng dụng giãn cách các lượt gửi ba giây và cho phép ẩn người gửi trên thẻ trình duyệt của mình. Đây là giới hạn phía trình duyệt. Phiên bản này chưa có kiểm duyệt viên hay chức năng cấm một người trên toàn dịch vụ. Tiến trình học tập và thông tin tài khoản không xuất hiện trong phòng.
-
-Để thử, mở cùng địa chỉ trong hai phiên trình duyệt độc lập, vào cùng một phòng, gửi rồi trả lời một câu hỏi. Đổi sang phòng khác để kiểm tra phân tách. Bản xem trước trên localhost dùng kênh riêng theo nguồn trang.
+Xem các tình huống kiểm tra tương tác trong [hướng dẫn kiểm thử](KIEM-THU.md).

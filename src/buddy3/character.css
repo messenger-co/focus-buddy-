@@ -1,13 +1,81 @@
-.companion-art[data-effect="glow"] {filter:drop-shadow(0 0 6px #d5ad74bd)}
-.buddy-moving .glint {transform-box:fill-box;transform-origin:center;animation:buddy-firefly 3.1s ease-in-out infinite alternate}
-.buddy-moving .glint-1 {animation-delay:-.9s}.buddy-moving .glint-2 {animation-delay:-1.7s}.buddy-moving .glint-3 {animation-delay:-2.2s}
-@keyframes buddy-firefly {from{transform:translateY(0) scale(.85);opacity:.65}to{transform:translateY(-7px) scale(1.07);opacity:1}}
-.buddy-moving:is([data-pose="celebrating"],[data-pose="dancing"],[data-pose="stretching"]) :is(.waving-paw,.buddy-left-paw) {transform-box:fill-box;transform-origin:50% 5%;animation:buddy-dance-arm .64s ease-in-out infinite alternate}
-.buddy-moving:is([data-pose="stretching"],[data-pose="waking"]) .waving-paw {animation-duration:1.9s}
-.buddy-moving .buddy-foot-left,.buddy-moving .buddy-foot-right {transform-box:fill-box;transform-origin:center}
-.buddy-moving:is([data-pose="walking"],[data-pose="dancing"],[data-pose="celebrating"]) :is(.buddy-foot-left,.buddy-foot-right){animation:buddy-step .38s ease-in-out infinite alternate}
-.buddy-moving .buddy-foot-right,.buddy-moving .buddy-left-paw {animation-direction:alternate-reverse!important}
-@keyframes buddy-dance-arm {from{transform:rotate(-16deg)}to{transform:rotate(44deg)}}
-@keyframes buddy-step {from{transform:translate(0,0) rotate(-4deg)}to{transform:translate(3px,-7px) rotate(10deg)}}
-@media(prefers-reduced-motion:reduce) {.companion-art *{animation:none!important}}
-html:is([data-motion="off"],[data-motion="minimal"]) .companion-art * {animation:none!important}
+.companion-art[data-effect="glow"] {
+  filter: drop-shadow(0 0 6px #d5ad74bd);
+}
+.buddy-moving .glint {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: buddy-firefly 3.1s ease-in-out infinite alternate;
+}
+.buddy-moving .glint-1 {
+  animation-delay: -0.9s;
+}
+.buddy-moving .glint-2 {
+  animation-delay: -1.7s;
+}
+.buddy-moving .glint-3 {
+  animation-delay: -2.2s;
+}
+@keyframes buddy-firefly {
+  from {
+    transform: translateY(0) scale(0.85);
+    opacity: 0.65;
+  }
+  to {
+    transform: translateY(-7px) scale(1.07);
+    opacity: 1;
+  }
+}
+.buddy-moving:is(
+    [data-pose="celebrating"],
+    [data-pose="dancing"],
+    [data-pose="stretching"]
+  )
+  :is(.waving-paw, .buddy-left-paw) {
+  transform-box: fill-box;
+  transform-origin: 50% 5%;
+  animation: buddy-dance-arm 0.64s ease-in-out infinite alternate;
+}
+.buddy-moving:is([data-pose="stretching"], [data-pose="waking"]) .waving-paw {
+  animation-duration: 1.9s;
+}
+.buddy-moving .buddy-foot-left,
+.buddy-moving .buddy-foot-right {
+  transform-box: fill-box;
+  transform-origin: center;
+}
+.buddy-moving:is(
+    [data-pose="walking"],
+    [data-pose="dancing"],
+    [data-pose="celebrating"]
+  )
+  :is(.buddy-foot-left, .buddy-foot-right) {
+  animation: buddy-step 0.38s ease-in-out infinite alternate;
+}
+.buddy-moving .buddy-foot-right,
+.buddy-moving .buddy-left-paw {
+  animation-direction: alternate-reverse !important;
+}
+@keyframes buddy-dance-arm {
+  from {
+    transform: rotate(-16deg);
+  }
+  to {
+    transform: rotate(44deg);
+  }
+}
+@keyframes buddy-step {
+  from {
+    transform: translate(0, 0) rotate(-4deg);
+  }
+  to {
+    transform: translate(3px, -7px) rotate(10deg);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .companion-art * {
+    animation: none !important;
+  }
+}
+html:is([data-motion="off"], [data-motion="minimal"]) .companion-art * {
+  animation: none !important;
+}

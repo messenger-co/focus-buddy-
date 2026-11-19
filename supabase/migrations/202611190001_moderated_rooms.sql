@@ -46,13 +46,13 @@ alter table public.fb_room_updates enable row level security;
 revoke all on public.fb_room_updates from public,anon,authenticated;
 grant select on public.fb_room_updates to authenticated;
 
-create function buddy_community.staff() returns boolean language sql stable security definer set search_path=pg_catalog,buddy_community as $$
+create function buddy_community.staff() returns boolean language sql stable security definer set search_path=pg_catalog,buddy_community,pg_temp as $$
  select exists(select 1 from moderators where account=auth.uid());
 $$;
-create function buddy_community.verified() returns boolean language sql stable security definer set search_path=pg_catalog,buddy_community as $$
+create function buddy_community.verified() returns boolean language sql stable security definer set search_path=pg_catalog,buddy_community,pg_temp as $$
  select exists(select 1 from auth.users where id=auth.uid() and not coalesce(is_anonymous,false) and email_confirmed_at is not null);
 $$;
-create function buddy_community.gate() returns uuid language plpgsql security definer set search_path=pg_catalog,buddy_community as $$
+create function buddy_community.gate() returns uuid language plpgsql security definer set search_path=pg_catalog,buddy_community,pg_temp as $$
 declare uid uuid:=auth.uid();
 begin
  if not (select enabled from settings) then raise exception 'Phòng đang đóng.';end if;
@@ -60,15 +60,15 @@ begin
  if exists(select 1 from profiles where account=uid and suspended_until>now()) then raise exception 'Tài khoản đang tạm ngừng thảo luận.';end if;
  return uid;
 end $$;
-create function buddy_community.accessible(r text) returns boolean language sql stable security definer set search_path=pg_catalog,buddy_community as $$
+create function buddy_community.accessible(r text) returns boolean language sql stable security definer set search_path=pg_catalog,buddy_community,pg_temp as $$
  select coalesce((select enabled from settings),false) and verified() and exists(
   select 1 from members m join profiles p on m.account=p.account join rooms rm on rm.id=m.room
   where m.account=auth.uid() and m.room=r and m.active and (not rm.private or m.invited) and (p.suspended_until is null or p.suspended_until<=now()));
 $$;
-create function public.fb_room_visible(p_room text) returns boolean language sql stable security definer set search_path=pg_catalog,buddy_community as $$select accessible(p_room)$$;
+create function public.fb_room_visible(p_room text) returns boolean language sql stable security definer set search_path=pg_catalog,buddy_community,pg_temp as $$select accessible(p_room)$$;
 create policy member_revision on public.fb_room_updates for select to authenticated using(public.fb_room_visible(room));
-create function buddy_community.touch(r text) returns void language sql set search_path=pg_catalog,buddy_community as $$ update public.fb_room_updates set revision=revision+1 where room=r $$;
-create function buddy_community.can_read(m messages) returns boolean language sql stable set search_path=pg_catalog,buddy_community as $$
+create function buddy_community.touch(r text) returns void language sql set search_path=pg_catalog,buddy_community,pg_temp as $$ update public.fb_room_updates set revision=revision+1 where room=r $$;
+create function buddy_community.can_read(m messages) returns boolean language sql stable set search_path=pg_catalog,buddy_community,pg_temp as $$
  select accessible(m.room) and (m.state='approved' or (m.author=auth.uid() and m.state='pending'))
  and not exists(select 1 from blocks where (owner=auth.uid() and target=m.author) or (target=auth.uid() and owner=m.author));
 $$;
@@ -80,13 +80,13 @@ begin
    or compact ~ '[0-9]{7}' then raise exception 'Hãy bỏ liên kết và thông tin liên hệ khỏi tin nhắn.';end if;
  return v;
 end $$;
-create function public.fb_community_status() returns jsonb language sql stable security definer set search_path=pg_catalog,buddy_community as $$
+create function public.fb_community_status() returns jsonb language sql stable security definer set search_path=pg_catalog,buddy_community,pg_temp as $$
  select jsonb_build_object('enabled',s.enabled,'verified',verified(),'moderator',staff(),'rooms',
  (select coalesce(jsonb_agg(jsonb_build_object('id',r.id,'name',r.name,'description',r.description,'private',r.private) order by r.id),'[]') from rooms r
  where not r.private or (s.enabled and exists(select 1 from members m where m.room=r.id and m.account=auth.uid() and m.invited))))
  from settings s;
 $$;
-create function public.fb_room_join(p_room text) returns jsonb language plpgsql security definer set search_path=pg_catalog,buddy_community as $$
+create function public.fb_room_join(p_room text) returns jsonb language plpgsql security definer set search_path=pg_catalog,buddy_community,pg_temp as $$
 declare uid uuid:=gate(); result jsonb;
 begin
  if not exists(select 1 from rooms r where r.id=p_room and (not r.private or exists(select 1 from members m where m.room=r.id and m.account=uid and m.invited))) then raise exception 'Phòng này không khả dụng.';end if;
@@ -95,8 +95,8 @@ begin
  select jsonb_build_object('alias',alias,'buddy',buddy,'theme',theme,'interest',interest) into result from profiles where account=uid;
  return result;
 end $$;
-create function public.fb_room_leave(p_room text) returns void language sql security definer set search_path=pg_catalog,buddy_community as $$update members set active=false where account=auth.uid() and room=p_room$$;
-create function public.fb_room_profile(p_alias text,p_buddy text,p_theme text,p_interest text) returns void language plpgsql security definer set search_path=pg_catalog,buddy_community as $$
+create function public.fb_room_leave(p_room text) returns void language sql security definer set search_path=pg_catalog,buddy_community,pg_temp as $$update members set active=false where account=auth.uid() and room=p_room$$;
+create function public.fb_room_profile(p_alias text,p_buddy text,p_theme text,p_interest text) returns void language plpgsql security definer set search_path=pg_catalog,buddy_community,pg_temp as $$
 declare uid uuid:=gate();
 begin
  if p_alias is null or p_alias !~ '^(Mây|Trúc|Lá|Sao|Mầm|Nắng) (Nhỏ|Xanh|Vui|Hiền|Sáng|Ấm)$'
@@ -104,7 +104,7 @@ begin
   or p_interest not in ('','Toán','Văn học','Ngoại ngữ','Khoa học','Nghệ thuật') then raise exception 'Hãy chọn trong danh mục hồ sơ.';end if;
  update profiles set alias=p_alias,buddy=p_buddy,theme=p_theme,interest=p_interest where account=uid;
 end $$;
-create function public.fb_room_feed(p_room text,p_search text default '') returns jsonb language plpgsql security definer set search_path=pg_catalog,buddy_community as $$
+create function public.fb_room_feed(p_room text,p_search text default '') returns jsonb language plpgsql security definer set search_path=pg_catalog,buddy_community,pg_temp as $$
 declare uid uuid:=gate(); result jsonb;
 begin
  if not accessible(p_room) then raise exception 'Hãy vào phòng trước.';end if;
@@ -120,7 +120,7 @@ begin
  return result;
 end $$;
 
-create function public.fb_room_send(p_room text,p_body text,p_reply uuid default null) returns uuid language plpgsql security definer set search_path=pg_catalog,buddy_community as $$
+create function public.fb_room_send(p_room text,p_body text,p_reply uuid default null) returns uuid language plpgsql security definer set search_path=pg_catalog,buddy_community,pg_temp as $$
 declare uid uuid:=gate(); msg text:=safe_body(p_body); mid uuid;
 begin
  if not accessible(p_room) then raise exception 'Hãy vào phòng trước.';end if;
@@ -139,7 +139,7 @@ begin
  update profiles set last_send=clock_timestamp(), sent_count=case when send_window<=now()-interval '1 hour' then 1 else sent_count+1 end, send_window=case when send_window<=now()-interval '1 hour' then now() else send_window end where account=uid; update rooms set last_send=clock_timestamp() where id=p_room;
  return mid;
 end $$;
-create function public.fb_room_feedback(p_message uuid,p_action text,p_value text default '') returns void language plpgsql security definer set search_path=pg_catalog,buddy_community as $$
+create function public.fb_room_feedback(p_message uuid,p_action text,p_value text default '') returns void language plpgsql security definer set search_path=pg_catalog,buddy_community,pg_temp as $$
 declare uid uuid:=gate(); m messages;
 begin
  select * into m from messages where id=p_message and state='approved';if m.id is null or not can_read(m) then raise exception 'Tin không khả dụng.';end if;
@@ -157,9 +157,9 @@ begin
    update profiles set last_reaction=clock_timestamp() where account=uid; perform touch(m.room);
  else raise exception 'Thao tác không hợp lệ.';end if;
 end $$;
-create function public.fb_room_delete(p_message uuid) returns void language plpgsql security definer set search_path=pg_catalog,buddy_community as $$
+create function public.fb_room_delete(p_message uuid) returns void language plpgsql security definer set search_path=pg_catalog,buddy_community,pg_temp as $$
 declare r text;begin delete from messages where author=auth.uid() and id=p_message returning room into r;perform touch(r);end $$;
-create function public.fb_room_erase() returns void language plpgsql security definer set search_path=pg_catalog,buddy_community as $$
+create function public.fb_room_erase() returns void language plpgsql security definer set search_path=pg_catalog,buddy_community,pg_temp as $$
 declare uid uuid:=auth.uid();r record;begin
  if uid is null then raise exception 'Cần đăng nhập.';end if;
  perform 1 from profiles where account=uid for update;
@@ -168,7 +168,7 @@ declare uid uuid:=auth.uid();r record;begin
  delete from reports where reporter=uid;delete from blocks where owner=uid;delete from reactions where account=uid;delete from members where account=uid;
  update profiles set alias='Mây Nhỏ',buddy='fox',theme='forest',interest='' where account=uid;
 end $$;
-create function public.fb_moderation_queue() returns jsonb language plpgsql security definer set search_path=pg_catalog,buddy_community as $$
+create function public.fb_moderation_queue() returns jsonb language plpgsql security definer set search_path=pg_catalog,buddy_community,pg_temp as $$
 begin
  if not staff() or not verified() then raise exception 'Chỉ người điều hành được truy cập.';end if;
  return (select coalesce(jsonb_agg(to_jsonb(q)),'[]') from (
@@ -177,7 +177,7 @@ begin
  where m.state='pending' or exists(select 1 from reports r where r.message=m.id and not resolved)
  order by exists(select 1 from reports r where r.message=m.id and not resolved) desc,m.created limit 100)q);
 end $$;
-create function public.fb_moderate(p_message uuid,p_action text) returns void language plpgsql security definer set search_path=pg_catalog,buddy_community as $$
+create function public.fb_moderate(p_message uuid,p_action text) returns void language plpgsql security definer set search_path=pg_catalog,buddy_community,pg_temp as $$
 declare m messages;begin
  if not staff() or not verified() then raise exception 'Chỉ người điều hành được truy cập.';end if;
  select * into m from messages where id=p_message for update;
@@ -196,7 +196,7 @@ declare m messages;begin
  insert into moderation_actions(moderator,message,action) values(auth.uid(),m.id,p_action);
  perform touch(m.room);
 end $$;
-create function buddy_community.prune() returns void language plpgsql security definer set search_path=pg_catalog,buddy_community as $$
+create function buddy_community.prune() returns void language plpgsql security definer set search_path=pg_catalog,buddy_community,pg_temp as $$
 begin
  delete from messages where created<now()-interval '30 days' or (state='pending' and created<now()-interval '7 days');
  delete from moderation_actions where created<now()-interval '90 days';

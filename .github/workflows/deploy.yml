@@ -30,7 +30,7 @@ jobs:
         run: npm ci
 
       - name: Kiểm thử
-        run: npm test && npm run test:edge
+        run: npm test && npm run test:edge && npm run test:community
 
       - name: Biên dịch trang tĩnh
         run: npm run build

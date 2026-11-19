@@ -1,47 +1,477 @@
-.app {--line:var(--study-line);--muted:var(--quiet);color:var(--text)}
-.app .sidebar{background:linear-gradient(175deg,var(--panel) 63%,var(--study-pale));border-color:var(--study-line);padding-top:22px}
-.app .sidebar .brand{margin-bottom:26px;color:var(--study-ink)}
-.app .sidebar nav{gap:3px}.app .nav-item{color:var(--subtext);min-height:39px}.app .nav-item.selected{color:var(--study-ink)}
-.app .sidebar .sidebar-label,.app .brand small{color:var(--quiet)}
-.app .topbar{background:var(--panel);border-color:var(--line);color:var(--subtext)}
-.app :is(.card,.stat-card,.play-table,.adventure-card,.game-card,.arcade-console,.modal){background-color:var(--panel);border-color:var(--line);color:var(--text)}
-.app .focus-hero{position:relative;isolation:isolate;min-height:238px;align-items:center;background:linear-gradient(110deg,var(--study-mid),var(--study-pale) 62%,var(--panel));padding-right:44%}
-.app .hero-copy{position:relative;z-index:1;max-width:420px}.app .focus-hero .hero-label{color:var(--subtext)}
-.study-nook{position:absolute;right:0;bottom:0;width:46%;height:96%;pointer-events:none;overflow:hidden}
-.study-nook .nook-room,.study-nook .nook-desk{position:absolute;inset:0;width:100%;height:100%}
-.nook-buddy{position:absolute;left:26%;top:28%;width:44%;height:49%;display:grid;place-items:center}
-.nook-buddy svg{max-width:100%;max-height:100%}.nook-buddy .buddy-halo{display:none}
-[data-palette="dark"] .window-sky{fill:#546284}[data-palette="dark"] .window-sun{fill:#faf1ca}
-.desk-links{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:16px 0}
-.desk-links a{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:12px;border:1px solid var(--line);color:var(--study-ink);border-radius:14px;background:var(--panel);font-size:13px;font-weight:600}
-.desk-links a svg:first-child{color:var(--highlight)}.desk-links a svg:last-child{margin-left:auto}
-.dashboard-grid:not([data-widgets~="missions"]) .missions-card,.dashboard-grid:not([data-widgets~="friend"]) .friend-card,.dashboard-grid:not([data-widgets~="mood"]) .mood-card,.dashboard-grid:not([data-widgets~="assistant"]) .assistant-card{display:none}
-.design-studio>h2{margin-bottom:12px}.palette-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px}
-.palette-tile{background:var(--panel);color:var(--text);border:1px solid var(--line);border-radius:15px;overflow:hidden;text-align:left}
-.palette-tile[aria-pressed=true]{outline:2px solid var(--highlight);outline-offset:-2px}
-.palette-tile strong{font-size:12px;display:flex;align-items:center;gap:6px;padding:10px 11px}
-.mini-scene{position:relative;display:block;height:50px;overflow:hidden;padding:3px 12px;text-align:right}
-.mini-scene i,.mini-scene b,.mini-scene em{position:absolute;bottom:-20px;left:-10%;width:80%;height:48px;border-radius:65% 75% 0 0;background:currentColor;opacity:.24;transform:rotate(-7deg)}
-.mini-scene b{left:42%;bottom:-26px;opacity:.48}.mini-scene em{left:7%;bottom:-34px;transform:rotate(9deg);opacity:.36}
-.studio-settings-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:22px}
-.work-settings,.journal-card{padding:20px}.work-settings h2,.journal-card h2{display:flex;align-items:center;gap:8px;font-size:19px;margin-bottom:12px}
-.work-settings label,.journal-card label{display:flex;align-items:center;justify-content:space-between;gap:12px;font-size:14px;margin:10px 0}
-.work-settings select,.journal-card :is(select,input,textarea){background:var(--raised);color:var(--text);border:1px solid var(--line);border-radius:10px;padding:8px;font:inherit}
-.work-settings input[type=checkbox]{width:18px;height:18px;accent-color:var(--study-accent)}
-.journal-card{margin-block:17px}.journal-card textarea{min-height:85px;resize:vertical;width:100%}.journal-card label{align-items:flex-start;flex-direction:column}.journal-card input{width:auto}
-.crash-card{padding:2rem}.skip-link{position:fixed;top:8px;left:10px;transform:translateY(-170%);background:var(--panel);padding:12px;border-radius:9px;z-index:120}.skip-link:focus{transform:none}#main-content:focus{outline:none}
-.app[data-backdrop=grid] .workspace{background-color:var(--study-paper);background-image:linear-gradient(var(--line) 1px,transparent 1px),linear-gradient(90deg,var(--line) 1px,transparent 1px);background-size:30px 30px}
-.app[data-backdrop=stars] .workspace{background-color:var(--study-paper);background-image:radial-gradient(2px 2px at 20px 18px,var(--study-mid) 95%,transparent),radial-gradient(1.5px 1.5px at 58px 44px,var(--study-line) 96%,transparent);background-size:81px 73px}
-.app[data-backdrop=leaves] .workspace{background-color:var(--study-paper);background-image:radial-gradient(ellipse 4px 8px at 22px 19px,var(--study-mid) 85%,transparent),radial-gradient(ellipse 7px 4px at 30px 22px,var(--study-mid) 85%,transparent);background-size:92px 81px}
-@media(prefers-reduced-motion:no-preference){.app[data-motion=enhanced]:is([data-backdrop=stars],[data-backdrop=leaves]) .workspace{animation:nook-drift 48s linear infinite}@keyframes nook-drift{to{background-position:81px 73px}}.app:is([data-motion=normal],[data-motion=enhanced]) .desk-links a:hover{transform:translateY(-2px)}}
-html:is([data-motion=off],[data-motion=minimal]) .app *,html:is([data-motion=off],[data-motion=minimal]) .app *::before,html:is([data-motion=off],[data-motion=minimal]) .app *::after{animation-duration:.001ms!important;animation-iteration-count:1!important;transition-duration:.001ms!important;scroll-behavior:auto!important}
-html[data-palette=dark]{color-scheme:dark}
-.app[data-palette=dark] :is(.button.secondary,.course-picker button:not([aria-pressed=true]),.pad-key,.studio-panel,.topic-card,.round-caption,.word-bank button,.tile,.arcade-controls,.board-controls,.arcade-readout,.theme-choices button,.friend-rest,.mission-row,.mood-option,.settings-field input,.date-chip,.mode-tag,.progress-track,.breadcrumbs,.sidebar-profile,.game-instructions,.settings-form input,input,textarea,select){background-color:var(--raised);color:var(--text);border-color:var(--line)}
-.app[data-palette=dark] :is(.card p,.section-kicker,.hero-copy p,.date-chip,.stat-label,.page-heading p,.adventure-card-copy p,.adventure-title p,.arcade-lobby-heading p,.game-card-copy p,.arcade-readout p,.game-card-copy small,.adventure-type,.friend-rest,.breadcrumb,.mission-row span,.shelf-caption,.stat-card strong,.mood-card h2,.friend-card h2,.studio-label,.page-footer,.mode-tag,.timer-note,.goal-hint,.form-label,.muted){color:var(--subtext)}
-.app[data-palette=dark] :is(.card h2,.card h3,.card h4,.adventure-card-copy h2,.studio-heading h1,.date-chip strong,.stat-card strong,.timer-number,.modal-head h2){color:var(--text)}
-.app[data-palette=dark] :is(.gentle-note,.assistant-card,.mood-face,.hero-label,.section-label,.achievement small,.game-feedback,.course-picker button[aria-pressed=true]){color:var(--study-ink);background-color:var(--study-mid)}
-.app[data-palette=dark] :is(.friend-card .friend-scene,.cover-pieces,.game-cover,.studio-room){color:#304b42}
-.app[data-palette=dark] .course-picker button[aria-pressed=true]{outline:2px solid var(--highlight)}
-.app .course-picker button:focus-visible,.app select:focus-visible,.app textarea:focus-visible{outline:2px solid var(--highlight);outline-offset:2px}
-@media(max-width:850px){.desk-links{gap:6px}.desk-links a{font-size:12px;padding:10px 8px}}
-@media(max-width:600px){.studio-settings-grid{grid-template-columns:1fr}.palette-grid{grid-template-columns:repeat(3,minmax(0,1fr))}.app .focus-hero{padding:18px 36% 17px 16px;min-height:207px}.study-nook{width:37%;height:75%}.desk-links{grid-template-columns:1fr 1fr}.desk-links a:last-child{grid-column:1/-1}.app .sidebar{padding-top:16px}.app .sidebar .brand{margin-bottom:16px}}
+.app {
+  --line: var(--study-line);
+  --muted: var(--quiet);
+  color: var(--text);
+}
+.app .sidebar {
+  background: linear-gradient(175deg, var(--panel) 63%, var(--study-pale));
+  border-color: var(--study-line);
+  padding-top: 22px;
+}
+.app .sidebar .brand {
+  margin-bottom: 26px;
+  color: var(--study-ink);
+}
+.app .sidebar nav {
+  gap: 3px;
+}
+.app .nav-item {
+  color: var(--subtext);
+  min-height: 39px;
+}
+.app .nav-item.selected {
+  color: var(--study-ink);
+}
+.app .sidebar .sidebar-label,
+.app .brand small {
+  color: var(--quiet);
+}
+.app .topbar {
+  background: var(--panel);
+  border-color: var(--line);
+  color: var(--subtext);
+}
+.app
+  :is(
+    .card,
+    .stat-card,
+    .play-table,
+    .adventure-card,
+    .game-card,
+    .arcade-console,
+    .modal
+  ) {
+  background-color: var(--panel);
+  border-color: var(--line);
+  color: var(--text);
+}
+.app .focus-hero {
+  position: relative;
+  isolation: isolate;
+  min-height: 238px;
+  align-items: center;
+  background: linear-gradient(
+    110deg,
+    var(--study-mid),
+    var(--study-pale) 62%,
+    var(--panel)
+  );
+  padding-right: 44%;
+}
+.app .hero-copy {
+  position: relative;
+  z-index: 1;
+  max-width: 420px;
+}
+.app .focus-hero .hero-label {
+  color: var(--subtext);
+}
+.study-nook {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  width: 46%;
+  height: 96%;
+  pointer-events: none;
+  overflow: hidden;
+}
+.study-nook .nook-room,
+.study-nook .nook-desk {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+.nook-buddy {
+  position: absolute;
+  left: 26%;
+  top: 28%;
+  width: 44%;
+  height: 49%;
+  display: grid;
+  place-items: center;
+}
+.nook-buddy svg {
+  max-width: 100%;
+  max-height: 100%;
+}
+.nook-buddy .buddy-halo {
+  display: none;
+}
+[data-palette="dark"] .window-sky {
+  fill: #546284;
+}
+[data-palette="dark"] .window-sun {
+  fill: #faf1ca;
+}
+.desk-links {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  margin: 16px 0;
+}
+.desk-links a {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  color: var(--study-ink);
+  border-radius: 14px;
+  background: var(--panel);
+  font-size: 13px;
+  font-weight: 600;
+}
+.desk-links a svg:first-child {
+  color: var(--highlight);
+}
+.desk-links a svg:last-child {
+  margin-left: auto;
+}
+.dashboard-grid:not([data-widgets~="missions"]) .missions-card,
+.dashboard-grid:not([data-widgets~="friend"]) .friend-card,
+.dashboard-grid:not([data-widgets~="mood"]) .mood-card,
+.dashboard-grid:not([data-widgets~="assistant"]) .assistant-card {
+  display: none;
+}
+.design-studio > h2 {
+  margin-bottom: 12px;
+}
+.palette-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  gap: 10px;
+}
+.palette-tile {
+  background: var(--panel);
+  color: var(--text);
+  border: 1px solid var(--line);
+  border-radius: 15px;
+  overflow: hidden;
+  text-align: left;
+}
+.palette-tile[aria-pressed="true"] {
+  outline: 2px solid var(--highlight);
+  outline-offset: -2px;
+}
+.palette-tile strong {
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 11px;
+}
+.mini-scene {
+  position: relative;
+  display: block;
+  height: 50px;
+  overflow: hidden;
+  padding: 3px 12px;
+  text-align: right;
+}
+.mini-scene i,
+.mini-scene b,
+.mini-scene em {
+  position: absolute;
+  bottom: -20px;
+  left: -10%;
+  width: 80%;
+  height: 48px;
+  border-radius: 65% 75% 0 0;
+  background: currentColor;
+  opacity: 0.24;
+  transform: rotate(-7deg);
+}
+.mini-scene b {
+  left: 42%;
+  bottom: -26px;
+  opacity: 0.48;
+}
+.mini-scene em {
+  left: 7%;
+  bottom: -34px;
+  transform: rotate(9deg);
+  opacity: 0.36;
+}
+.studio-settings-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-top: 22px;
+}
+.work-settings,
+.journal-card {
+  padding: 20px;
+}
+.work-settings h2,
+.journal-card h2 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 19px;
+  margin-bottom: 12px;
+}
+.work-settings label,
+.journal-card label {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 14px;
+  margin: 10px 0;
+}
+.work-settings select,
+.journal-card :is(select, input, textarea) {
+  background: var(--raised);
+  color: var(--text);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 8px;
+  font: inherit;
+}
+.work-settings input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--study-accent);
+}
+.journal-card {
+  margin-block: 17px;
+}
+.journal-card textarea {
+  min-height: 85px;
+  resize: vertical;
+  width: 100%;
+}
+.journal-card label {
+  align-items: flex-start;
+  flex-direction: column;
+}
+.journal-card input {
+  width: auto;
+}
+.crash-card {
+  padding: 2rem;
+}
+.skip-link {
+  position: fixed;
+  top: 8px;
+  left: 10px;
+  transform: translateY(-170%);
+  background: var(--panel);
+  padding: 12px;
+  border-radius: 9px;
+  z-index: 120;
+}
+.skip-link:focus {
+  transform: none;
+}
+#main-content:focus {
+  outline: none;
+}
+.app[data-backdrop="grid"] .workspace {
+  background-color: var(--study-paper);
+  background-image:
+    linear-gradient(var(--line) 1px, transparent 1px),
+    linear-gradient(90deg, var(--line) 1px, transparent 1px);
+  background-size: 30px 30px;
+}
+.app[data-backdrop="stars"] .workspace {
+  background-color: var(--study-paper);
+  background-image:
+    radial-gradient(2px 2px at 20px 18px, var(--study-mid) 95%, transparent),
+    radial-gradient(
+      1.5px 1.5px at 58px 44px,
+      var(--study-line) 96%,
+      transparent
+    );
+  background-size: 81px 73px;
+}
+.app[data-backdrop="leaves"] .workspace {
+  background-color: var(--study-paper);
+  background-image:
+    radial-gradient(
+      ellipse 4px 8px at 22px 19px,
+      var(--study-mid) 85%,
+      transparent
+    ),
+    radial-gradient(
+      ellipse 7px 4px at 30px 22px,
+      var(--study-mid) 85%,
+      transparent
+    );
+  background-size: 92px 81px;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .app[data-motion="enhanced"]:is(
+      [data-backdrop="stars"],
+      [data-backdrop="leaves"]
+    )
+    .workspace {
+    animation: nook-drift 48s linear infinite;
+  }
+  @keyframes nook-drift {
+    to {
+      background-position: 81px 73px;
+    }
+  }
+  .app:is([data-motion="normal"], [data-motion="enhanced"])
+    .desk-links
+    a:hover {
+    transform: translateY(-2px);
+  }
+}
+html:is([data-motion="off"], [data-motion="minimal"]) .app *,
+html:is([data-motion="off"], [data-motion="minimal"]) .app *::before,
+html:is([data-motion="off"], [data-motion="minimal"]) .app *::after {
+  animation-duration: 0.001ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.001ms !important;
+  scroll-behavior: auto !important;
+}
+html[data-palette="dark"] {
+  color-scheme: dark;
+}
+.app[data-palette="dark"]
+  :is(
+    .button.secondary,
+    .course-picker button:not([aria-pressed="true"]),
+    .pad-key,
+    .studio-panel,
+    .topic-card,
+    .round-caption,
+    .word-bank button,
+    .tile,
+    .arcade-controls,
+    .board-controls,
+    .arcade-readout,
+    .theme-choices button,
+    .friend-rest,
+    .mission-row,
+    .mood-option,
+    .settings-field input,
+    .date-chip,
+    .mode-tag,
+    .progress-track,
+    .breadcrumbs,
+    .sidebar-profile,
+    .game-instructions,
+    .settings-form input,
+    input,
+    textarea,
+    select
+  ) {
+  background-color: var(--raised);
+  color: var(--text);
+  border-color: var(--line);
+}
+.app[data-palette="dark"]
+  :is(
+    .card p,
+    .section-kicker,
+    .hero-copy p,
+    .date-chip,
+    .stat-label,
+    .page-heading p,
+    .adventure-card-copy p,
+    .adventure-title p,
+    .arcade-lobby-heading p,
+    .game-card-copy p,
+    .arcade-readout p,
+    .game-card-copy small,
+    .adventure-type,
+    .friend-rest,
+    .breadcrumb,
+    .mission-row span,
+    .shelf-caption,
+    .stat-card strong,
+    .mood-card h2,
+    .friend-card h2,
+    .studio-label,
+    .page-footer,
+    .mode-tag,
+    .timer-note,
+    .goal-hint,
+    .form-label,
+    .muted
+  ) {
+  color: var(--subtext);
+}
+.app[data-palette="dark"]
+  :is(
+    .card h2,
+    .card h3,
+    .card h4,
+    .adventure-card-copy h2,
+    .studio-heading h1,
+    .date-chip strong,
+    .stat-card strong,
+    .timer-number,
+    .modal-head h2
+  ) {
+  color: var(--text);
+}
+.app[data-palette="dark"]
+  :is(
+    .gentle-note,
+    .assistant-card,
+    .mood-face,
+    .hero-label,
+    .section-label,
+    .achievement small,
+    .game-feedback,
+    .course-picker button[aria-pressed="true"]
+  ) {
+  color: var(--study-ink);
+  background-color: var(--study-mid);
+}
+.app[data-palette="dark"]
+  :is(.friend-card .friend-scene, .cover-pieces, .game-cover, .studio-room) {
+  color: #304b42;
+}
+.app[data-palette="dark"] .course-picker button[aria-pressed="true"] {
+  outline: 2px solid var(--highlight);
+}
+.app .course-picker button:focus-visible,
+.app select:focus-visible,
+.app textarea:focus-visible {
+  outline: 2px solid var(--highlight);
+  outline-offset: 2px;
+}
+@media (max-width: 850px) {
+  .desk-links {
+    gap: 6px;
+  }
+  .desk-links a {
+    font-size: 12px;
+    padding: 10px 8px;
+  }
+}
+@media (max-width: 600px) {
+  .studio-settings-grid {
+    grid-template-columns: 1fr;
+  }
+  .palette-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+  .app .focus-hero {
+    padding: 18px 36% 17px 16px;
+    min-height: 207px;
+  }
+  .study-nook {
+    width: 37%;
+    height: 75%;
+  }
+  .desk-links {
+    grid-template-columns: 1fr 1fr;
+  }
+  .desk-links a:last-child {
+    grid-column: 1/-1;
+  }
+  .app .sidebar {
+    padding-top: 16px;
+  }
+  .app .sidebar .brand {
+    margin-bottom: 16px;
+  }
+}

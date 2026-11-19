@@ -25,6 +25,8 @@ jobs:
         run: npm test
       - name: Kiểm thử Edge Function (không triển khai)
         run: npm run test:edge
+      - name: Kiểm thử phân quyền phòng học trên PostgreSQL cục bộ
+        run: npm run test:community
       - name: Kiểm tra TypeScript và build
         run: npm run build
         env:

@@ -1,13 +1,20 @@
-# Kiểm thử Bạn Đồng Hành
+# Kiểm thử Focus Buddy 3.0
 
-46 kiểm thử giao diện, tiến trình, tin nhắn và trò chơi cùng 15 kiểm thử Edge Function đạt. Bản dựng production dùng `/focus-buddy-/`. Handler kiểm tra JWT, dữ liệu đầu vào, hạn mức, SSE và không trả khóa riêng tư.
+## Các lệnh kiểm tra
 
-Đã thử trực tiếp Groq: HTTP 200, đúng openai/gpt-oss-120b và nhận câu trả lời tiếng Việt. Yêu cầu gửi User-Agent FocusBuddy/2.0; yêu cầu Python mặc định trước đó nhận HTTP 403. Chưa kiểm thử qua Edge Function đã triển khai. Cần quyền quản trị Supabase để đặt GROQ_API_KEY, GROQ_MODEL và triển khai hàm mới. Không coi triển khai GitHub Pages là hoàn tất triển khai backend.
+| Lệnh | Phạm vi |
+| --- | --- |
+| `npm test` | Giao diện, tiến trình đã lưu, đồng hồ, trò chơi theo chặng, đường đi trong năm thế giới 3D, điều khiển, âm nhạc và thử thách |
+| `npm run test:edge` | JWT, xác thực nguồn gọi, mô hình Groq, chế độ học, giới hạn, hủy và xử lý lỗi với nhà cung cấp mô phỏng |
+| `npm run test:community` | Áp dụng migration lên PostgreSQL cục bộ, kiểm tra quyền của từng vai trò, tư cách thành viên, kiểm duyệt, chặn, báo cáo, hạn mức và dọn dữ liệu |
+| `VITE_BASE_PATH=/focus-buddy-/ npm run build` | Kiểm tra TypeScript và đóng gói trang tĩnh với đường dẫn của kho |
 
-Ngoài các kiểm thử tự động trong kho, đã chạy bản dựng production bằng Chromium ở kích thước máy tính và điện thoại:
+## Kiểm tra trên trình duyệt
 
-- Sáu chặng mới đều có đường về đích qua bộ mô phỏng với cùng đầu vào mà người chơi sử dụng. Đã kiểm tra nhảy đôi, đáp xuống đảo trôi, bật nấm, chạm gai, va vào mây, hồi sinh ở cờ, giữ vật phẩm và ghi nhận khi về đích.
-- Trong Chromium, đã chọn Kỳ giông Đào đeo tai nghe, hoàn tất chặng đầu Đảo Mây bằng bàn phím, kiểm tra kỷ lục, tạm dừng, chơi lại và quay về đúng phiên học. Với màn hình cảm ứng mô phỏng 390 px, đã điều khiển hai nút đồng thời và hoàn tất chặng Sông sao với 9/9 vòng sáng.
-- Chơi đến khi hoàn thành cả năm trò, mở lại ván mới và quay về đồng hồ đang chạy. Thời điểm kết thúc của phiên và số điểm vẫn chính xác.
-- Chọn Kỳ giông Đào và Cánh Cụt Băng, thử động tác vẫy tay, bốn phụ kiện mới và đổi chủ đề. Đã kiểm tra lựa chọn sau khi tải lại và khi bật giảm chuyển động.
-- Ba phiên trình duyệt độc lập kết nối Supabase Realtime qua kênh của bản xem trước. Đã gửi và nhận hai chiều, ẩn tin, chuyển giữa hai phòng và vào lại cùng phòng. Tin của hai phòng được tách riêng và không có lịch sử phát lại.
+- Mở `/#/tro-choi/dao-xanh`. Địa chỉ phải chuyển về `/#/tro-choi`. Kiểm tra kệ vẫn mở được Buddy Runner, vườn, các trò có sáu chặng và hoạt động sáng tạo.
+- Mở một phiên học, chuyển trang và tải lại. Kiểm tra thời điểm kết thúc, tạm dừng, tiếp tục, lưu ghi chú và quay về từ trò chơi trong giờ nghỉ.
+- Chọn Buddy, thay phụ kiện, lưu trang phục rồi tải lại. Thử đổi chủ đề, ngôn ngữ và tắt chuyển động. Kiểm tra bằng bàn phím và kích thước điện thoại.
+- Chơi một chặng bằng bàn phím rồi bằng nút chạm, kiểm tra kỷ lục và chơi lại. Trong câu lạc bộ, thử hoạt động vận động, giải đố và lưu tranh, khu vườn, cách bài trí.
+- Mở phòng 3D, xoay camera, đổi đèn và thử năm trò. Chọn bản đồ 2D hoặc tắt WebGL rồi tải lại. Sau khi đã ghé một trò và service worker đã sẵn sàng, tải lại khi ngoại tuyến.
+- Với trợ lý, kiểm tra health trả đúng mô hình. Để xác nhận hoạt động thật của Groq, gửi một câu hỏi ngắn, kiểm tra văn bản trả về và nút dừng. Health kiểm tra cấu hình. Một lượt sinh thật sử dụng hạn mức của tài khoản.
+- Dùng hai tài khoản học sinh và một kiểm duyệt viên trên dự án thử nghiệm để xác nhận Realtime, email đã xác minh và quyền điều hành trước khi mở phòng chính. Xem [các bước quản trị](supabase/README.md).

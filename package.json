@@ -11,7 +11,8 @@
     "build": "tsc -b && vite build",
     "preview": "vite preview --host 0.0.0.0",
     "test": "vitest run",
-    "test:edge": "node --experimental-strip-types --test supabase/functions/tests/*.test.ts"
+    "test:edge": "node --experimental-strip-types --test supabase/functions/tests/*.test.ts",
+    "test:community": "node supabase/tests/community-local.mjs"
   },
   "dependencies": {
     "@fontsource/be-vietnam-pro": "^5.2.6",
@@ -24,6 +25,7 @@
     "three": "^0.187.0"
   },
   "devDependencies": {
+    "@electric-sql/pglite": "0.5.16",
     "@tailwindcss/vite": "^4.1.0",
     "@testing-library/react": "^16.3.0",
     "@types/node": "^22.19.0",

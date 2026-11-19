@@ -1,0 +1,233 @@
+.club-shelf {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(177px, 1fr));
+  gap: 10px;
+  margin: 12px 0 28px;
+}
+.club-shelf a {
+  border: 1px solid var(--line);
+  border-radius: 15px;
+  padding: 14px;
+  background: linear-gradient(145deg, var(--panel), var(--study-pale));
+  display: grid;
+  gap: 5px;
+}
+.club-shelf i,
+.club-start > span {
+  font:
+    34px Georgia,
+    serif;
+  color: var(--highlight);
+}
+.club-shelf small {
+  color: var(--quiet);
+}
+.club-stage h1 {
+  font-size: clamp(25px, 4vw, 40px);
+}
+.club-stage,
+.club-question {
+  display: grid;
+  gap: 12px;
+}
+.club-toolbar,
+.club-pad,
+.club-choices,
+.dress-controls,
+.mosaic-tray,
+.club-swatches {
+  display: flex;
+  gap: 7px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+.club-stage button:not(.button),
+.club-question select {
+  border: 1px solid var(--line);
+  background: var(--raised);
+  color: var(--text);
+  padding: 8px;
+  border-radius: 9px;
+  min-height: 38px;
+}
+.club-stage button[aria-pressed="true"] {
+  outline: 2px solid var(--highlight);
+}
+.club-start {
+  display: grid;
+  place-items: center;
+  gap: 12px;
+  background: radial-gradient(
+    ellipse at 44% 70%,
+    var(--study-mid),
+    var(--study-pale)
+  );
+  min-height: 175px;
+  border-radius: 17px;
+}
+.club-start > span {
+  font-size: 65px;
+}
+.club-motion {
+  position: relative;
+  aspect-ratio: 2/1;
+  max-height: 420px;
+  touch-action: none;
+  overflow: hidden;
+  border-radius: 16px;
+}
+.club-motion canvas {
+  width: 100%;
+  height: 100%;
+}
+.club-sprite {
+  position: absolute;
+  pointer-events: none;
+}
+.club-sprite svg {
+  width: 100%;
+  height: 100%;
+}
+.club-hud {
+  padding: 8px 2px;
+  font-weight: 600;
+}
+.club-pad {
+  padding: 9px 0;
+}
+.club-pad button {
+  min-width: 42px;
+  touch-action: none;
+}
+.club-stage button.club-lantern {
+  min-height: 140px;
+  background: radial-gradient(circle, #535d70, #2b3a52);
+  color: white;
+  font-size: 21px;
+}
+.club-stage .club-lantern.lit {
+  background: radial-gradient(circle, #ffeea5, #b4925c);
+  color: #452d26;
+}
+.mosaic-board,
+.creative-grid {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  max-width: 470px;
+  gap: 3px;
+}
+.mosaic-board button,
+.creative-grid button {
+  aspect-ratio: 1;
+  display: grid;
+  place-items: center;
+  font-size: 20px;
+}
+.mosaic-board button.filled,
+.mosaic-board button[data-filled="true"] {
+  background: var(--highlight);
+}
+.creative-grid button {
+  background: var(--study-mid) !important;
+}
+.piece-preview {
+  display: grid;
+  gap: 2px;
+}
+.treasure-map {
+  height: 235px;
+  position: relative;
+  border-radius: 18px;
+  background: radial-gradient(
+    ellipse at 40% 30%,
+    #a6cfab,
+    #91c6b6 44%,
+    #cca96d
+  );
+}
+.treasure-map button {
+  position: absolute;
+  transform: translateX(-50%);
+  background: #fff9 !important;
+  font-size: 23px;
+}
+.drawing-pad {
+  width: 100%;
+  max-width: 590px;
+  aspect-ratio: 100/65;
+  touch-action: none;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: #fff8e7;
+}
+.club-question blockquote {
+  font-size: 22px;
+  padding: 15px;
+  background: var(--study-pale);
+  border-radius: 12px;
+}
+.club-question label {
+  display: grid;
+  gap: 5px;
+}
+.club-swatches button {
+  display: grid;
+  gap: 4px;
+}
+.dress-model {
+  display: grid;
+  place-items: center;
+}
+.club-stage .club-question .button {
+  width: fit-content;
+}
+.paint-chip {
+  width: 100%;
+  height: 110px;
+  border-radius: 16px;
+}
+.club-swatches button i {
+  display: block;
+  width: 43px;
+  height: 44px;
+  border-radius: 8px;
+}
+.paint-chip,
+.club-swatches i {
+  background-image: repeating-linear-gradient(
+    25deg,
+    transparent 0 12px,
+    #ffffff4a 13px 16px
+  );
+}
+.club-swatches :is(.dots, .dot),
+.paint-chip:is(.dots, .dot) {
+  background-image: radial-gradient(#ffffffa3 19%, transparent 20%);
+  background-size: 12px 12px;
+}
+.mosaic-board button:not([data-color="0"]) {
+  background: var(--highlight);
+  box-shadow: inset 0 -4px #0002;
+}
+.piece-preview {
+  grid-auto-rows: 10px;
+  grid-auto-columns: 10px;
+  min-width: 28px;
+  min-height: 20px;
+}
+.piece-preview i {
+  background: var(--highlight);
+  border-radius: 2px;
+}
+.club-choices button.correct {
+  outline: 2px solid var(--highlight);
+}
+.club-motion canvas {
+  display: block;
+}
+.paint-chip.cross,
+.club-swatches i.cross {
+  background-image:
+    repeating-linear-gradient(0deg, transparent 0 10px, #fff6 11px 12px),
+    repeating-linear-gradient(90deg, transparent 0 10px, #fff6 11px 12px);
+}
