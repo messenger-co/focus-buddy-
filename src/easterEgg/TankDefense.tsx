@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, type PointerEvent } from "react";
 import { ArrowDown, ArrowLeft, ArrowRight, ArrowUp, Crosshair, Flag, Gauge, Pause, Play, RotateCcw, Shield, X, Zap, Users, Box } from "lucide-react";
 import {
-  ALLY_CARDS, canRecruit, createTankState, recruitAlly, stepTank,
+  ALLY_CARDS, createTankState, recruitAlly, stepTank,
   MISSILE_COOLDOWN, TANK_DURATION, TANK_HEIGHT, TANK_WIDTH,
   type AllyKind, type TankInput, type TankPhase, type TankState,
 } from "./tankGame";
