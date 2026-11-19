@@ -37,6 +37,7 @@ export default function TankDefense({ onExit }: { onExit:()=>void }) {
   const [view,setView]=useState<View>(()=>snapshot(state.current));
   const [effects,setEffects]=useState(true);
   const previousUpdate=useRef(0);
+  const renderedPhase=useRef<TankPhase>("ready");
 
   function start() {
     state.current=createTankState();
@@ -119,7 +120,7 @@ export default function TankDefense({ onExit }: { onExit:()=>void }) {
     function frame(time:number){
       if(!active)return;
       raf=requestAnimationFrame(frame);
-      if(document.visibilityState==="hidden" || time-lastFrame<1000/42)return;
+      if(document.visibilityState==="hidden" || time-lastFrame<1000/(state.current.phase==="running"?36:16))return;
       const dt=Math.min(.045,Math.max(0,(time-last)/1000 || .02));
       lastFrame=time;last=time;
       const game=state.current;
@@ -144,7 +145,8 @@ export default function TankDefense({ onExit }: { onExit:()=>void }) {
       stepTank(game,input,dt);
       ctx.setTransform(element.width/TANK_WIDTH,0,0,element.height/TANK_HEIGHT,0,0);
       drawTankGame(ctx,game,input,time/1000,effects);
-      if(time-previousUpdate.current>135 || game.phase!==view.phase){
+      if(time-previousUpdate.current>135 || game.phase!==renderedPhase.current){
+        renderedPhase.current=game.phase;
         previousUpdate.current=time;
         setView(snapshot(game));
       }
