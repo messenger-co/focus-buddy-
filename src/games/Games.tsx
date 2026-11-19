@@ -33,6 +33,7 @@ import "./games.css";
 import { adventures } from "./arcade/courses";
 import { AdventureShelf } from "./arcade/Gallery";
 const Adventure = lazy(() => import("./arcade/Adventure"));
+const BuddyGarden = lazy(() => import("./BuddyGarden"));
 
 const symbols = [
   { icon: Leaf, name: "Lá" },
@@ -434,6 +435,7 @@ export default function Games({
   const { slug } = useParams();
   const selected = gameShelf.find((g) => g.id === slug);
   const adventure = adventures.find((g) => g.slug === slug);
+  const buddyGarden = slug === "vuon-buddy";
   return (
     <div className="games-page">
       {countdown && (
@@ -443,13 +445,17 @@ export default function Games({
           <ArrowRight size={16} />
         </Link>
       )}
-      {selected || adventure ? (
+      {selected || adventure || buddyGarden ? (
         <>
           <Link className="back-to-shelf" to="/tro-choi">
             <ArrowLeft size={16} />
             Tất cả trò chơi
           </Link>
-          {adventure ? (
+          {buddyGarden ? (
+            <Suspense fallback={<p>Đang mở vườn hoa…</p>}>
+              <BuddyGarden profile={profile}/>
+            </Suspense>
+          ) : adventure ? (
             <Suspense fallback={<p>Đang mở đường chơi…</p>}>
               <Adventure
                 key={adventure.mode}
@@ -472,6 +478,11 @@ export default function Games({
               {profile.buddy_name || "bạn nhỏ của bạn"}.
             </p>
           </header>
+          <Link className="garden-promo" to="/tro-choi/vuon-buddy">
+            <span className="garden-promo-icon"><Flower2 size={31}/></span>
+            <span><small>TRÒ CHƠI CÙNG BUDDY · 1 PHÚT</small><strong>Vườn hoa lấp lánh</strong><em>Tìm 10 bông hoa phát sáng. Một cuộc phiêu lưu nhỏ trong giờ nghỉ!</em></span>
+            <ArrowRight size={21}/>
+          </Link>
           <AdventureShelf profile={profile} />
           <h2 className="shelf-caption">Thử thách nhanh</h2>
           <div className="game-shelf">
