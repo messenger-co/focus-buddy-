@@ -19,7 +19,7 @@ describe("Chat document attachments",()=>{
   it("reads UTF-8 text locally without changing the original",async()=>{
     const file=mockFile("ôn_tập.md","# Sinh học\nQuang hợp tạo glucose.");
     expect(await readTextAttachment(file,"a")).toMatchObject({
-      name:"ôn_tập.md",type:"text",totalCharacters:32,
+      name:"ôn_tập.md",type:"text",totalCharacters:33,
     });
   });
   it("refuses unsupported PDF/images, binary data and files over 2 MB",async()=>{
