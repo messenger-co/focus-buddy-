@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { russianShortcut, danceGifUrl, meowImageUrl, callerImageUrl, trackUrl } from "./russianShortcut";
+import { russianShortcut, danceGifUrl, meowImageUrl, swowImageUrl, callerImageUrl, trackUrl } from "./russianShortcut";
 
 describe("Russian Easter egg shortcut and assets", () => {
   const trigger = {
@@ -18,6 +18,7 @@ describe("Russian Easter egg shortcut and assets", () => {
   it("references the exact assets, rather than shipping copies", () => {
     expect(danceGifUrl).toContain("lets-dance-dancing.gif");
     expect(meowImageUrl).toContain("meowpng.webp");
+    expect(swowImageUrl).toContain("swow.webp");
     expect(callerImageUrl).toContain("image.png");
     expect(decodeURIComponent(trackUrl)).toContain(
       "ТРИ-ПОЛОСКИ-KOLM-TRIIPU-THREE-STRIPES_007_128k.m4a",
