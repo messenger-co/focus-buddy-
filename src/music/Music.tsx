@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, type FormEvent } from "react";
 import { ExternalLink, Headphones, Link2, ListMusic, Music2, RotateCcw, ShieldCheck } from "lucide-react";
 import "./music.css";
 
@@ -44,7 +44,7 @@ export default function Music() {
     setSaved(items);
     try { localStorage.setItem(STORAGE_KEY, JSON.stringify(items)); } catch { /* local storage can be disabled */ }
   }
-  function add(event: React.FormEvent<HTMLFormElement>) {
+  function add(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const parsed = validate(input);
     if (!parsed) { setError("Hãy dán liên kết Spotify hợp lệ tới playlist, album, bài hát hoặc podcast."); return; }
