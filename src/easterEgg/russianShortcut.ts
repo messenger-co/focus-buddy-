@@ -12,3 +12,5 @@ export const callerImageUrl = ROOT + "image.png";
 export const meowImageUrl = ROOT + "meowpng.webp";
 
 export const danceGifUrl = ROOT + "lets-dance-dancing.gif";
+
+export const swowImageUrl = ROOT + "swow.webp";

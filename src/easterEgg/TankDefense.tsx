@@ -1,0 +1,299 @@
+import { useEffect, useRef, useState, type PointerEvent } from "react";
+import { ArrowDown, ArrowLeft, ArrowRight, ArrowUp, Crosshair, Flag, Gauge, Pause, Play, RotateCcw, Shield, X } from "lucide-react";
+import {
+  createTankState, stepTank, TANK_DURATION, TANK_HEIGHT, TANK_WIDTH,
+  type TankInput, type TankPhase, type TankState,
+} from "./tankGame";
+import { drawTankGame } from "./tankPaint";
+import "./tankDefense.css";
+
+type View = {
+  phase: TankPhase;
+  score: number;
+  defeated: number;
+  wave: number;
+  seconds: number;
+  tankHp: number;
+  baseHp: number;
+  heat: number;
+};
+const snapshot=(state:TankState):View=>({
+  phase:state.phase,score:state.score,defeated:state.defeated,
+  wave:state.wave,seconds:Math.max(0,Math.ceil(TANK_DURATION-state.elapsed)),
+  tankHp:state.player.hp,baseHp:state.baseHp,heat:Math.round(state.player.heat),
+});
+type Direction = "left"|"right"|"up"|"down";
+const arrowKeys:Record<string,Direction> = {
+  ArrowLeft:"left",KeyA:"left",ArrowRight:"right",KeyD:"right",
+  ArrowUp:"up",KeyW:"up",ArrowDown:"down",KeyS:"down",
+};
+export default function TankDefense({ onExit }: { onExit:()=>void }) {
+  const state=useRef(createTankState());
+  const canvas=useRef<HTMLCanvasElement>(null);
+  const held=useRef(new Set<Direction>());
+  const firing=useRef(false);
+  const aim=useRef({x:450,y:40});
+  const aimedByPointer=useRef(false);
+  const [view,setView]=useState<View>(()=>snapshot(state.current));
+  const [effects,setEffects]=useState(true);
+  const previousUpdate=useRef(0);
+  const renderedPhase=useRef<TankPhase>("ready");
+
+  function start() {
+    state.current=createTankState();
+    state.current.phase="running";
+    held.current.clear();
+    firing.current=false;
+    aimedByPointer.current=false;
+    setView(snapshot(state.current));
+  }
+  function togglePause() {
+    const game=state.current;
+    if(game.phase==="running")game.phase="paused";
+    else if(game.phase==="paused")game.phase="running";
+    held.current.clear();
+    firing.current=false;
+    setView(snapshot(game));
+  }
+  useEffect(()=>{
+    const keyDown=(event:KeyboardEvent)=>{
+      if(event.repeat && (event.code==="KeyP"||event.code==="Escape"))return;
+      const direction=arrowKeys[event.code];
+      if(direction){
+        event.preventDefault();
+        held.current.add(direction);
+      } else if(event.code==="Space"){
+        event.preventDefault();
+        firing.current=true;
+      } else if(event.code==="KeyP") {
+        event.preventDefault();
+        togglePause();
+      } else if(event.code==="Escape") {
+        event.preventDefault();
+        onExit();
+      }
+    };
+    const keyUp=(event:KeyboardEvent)=>{
+      const direction=arrowKeys[event.code];
+      if(direction){event.preventDefault();held.current.delete(direction);}
+      if(event.code==="Space"){event.preventDefault();firing.current=false;}
+    };
+    const release=()=>{
+      firing.current=false;
+      held.current.clear();
+      if(document.visibilityState==="hidden" && state.current.phase==="running"){
+        state.current.phase="paused";
+        setView(snapshot(state.current));
+      }
+    };
+    window.addEventListener("keydown",keyDown,true);
+    window.addEventListener("keyup",keyUp,true);
+    window.addEventListener("blur",release);
+    document.addEventListener("visibilitychange",release);
+    return ()=>{
+      window.removeEventListener("keydown",keyDown,true);
+      window.removeEventListener("keyup",keyUp,true);
+      window.removeEventListener("blur",release);
+      document.removeEventListener("visibilitychange",release);
+    };
+  },[onExit]);
+
+  useEffect(()=>{
+    const element=canvas.current;
+    const ctx=element?.getContext("2d",{alpha:false});
+    if(!element||!ctx)return;
+    const surface: HTMLCanvasElement = element;
+    const drawing: CanvasRenderingContext2D = ctx;
+    let width=900,height=540,dpr=1;
+    let last=0,raf=0,lastFrame=0;
+    let active=true;
+    const resize=()=>{
+      const rect=surface.getBoundingClientRect();
+      width=Math.max(320,rect.width);
+      height=Math.max(180,rect.height);
+      dpr=Math.min(window.devicePixelRatio||1,1.5);
+      const w=Math.floor(width*dpr),h=Math.floor(height*dpr);
+      if(surface.width!==w)surface.width=w;
+      if(surface.height!==h)surface.height=h;
+    };
+    const observer=typeof ResizeObserver!=="undefined"?new ResizeObserver(resize):null;
+    resize();
+    observer?.observe(element);
+    function frame(time:number){
+      if(!active)return;
+      raf=requestAnimationFrame(frame);
+      if(document.visibilityState==="hidden" || time-lastFrame<1000/(state.current.phase==="running"?36:16))return;
+      const dt=Math.min(.045,Math.max(0,(time-last)/1000 || .02));
+      lastFrame=time;last=time;
+      const game=state.current;
+      const input:TankInput={
+        left:held.current.has("left"),
+        right:held.current.has("right"),
+        up:held.current.has("up"),
+        down:held.current.has("down"),
+        firing:firing.current,
+        aimX:aim.current.x,aimY:aim.current.y,
+      };
+      // Accessible keyboard mode: aim at the closest target if no pointer was used.
+      if(!aimedByPointer.current && game.troops.length){
+        let best=game.troops[0],dist=Infinity;
+        for(const troop of game.troops){
+          const dx=troop.x-game.player.x,dy=troop.y-game.player.y;
+          const next=dx*dx+dy*dy;
+          if(next<dist){dist=next;best=troop;}
+        }
+        input.aimX=best.x;input.aimY=best.y;
+      }
+      stepTank(game,input,dt);
+      drawing.setTransform(surface.width/TANK_WIDTH,0,0,surface.height/TANK_HEIGHT,0,0);
+      drawTankGame(drawing,game,input,time/1000,effects);
+      if(time-previousUpdate.current>135 || game.phase!==renderedPhase.current){
+        renderedPhase.current=game.phase;
+        previousUpdate.current=time;
+        setView(snapshot(game));
+      }
+    }
+    raf=requestAnimationFrame(frame);
+    return ()=>{active=false;cancelAnimationFrame(raf);observer?.disconnect();};
+  },[effects]);
+
+  function pointerAim(event:PointerEvent<HTMLCanvasElement>){
+    const rect=event.currentTarget.getBoundingClientRect();
+    aim.current={
+      x:(event.clientX-rect.left)/rect.width*TANK_WIDTH,
+      y:(event.clientY-rect.top)/rect.height*TANK_HEIGHT,
+    };
+    aimedByPointer.current=true;
+  }
+  function pressDirection(direction:Direction){
+    return {
+      onPointerDown:(event:PointerEvent<HTMLButtonElement>)=>{
+        event.preventDefault();
+        held.current.add(direction);
+        event.currentTarget.setPointerCapture(event.pointerId);
+      },
+      onPointerUp:()=>held.current.delete(direction),
+      onPointerCancel:()=>held.current.delete(direction),
+      onLostPointerCapture:()=>held.current.delete(direction),
+    };
+  }
+  const finished=view.phase==="won"||view.phase==="lost";
+  return (
+    <div className="tank-defense">
+      <div className="tank-game-heading">
+        <div>
+          <span className="tank-eyebrow">★ ЗИМНИЙ РУБЕЖ · 1943 ★</span>
+          <h2>THE WINTER FRONT</h2>
+          <p>Fictional Soviet winter defense • Five brutal waves • No gore or extremist symbols</p>
+        </div>
+        <div className="tank-header-buttons">
+          <button type="button" onClick={()=>setEffects(x=>!x)}
+            aria-pressed={!effects}><Gauge size={16}/>{effects?"LIGHT FX":"LOW FX"}</button>
+          <button type="button" onClick={togglePause} disabled={view.phase==="ready"||finished}>
+            {view.phase==="paused"?<Play size={16}/>:<Pause size={16}/>}
+            {view.phase==="paused"?"RESUME":"PAUSE (P)"}
+          </button>
+          <button type="button" onClick={onExit} aria-label="Leave tank game">
+            <X size={17}/> EXIT
+          </button>
+        </div>
+      </div>
+      <div className="tank-board">
+        <canvas ref={canvas} className="tank-canvas"
+          role="img" aria-label="Winter battlefield: tank defending an outpost against advancing infantry"
+          onPointerMove={pointerAim}
+          onPointerDown={event=>{
+            pointerAim(event);
+            firing.current=true;
+            event.currentTarget.setPointerCapture(event.pointerId);
+          }}
+          onPointerUp={()=>{firing.current=false;}}
+          onPointerCancel={()=>{firing.current=false;}}
+          onLostPointerCapture={()=>{firing.current=false;}}
+        />
+        <div className="tank-game-hud" aria-label="Tank game status">
+          <span><Shield size={15}/> ARMOR <b>{view.tankHp}%</b></span>
+          <span><Flag size={15}/> BASE <b>{view.baseHp}%</b></span>
+          <span>WAVE <b>{view.wave}/5</b></span>
+          <span>TIME <b>{view.seconds}s</b></span>
+          <span>SCORE <b>{view.score.toLocaleString("en-US")}</b></span>
+        </div>
+        <div className="tank-heat" role="progressbar" aria-label="Weapon heat"
+          aria-valuenow={view.heat} aria-valuemin={0} aria-valuemax={100}>
+          <small>HEAT</small><span><i style={{width:String(view.heat)+"%"}}/></span>
+        </div>
+        {view.phase!=="running" && (
+          <div className="tank-overlay" role="status">
+            <div className="tank-start-card">
+              <span className="tank-start-star">★</span>
+              <h3>{view.phase==="ready"?"ЗА РОДИНУ!":
+                view.phase==="paused"?"ПАУЗА":
+                view.phase==="won"?"ПОБЕДА!":"МИССИЯ ПРОВАЛЕНА"}
+              </h3>
+              <p>{view.phase==="ready"
+                ?"DEFEND THE OUTPOST! Enemy infantry advances in increasingly fast waves. Move the tank, aim, and fire. Survive 95 seconds."
+                :view.phase==="paused"?"Take a short break. The battle is frozen."
+                :view.phase==="won"?"You survived all five winter waves. Impressive!"
+                :"Your tank or the outpost was overwhelmed. Try again!"}
+              </p>
+              {finished && <p className="tank-final-score">
+                SCORE {view.score.toLocaleString("en-US")} · {view.defeated} TARGETS
+              </p>}
+              <div className="tank-start-actions">
+                <button type="button" onClick={view.phase==="paused"?togglePause:start}>
+                  {view.phase==="paused"?<Play size={18}/>:<Crosshair size={18}/>}
+                  {view.phase==="ready"?"START HARD MODE":
+                    view.phase==="paused"?"RESUME":"RETRY MISSION"}
+                </button>
+                <button type="button" className="tank-secondary" onClick={onExit}>
+                  RETURN TO EASTER EGG
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+      <div className="tank-controls">
+        <div className="tank-game-pad" aria-label="Tank movement buttons">
+          <button type="button" aria-label="Move up" style={{gridArea:"up"}} {...pressDirection("up")}>
+            <ArrowUp size={22}/>
+          </button>
+          <button type="button" aria-label="Move left" style={{gridArea:"left"}} {...pressDirection("left")}>
+            <ArrowLeft size={22}/>
+          </button>
+          <button type="button" aria-label="Move down" style={{gridArea:"down"}} {...pressDirection("down")}>
+            <ArrowDown size={22}/>
+          </button>
+          <button type="button" aria-label="Move right" style={{gridArea:"right"}} {...pressDirection("right")}>
+            <ArrowRight size={22}/>
+          </button>
+        </div>
+        <div className="tank-control-copy">
+          <strong>УДЕРЖИВАЙ РУБЕЖ! • DEFEND THE LINE</strong>
+          <span><kbd>WASD</kbd> / <kbd>↑↓←→</kbd> Move</span>
+          <span><kbd>Mouse</kbd> Aim · <kbd>Space</kbd> Shoot (auto-aim for keyboard)</span>
+          <span>Mobile: move with arrows, tap/hold the battlefield or FIRE button.</span>
+        </div>
+        <button className="tank-fire-button" type="button"
+          disabled={view.phase!=="running"}
+          onPointerDown={event=>{
+            event.preventDefault();firing.current=true;
+            event.currentTarget.setPointerCapture(event.pointerId);
+          }}
+          onPointerUp={()=>{firing.current=false;}}
+          onPointerCancel={()=>{firing.current=false;}}
+          onLostPointerCapture={()=>{firing.current=false;}}>
+          <Crosshair size={25}/> FIRE
+        </button>
+        <button className="tank-retry-mini" type="button" onClick={start}>
+          <RotateCcw size={16}/> RESTART
+        </button>
+      </div>
+      <p className="tank-game-note">
+        Original arcade fiction inspired by a snowy 1943 eastern-front setting. Opponents use
+        neutral grey cross markings, with no Nazi symbols. No gore, cloud saves or purchases.
+        The game pauses when its tab is hidden.
+      </p>
+    </div>
+  );
+}

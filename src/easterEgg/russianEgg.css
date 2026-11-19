@@ -355,3 +355,84 @@ html:is([data-motion="minimal"],[data-motion="off"]) .russian-meow-corner img,
 html:is([data-motion="minimal"],[data-motion="off"]) .russian-meow-corner span {
   animation:none!important;
 }
+
+
+/* Soviet winter arcade remix. No extremist insignia or actual browser damage. */
+.russian-egg-overlay{
+  --rus-red:#aa2331;
+  --rus-cream:#ffe8b0;
+  background:
+    radial-gradient(ellipse at 85% 4%,#ffdf9283,transparent 32%),
+    radial-gradient(ellipse at 0 96%,#ffc37c4a,transparent 34%),
+    repeating-linear-gradient(45deg,transparent 0 28px,#f4d69b0a 28px 31px),
+    linear-gradient(132deg,#441b31 0%,#a42133 48%,#bd3e3b 78%,#4c293c 100%);
+}
+.russian-egg-header{
+  background:linear-gradient(100deg,#681c2edc,#a12837cf);
+  border-bottom:2px solid #e9bf79a6;
+  box-shadow:0 4px 0 #40162f36;
+}
+.russian-egg-label{color:#ffe1a4;letter-spacing:1.8px}
+.russian-egg-stars{color:#ffe299}
+.russian-wavy-title{text-shadow:3px 4px 0 #6c1a2f,5px 8px 0 #362439,0 16px 24px #120b1f80}
+.russian-shout-bubble{
+  background:linear-gradient(135deg,#fff5d9,#ffcf87);
+  color:#7e2534;box-shadow:6px 9px 0 #461b31,0 20px 35px #22162868;
+}
+.russian-egg-stage::before{
+  content:"★";position:absolute;pointer-events:none;z-index:0;
+  top:14px;right:4%;font-size:clamp(70px,10vw,155px);line-height:1;
+  color:#f8d18f25;text-shadow:0 4px 20px #f2ca7641;
+}
+.russian-gif-button{
+  /* GIF itself animates. The frame must NOT bounce anymore. */
+  transform:none!important;
+  animation:none!important;
+  box-shadow:0 9px 0 #7a273a,0 18px 32px #200f226d,inset 0 3px #fff4c0;
+}
+.russian-gif-button:hover{transform:none!important}
+.russian-swow-corner{
+  position:fixed;z-index:5;width:clamp(78px,11vw,146px);height:clamp(78px,11vw,146px);
+  display:grid;place-items:center;pointer-events:none;
+  filter:drop-shadow(0 8px 12px #381a2da6);
+}
+.russian-swow-corner img{display:block;width:100%;height:100%;object-fit:contain;
+  animation:russian-swow-spin 1.8s linear infinite reverse}
+.russian-swow-corner span{font-size:70px;animation:russian-swow-spin 1.8s linear infinite reverse}
+.russian-swow-corner.corner-top-right{top:92px;right:25px}
+.russian-swow-corner.corner-bottom-right{bottom:26px;right:25px}
+.russian-swow-corner.corner-bottom-left{bottom:26px;left:25px}
+.russian-swow-corner.corner-top-left{top:92px;left:25px}
+@keyframes russian-swow-spin{to{transform:rotate(360deg)}}
+.russian-tank-invite{
+  display:grid;gap:9px;justify-items:start;
+  margin:18px 0 16px;padding:16px 18px;
+  background:linear-gradient(130deg,#311f31dc,#742e38d6);
+  border:2px solid #ecbf78;border-radius:15px;
+  box-shadow:0 7px 0 #3b1a31,0 15px 25px #200f234d;
+}
+.russian-tank-invite-kicker{font-size:10px;color:#ffda92;font-weight:950;letter-spacing:2px}
+.russian-tank-invite strong{font-size:19px;color:#fff1d6;font-weight:900;letter-spacing:.5px}
+.russian-tank-invite p{font-size:11px;line-height:1.6;color:#f6ddc6}
+.russian-tank-launch{
+  display:inline-flex;align-items:center;justify-content:center;gap:9px;
+  min-height:48px;padding:12px 19px;
+  background:linear-gradient(120deg,#f8d992,#dc995a);
+  border:2px solid #fff2c4;border-radius:11px;color:#742d39;
+  font-size:13px;font-weight:1000;
+  box-shadow:0 5px 0 #7b4e3a,0 10px 22px #210f2368;
+  cursor:pointer;
+}
+.russian-tank-launch:hover{filter:brightness(1.07)}
+.russian-tank-launch:focus-visible{outline:3px solid #fff;outline-offset:4px}
+.russian-tank-loading{text-align:center;color:#ffefbd;font-size:16px;margin:100px 20px}
+@media(max-width:700px){
+  .russian-egg-label{letter-spacing:.6px;font-size:9px}
+  .russian-tank-invite{justify-items:center;text-align:center}
+  .russian-swow-corner{width:66px;height:66px}
+}
+@media(prefers-reduced-motion:reduce){
+  .russian-swow-corner img,.russian-swow-corner span{animation:none!important}
+}
+html:is([data-motion="minimal"],[data-motion="off"]) .russian-swow-corner img,
+html:is([data-motion="minimal"],[data-motion="off"]) .russian-swow-corner span{animation:none!important}
