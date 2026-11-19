@@ -1,10 +1,11 @@
 import { lazy, Suspense, useEffect, useRef, useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import { Link, Navigate, useParams } from "react-router-dom";
 import {
   ArrowLeft,
   ArrowRight,
   Check,
   Clock3,
+  Sparkles,
   Feather,
   Flower2,
   Footprints,
@@ -13,7 +14,6 @@ import {
   Moon,
   RotateCcw,
   ScanEye,
-  Sparkles,
   Sprout,
   Star,
   Sun,
@@ -38,10 +38,13 @@ import {
 import "./games.css";
 import { expeditions } from "./arcade/boards";
 import { LevelPicker, LevelCount, levelKey, recordScore } from "./levels";
+import "./game-depth.css";
 import { adventures } from "./arcade/courses";
 import { AdventureShelf } from "./arcade/Gallery";
 const Expedition = lazy(() => import("./arcade/Expedition"));
 const Adventure = lazy(() => import("./arcade/Adventure"));
+const BuddyGarden = lazy(() => import("./BuddyGarden"));
+const BuddyRunner = lazy(() => import("./BuddyRunner"));
 
 const symbols = [
   { icon: Leaf, name: "Lá" },
@@ -517,11 +520,29 @@ export default function Games({
   countdown: string | null;
 }) {
   const { slug } = useParams();
+  const [richEffects, setRichEffects] = useState(() => {
+    try { return localStorage.getItem("focus-buddy-rich-effects-v1") !== "off"; }
+    catch { return true; }
+  });
+  useEffect(() => {
+    try { localStorage.setItem("focus-buddy-rich-effects-v1", richEffects ? "on" : "off"); }
+    catch { /* Device storage is optional. */ }
+  }, [richEffects]);
   const selected = gameShelf.find((g) => g.id === slug);
   const expedition = expeditions.find((g) => g.slug === slug);
   const adventure = adventures.find((g) => g.slug === slug);
+  const buddyGarden = slug === "vuon-buddy";
+  const buddyRunner = slug === "buddy-run";
+  if (slug === "dao-xanh") return <Navigate replace to="/tro-choi"/>;
   return (
-    <div className="games-page">
+    <div className={`games-page ${richEffects ? "fx-rich" : "fx-lite"}`}>
+      <div className="game-graphics-bar">
+        <span><Sparkles size={17}/> Hình ảnh 2.5D · Chiều sâu, ánh sáng và chuyển động</span>
+        <button type="button" aria-pressed={richEffects}
+          onClick={() => setRichEffects((current) => !current)}>
+          {richEffects ? "Hiệu ứng: Bật" : "Hiệu ứng: Tối giản"}
+        </button>
+      </div>
       {countdown && (
         <Link to="/tap-trung" className="game-timer">
           <Clock3 size={17} />
@@ -529,13 +550,21 @@ export default function Games({
           <ArrowRight size={16} />
         </Link>
       )}
-      {selected || adventure || expedition ? (
+      {selected || adventure || expedition || buddyGarden || buddyRunner ? (
         <>
           <Link className="back-to-shelf" to="/tro-choi">
             <ArrowLeft size={16} />
             Tất cả trò chơi
           </Link>
-          {expedition || adventure ? (
+          {buddyRunner ? (
+            <Suspense fallback={<p>Đang mở đường chạy Buddy…</p>}>
+              <BuddyRunner profile={profile}/>
+            </Suspense>
+          ) : buddyGarden ? (
+            <Suspense fallback={<p>Đang mở vườn hoa…</p>}>
+              <BuddyGarden profile={profile}/>
+            </Suspense>
+          ) : expedition || adventure ? (
             <Suspense fallback={<p>Đang mở đường chơi…</p>}>
               {expedition ? (
                 <Expedition
@@ -568,6 +597,17 @@ export default function Games({
               {profile.buddy_name || "bạn nhỏ của bạn"}.
             </p>
           </header>
+          <Link className="garden-promo" to="/tro-choi/vuon-buddy">
+            <span className="garden-promo-icon"><Flower2 size={31}/></span>
+            <span><small>TRÒ CHƠI CÙNG BUDDY · 1 PHÚT</small><strong>Vườn hoa lấp lánh</strong><em>Tìm 10 bông hoa phát sáng. Một cuộc phiêu lưu nhỏ trong giờ nghỉ!</em></span>
+            <ArrowRight size={21}/>
+          </Link>
+          <div className="buddy-big-games">
+            <Link to="/tro-choi/buddy-run" className="buddy-feature-game runner-feature">
+              <span className="buddy-feature-emoji" aria-hidden="true">🏃</span>
+              <div><small>NHẢY · THỬ PHẢN XẠ · CẤP ĐỘ TĂNG DẦN</small><h2>Buddy Runner</h2><p>Trò chơi giống khủng long offline, nhưng chính Buddy của bạn chạy và nhảy. Có kỷ lục lưu cục bộ.</p><span>Chơi ngay <ArrowRight size={15}/></span></div>
+            </Link>
+          </div>
           <AdventureShelf profile={profile} />
           <h2 className="shelf-caption">Thử thách nhanh</h2>
           <div className="game-shelf">

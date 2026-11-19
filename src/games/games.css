@@ -450,3 +450,25 @@
   display: inline-block;
   margin-left: 0.4em;
 }
+
+.garden-promo{display:flex;align-items:center;gap:18px;text-decoration:none;background:linear-gradient(108deg,var(--study-mid),var(--study-pale));border:1px solid var(--study-line);color:var(--study-ink);padding:22px;border-radius:21px;margin:22px 0;transition:transform .2s,box-shadow .2s}
+.garden-promo:hover{transform:translateY(-2px);box-shadow:0 10px 24px #33492d1a}
+.garden-promo-icon{display:grid;place-items:center;min-width:63px;height:63px;border-radius:18px;background:#ffffffa9;color:var(--study-accent)}
+.garden-promo>span:nth-child(2){display:grid;gap:5px;flex:1}
+.garden-promo small{font-size:10px;letter-spacing:.9px;font-weight:750;color:var(--study-accent)}
+.garden-promo strong{font-size:19px}
+.garden-promo em{font-size:12px;font-style:normal;line-height:1.7}
+@media(max-width:480px){.garden-promo{gap:12px;padding:15px}.garden-promo-icon{min-width:50px;height:50px}}
+@media(prefers-reduced-motion:reduce){.garden-promo{transition:none}.garden-promo:hover{transform:none}}
+
+.buddy-big-games{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;margin:19px 0 24px}
+.buddy-feature-game{min-height:184px;display:flex;align-items:center;gap:16px;padding:23px;border:1px solid var(--study-line);border-radius:21px;color:var(--study-ink);background:linear-gradient(135deg,var(--study-pale),#fefefb);transition:transform .2s,box-shadow .2s}
+.buddy-feature-game:hover{transform:translateY(-3px);box-shadow:0 13px 27px #324d3719}
+.buddy-feature-emoji{display:grid;place-items:center;min-width:75px;height:75px;border-radius:23px;font-size:42px;background:#ffffffa0}
+.buddy-feature-game>div{display:grid;gap:7px}
+.buddy-feature-game small{font-size:10px;font-weight:800;letter-spacing:.5px;color:var(--study-accent)}
+.buddy-feature-game h2{font-size:20px}
+.buddy-feature-game p{font-size:12px;line-height:1.65}
+.buddy-feature-game>div>span{display:flex;align-items:center;gap:7px;color:var(--study-accent);font-size:12px;font-weight:700}
+@media(max-width:760px){.buddy-big-games{grid-template-columns:1fr}.buddy-feature-game{min-height:150px;padding:18px}.buddy-feature-emoji{min-width:56px;height:56px;font-size:30px}}
+@media(prefers-reduced-motion:reduce){.buddy-feature-game{transition:none}.buddy-feature-game:hover{transform:none}}

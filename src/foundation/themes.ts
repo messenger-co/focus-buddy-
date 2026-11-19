@@ -4,6 +4,7 @@ export const paletteLibrary = [
   ["cozy","Góc học ấm áp",28,false],["forest","Rừng xanh",149,false],["ocean","Đại dương",207,false],
   ["sakura","Hoa anh đào",340,false],["midnight","Tím nửa đêm",266,true],["neon","Neon",177,true],
   ["galaxy","Dải ngân hà",240,true],["winter","Tuyết đầu mùa",198,false],["autumn","Cà phê mùa thu",23,false],
+  ["cocoa","Cà phê ấm",25,false],["starlight","Đêm sao dịu",235,false],["frost","Băng tuyết",191,false],["sunrise","Bình minh",30,false],
 ] as const;
 export type ThemeId=(typeof paletteLibrary)[number][0];
 export function palette(id:string, accent:number|null=null) {

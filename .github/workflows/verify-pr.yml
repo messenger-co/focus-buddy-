@@ -1,0 +1,33 @@
+name: Kiểm tra tính năng Focus Buddy
+
+on:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    name: TypeScript, trò chơi và kiểm thử
+    runs-on: ubuntu-latest
+    steps:
+      - name: Lấy mã nguồn
+        uses: actions/checkout@v4
+      - name: Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+      - name: Cài thư viện
+        run: npm ci
+      - name: Kiểm thử giao diện
+        run: npm test
+      - name: Kiểm thử Edge Function (không triển khai)
+        run: npm run test:edge
+      - name: Kiểm tra TypeScript và build
+        run: npm run build
+        env:
+          VITE_SUPABASE_URL: ${{ vars.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_PUBLISHABLE_KEY: ${{ vars.VITE_SUPABASE_PUBLISHABLE_KEY }}
+          VITE_BASE_PATH: /focus-buddy-/

@@ -23,7 +23,11 @@ export type BuddyAccessory =
   | "beret"
   | "headphones"
   | "satchel"
-  | "sprout";
+  | "sprout"
+  | "flower"
+  | "beanie"
+  | "star"
+  | "wizard";
 export type BuddyScene = "garden" | "space" | "sunset";
 export const THEMES = paletteLibrary.map(([id,name])=>{
   const p=palette(id);return {id,name,tones:[p["--study-ink"],p["--study-mid"],p["--study-pale"]]};
@@ -147,6 +151,10 @@ export const ACCESSORIES: {
   { id: "headphones", name: "Tai nghe", symbol: "🎧" },
   { id: "satchel", name: "Túi thám hiểm", symbol: "🎒" },
   { id: "sprout", name: "Kẹp mầm non", symbol: "🌱" },
+  { id: "flower", name: "Vòng hoa", symbol: "🌸" },
+  { id: "beanie", name: "Mũ len", symbol: "🧢" },
+  { id: "star", name: "Ngôi sao", symbol: "⭐" },
+  { id: "wizard", name: "Mũ phép thuật", symbol: "🪄" },
 ];
 export const SCENES: { id: BuddyScene; name: string; description: string }[] = [
   { id: "garden", name: "Vườn nhỏ", description: "Lá xanh và chút bình yên" },

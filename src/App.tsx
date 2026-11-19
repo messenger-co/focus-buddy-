@@ -25,6 +25,8 @@ import {
   Flame,
   Flower2,
   Gamepad2,
+  Headphones,
+  Puzzle,
   MessagesSquare,
   Heart,
   Home,
@@ -64,6 +66,8 @@ const ThemeStudio=lazy(()=>import("./foundation/ThemeStudio"));
 const World=lazy(()=>import("./world3/World"));
 const Journal=lazy(()=>import("./foundation/Journal"));
 const Games = lazy(() => import("./games/Games"));
+const Music = lazy(() => import("./music/Music"));
+const Challenges = lazy(() => import("./challenges/Challenges"));
 const Discussion = lazy(() => import("./discussion/Discussion"));
 const BuddyStudio = lazy(() => import("./components/BuddyStudio"));
 const Companion = lazy(() => import("./components/Companion"));
@@ -76,6 +80,8 @@ const navItems = [
   { to: "/tro-choi", icon: Gamepad2, label: "Trò chơi tập trung" },
   { to: "/the-gioi-3d", icon: BoxIcon, label: "Phòng học 3D" },
   { to: "/giao-dien", icon: Palette, label: "Xưởng giao diện" },
+  { to: "/thu-thach", icon: Puzzle, label: "20 phút thử thách" },
+  { to: "/am-nhac", icon: Headphones, label: "Góc âm nhạc" },
   { to: "/thao-luan", icon: MessagesSquare, label: "Phòng thảo luận" },
   { to: "/hanh-trinh", icon: TrendingUp, label: "Hành trình của bạn" },
 ];
@@ -467,6 +473,22 @@ function App() {
                     profile={buddy.progress.profile}
                     countdown={active ? clockText(remaining,active.mode==="stopwatch") : null}
                   /></>
+                </Suspense>
+              }
+            />
+            <Route
+              path="/thu-thach"
+              element={
+                <Suspense fallback={<p>Đang mở thử thách…</p>}>
+                  <Challenges />
+                </Suspense>
+              }
+            />
+            <Route
+              path="/am-nhac"
+              element={
+                <Suspense fallback={<p>Đang mở góc âm nhạc…</p>}>
+                  <Music />
                 </Suspense>
               }
             />

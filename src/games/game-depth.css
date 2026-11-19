@@ -1,0 +1,247 @@
+/* Focus Buddy 2.5D visual system.
+ * Keep layout and gameplay 2D; depth comes from layering, light, perspective and shadows. */
+.games-page {
+  --depth-shadow: #1f3a3442;
+  --depth-edge: #aac7ac;
+  --depth-shine: #ffffffae;
+  isolation: isolate;
+}
+.games-page .arcade-lobby-heading {
+  position: relative;
+  border-radius: 26px;
+  padding: 30px clamp(20px,4vw,41px);
+  margin: 0 0 22px;
+  background: radial-gradient(circle at 89% 18%, #fffde3a8, transparent 28%),
+    linear-gradient(115deg,var(--study-mid),var(--study-pale));
+  border: 1px solid var(--study-line);
+  box-shadow: 0 5px 0 #718e7730, 0 16px 36px #234c3614, inset 0 1px #fff;
+  overflow: hidden;
+}
+.games-page .arcade-lobby-heading::after {
+  content:"✦";position:absolute;font-size:125px;line-height:1;right:30px;top:-24px;
+  color:#ffffffa8;text-shadow:0 6px 15px #e4ebc9;pointer-events:none;
+}
+.games-page .arcade-lobby-heading h1,
+.games-page .arcade-lobby-heading p { position:relative;z-index:1 }
+.games-page .arcade-lobby-heading h1 {font-size:clamp(28px,4vw,43px);font-weight:750}
+.games-page .arcade-lobby-heading p {max-width:660px;font-size:14px}
+.game-graphics-bar {
+  display:flex;align-items:center;justify-content:space-between;gap:14px;
+  flex-wrap:wrap;margin:0 0 18px;padding:11px 16px;
+  background:#fffdfaf0;border:1px solid var(--study-line);border-radius:16px;
+  box-shadow:0 3px 0 #dae5d5a8,0 9px 19px #244c3710;
+}
+.game-graphics-bar > span {display:flex;align-items:center;gap:9px;color:var(--study-accent);font-size:12px;font-weight:700}
+.game-graphics-bar button {
+  display:inline-flex;align-items:center;gap:8px;font-size:12px;font-weight:700;
+  background:linear-gradient(180deg,#fff,var(--study-pale));
+  border:1px solid var(--study-line);border-radius:99px;padding:9px 14px;
+  box-shadow:0 3px 0 #abc1ad79;transition:transform .15s,box-shadow .15s;
+}
+.game-graphics-bar button:hover {transform:translateY(-1px);box-shadow:0 4px 0 #abc1ad79}
+.game-graphics-bar button:active {transform:translateY(2px);box-shadow:0 1px 0 #abc1ad79}
+.games-page .game-card,.games-page .adventure-card {
+  transform-style:preserve-3d;
+  background:linear-gradient(160deg,#fff 0%,#fffefa 62%,var(--study-pale) 100%);
+  box-shadow:0 6px 0 #bacfbd9b,0 16px 27px #173e361f,inset 0 1px #fff;
+  border:1px solid #c7d8c9;
+  border-radius:21px;
+  overflow:hidden;
+  transition:transform .23s cubic-bezier(.2,.8,.25,1),box-shadow .23s;
+  position:relative;
+}
+.games-page .game-card::after,.games-page .adventure-card::after {
+  content:"";pointer-events:none;position:absolute;inset:0;
+  background:linear-gradient(115deg,#ffffff42,transparent 48%);
+  border-radius:inherit;
+}
+.games-page .game-cover {filter:saturate(1.1);transform:translateZ(0);box-shadow:inset 0 -8px 20px #203e3815}
+.games-page .game-cover .cover-pieces {filter:drop-shadow(0 8px 6px #26372f28)}
+.games-page .game-card-copy h2 {color:var(--study-ink);letter-spacing:-.5px}
+.games-page .game-card .game-play,.games-page .adventure-card-arrow {
+  box-shadow:0 4px 0 #b0cbb4a8,0 7px 14px #203b321e;
+}
+.games-page .play-table {
+  background:radial-gradient(circle at 100% 0,var(--study-pale),transparent 50%),#fffefb;
+  border:1px solid #c9dccb;border-radius:23px;
+  box-shadow:0 8px 0 #b0cbb4a1,0 22px 45px #24473821,inset 0 1px #fff;
+}
+.games-page .tile {
+  transform:translate3d(0,-3px,0);
+  background:linear-gradient(160deg,#ffffff,#f0f6e9);
+  border:1px solid #b8cdbd;
+  box-shadow:0 6px 0 #aac7b5,0 12px 18px #24473924,inset 0 2px 2px #fff;
+  transition:transform .16s,box-shadow .16s,filter .16s;
+  position:relative;
+}
+.games-page .tile:hover:not(:disabled){transform:translate3d(0,-6px,0);filter:saturate(1.12)}
+.games-page .tile:active:not(:disabled) {
+  transform:translate3d(0,2px,0);
+  box-shadow:0 1px 0 #aac7b5,0 3px 7px #24473921,inset 0 2px 3px #99ae9c32;
+}
+.games-page .tile.revealed {
+  background:linear-gradient(150deg,#fdfceb,#e8f1d8);
+  box-shadow:0 4px 0 #b8cfa5,0 11px 18px #24473915,inset 0 1px #fff;
+}
+
+/* Featured shelf: toy-like physical game cards. */
+.games-page .buddy-feature-game,.games-page .garden-promo {
+  position:relative;
+  border:1px solid #bed3c1;
+  box-shadow:0 7px 0 #a2c3b3,0 17px 30px #22463527,inset 0 1px #fff;
+  overflow:hidden;
+  transform:translate3d(0,0,0);
+  transition:transform .23s,box-shadow .23s;
+}
+.games-page .buddy-feature-game::after,.games-page .garden-promo::after{
+  content:"✦";position:absolute;font-size:78px;right:13px;top:-28px;color:#ffffff70;
+  pointer-events:none;text-shadow:0 4px 12px #fff;
+}
+.games-page .buddy-feature-emoji,.games-page .garden-promo-icon {
+  filter:drop-shadow(0 9px 6px #30462c31);
+}
+.games-page .garden-promo strong {letter-spacing:-.3px}
+
+/* Runner: framed panoramic diorama with layered motion. */
+.runner-page .runner-header {
+  background:radial-gradient(ellipse at 84% 19%,#fff7c4,transparent 25%),
+    linear-gradient(113deg,var(--study-mid),var(--study-pale));
+  box-shadow:0 6px 0 #a6c0b6a8,0 17px 30px #264f3a17,inset 0 1px #fff;
+}
+.runner-page .runner-panel {
+  background:linear-gradient(145deg,#ffffff,#f5faf4);
+  box-shadow:0 9px 0 #c1d8cb,0 23px 37px #264f3a28;
+}
+.runner-page .runner-score span {
+  background:linear-gradient(150deg,#fff,var(--study-pale));
+  border:1px solid #d1e1d1;
+  box-shadow:0 3px 0 #afcbb18a,inset 0 1px #fff;
+}
+.runner-page .runner-stage {
+  border:5px solid #ffffff;
+  outline:1px solid #afc9c2;
+  box-shadow:0 9px 0 #a3bfb6,0 20px 26px #284a412f,inset 0 0 28px #ffffff23;
+  isolation:isolate;
+}
+.runner-page .runner-stage::after {
+  content:"";position:absolute;pointer-events:none;inset:0;z-index:4;
+  border-radius:14px;
+  background:linear-gradient(122deg,#ffffff4d,transparent 25% 75%,#ffffff18),
+    radial-gradient(ellipse at 50% 0%,#ffffff26,transparent 66%);
+  box-shadow:inset 0 2px 4px #ffffff5c,inset 0 -8px 18px #283c4514;
+}
+.runner-page .runner-stage.impact {animation:runner-impact .33s ease-out}
+.runner-page .runner-buddy {
+  filter:drop-shadow(0 9px 3px #2545412d);
+  transform-origin:50% 95%;
+  z-index:3;
+}
+.runner-page .runner-buddy.buddy-striding .sprite-foot-left {
+  animation: runner-foot-left .22s ease-in-out infinite alternate;
+}
+.runner-page .runner-buddy.buddy-striding .sprite-foot-right {
+  animation: runner-foot-right .22s ease-in-out infinite alternate;
+}
+.runner-page .runner-buddy.buddy-striding .sprite-scarf {
+  transform-origin:185px 196px;
+  animation: runner-scarf .42s ease-in-out infinite alternate;
+}
+.runner-page .runner-overlay {
+  z-index:5;backdrop-filter:blur(7px);
+  background:linear-gradient(135deg,#f8fbf3ea,#fffbe0dd);
+}
+.runner-page .runner-overlay h2 {text-shadow:0 2px 0 #fff,0 6px 15px #678b7340}
+.runner-action-buttons{display:flex;justify-content:center;align-items:center;gap:12px;flex-wrap:wrap}
+.runner-page .runner-jump {box-shadow:0 6px 0 #2c5d47,0 13px 20px #284a372e}
+.runner-page .runner-jump:active:not(:disabled){transform:translateY(4px);box-shadow:0 2px 0 #2c5d47}
+@keyframes runner-foot-left {from{transform:translateY(0)}to{transform:translateY(-5px) rotate(3deg)}}
+@keyframes runner-foot-right {from{transform:translateY(-5px) rotate(-3deg)}to{transform:translateY(0)}}
+@keyframes runner-scarf {from{transform:rotate(9deg)}to{transform:rotate(18deg)}}
+@keyframes runner-impact {0%{transform:translateX(0)}25%{transform:translateX(-3px)}60%{transform:translateX(3px)}100%{transform:translateX(0)}}
+
+/* Garden: tactile illuminated flowers with depth, not flat buttons. */
+.garden-play .garden-heading {
+  background:radial-gradient(circle at 85% 14%,#fff9d4a9,transparent 28%),linear-gradient(118deg,var(--study-mid),var(--study-pale));
+  box-shadow:0 6px 0 #b5cdbda1,0 16px 30px #1d4a3819;
+}
+.garden-play .garden-panel{
+  background:linear-gradient(160deg,#fff,#f6fbf1);
+  box-shadow:0 8px 0 #bbd1bd,0 20px 35px #244a3325;
+}
+.garden-play .garden-plot {
+  position:relative;
+  background:radial-gradient(ellipse at 28% 16%,#f4ffed,transparent 55%),linear-gradient(145deg,#e2f1d2,#a5cca7);
+  border:2px solid #c0d5a8;
+  box-shadow:0 7px 0 #6f9d77,0 14px 18px #2846363b,inset 0 3px #ffffffb8;
+  transform:translate3d(0,-4px,0);
+  transition:transform .16s,box-shadow .16s;
+}
+.garden-play .garden-plot.golden{
+  color:#bc8431;
+  border-color:#ffe7a3;
+  background:radial-gradient(circle at 40% 31%,#fffef0,#ffe39d 66%,#e9b76c);
+  box-shadow:0 8px 0 #d7a45f,0 16px 20px #ad7c3e58,0 0 27px #fff6b6;
+}
+.garden-play .garden-plot:hover:not(:disabled){transform:translate3d(0,-8px,0)}
+.garden-play .garden-plot:active:not(:disabled){transform:translate3d(0,3px,0);box-shadow:0 2px 0 #6f9d77,0 6px 10px #28463636}
+.garden-play .garden-buddy-bubble{
+  box-shadow:0 4px 0 #c5d8ba,0 9px 15px #2b513b16;
+}
+.garden-play .garden-overlay{
+  background:radial-gradient(circle at 50% 0%,#fffdec,transparent 70%),linear-gradient(145deg,var(--study-paper),var(--study-pale));
+  box-shadow:inset 0 3px #fff,0 5px 0 #c7dcc5;
+}
+
+/* Existing platform / glide levels share the new depth treatment. */
+.games-page .adventure-poster,.games-page .arcade-stage{
+  box-shadow:inset 0 0 25px #192f4024;
+}
+.games-page .adventure-card:hover .adventure-poster canvas{filter:saturate(1.12)}
+.games-page .arcade-stage{border:4px solid #fff;border-radius:18px;box-shadow:0 7px 0 #93adab,0 17px 24px #29463e36}
+.games-page .adventure-card-copy{background:linear-gradient(155deg,#fffefc,var(--study-paper))}
+.games-page .arcade-actor{filter:drop-shadow(0 4px 4px #233d4933)}
+
+/* Reduced effects option and OS reduced-motion preference. */
+.games-page.fx-lite .game-card,
+.games-page.fx-lite .buddy-feature-game,
+.games-page.fx-lite .garden-promo,
+.games-page.fx-lite .adventure-card,
+.games-page.fx-lite .tile,
+.games-page.fx-lite .garden-plot {
+  transform:none;transition:none;
+}
+.games-page.fx-lite .runner-buddy .sprite-foot-left,
+.games-page.fx-lite .runner-buddy .sprite-foot-right,
+.games-page.fx-lite .runner-buddy .sprite-scarf,
+.games-page.fx-lite .garden-plot.golden {animation:none}
+@media(hover:hover) and (prefers-reduced-motion:no-preference) {
+  .games-page .game-card:hover,.games-page .adventure-card:hover {
+    transform:perspective(750px) rotateX(2deg) translateY(-6px);
+    box-shadow:0 9px 0 #a9c9b7,0 24px 36px #1d3a332b;
+  }
+  .games-page .buddy-feature-game:hover,.games-page .garden-promo:hover{
+    transform:perspective(800px) rotateX(2deg) translateY(-5px);
+    box-shadow:0 10px 0 #a2c3b3,0 25px 36px #22463528;
+  }
+  .games-page.fx-lite .game-card:hover,
+  .games-page.fx-lite .adventure-card:hover,
+  .games-page.fx-lite .buddy-feature-game:hover,
+  .games-page.fx-lite .garden-promo:hover {transform:none}
+}
+@media(max-width:680px) {
+  .games-page .arcade-lobby-heading{padding:23px 20px}
+  .games-page .arcade-lobby-heading::after{right:-10px;font-size:90px;opacity:.5}
+  .game-graphics-bar{padding:10px}
+}
+@media(prefers-reduced-motion:reduce) {
+  .games-page *, .games-page *::before, .games-page *::after{
+    animation:none!important;
+    transition:none!important;
+    scroll-behavior:auto!important;
+  }
+  .games-page .game-card:hover,.games-page .adventure-card:hover,
+  .games-page .buddy-feature-game:hover,.games-page .garden-promo:hover,
+  .games-page .tile:hover,.games-page .garden-plot:hover{
+    transform:none;
+  }
+}
