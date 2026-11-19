@@ -1,0 +1,268 @@
+/* Hidden Russian novelty — all styling and effects vanish on refresh. */
+.app[data-easter="russian"]{
+  --study-ink:#5d2233!important;
+  --study-accent:#b83746!important;
+  --study-mid:#ffd5d2!important;
+  --study-pale:#fff0e9!important;
+  --study-line:#efbbbb!important;
+  background:linear-gradient(128deg,#fff2e9,#fce1d5 54%,#fff8e9)!important;
+}
+.app[data-easter="russian"] .sidebar,
+.app[data-easter="russian"] .topbar{
+  background:linear-gradient(135deg,#a72b3d,#cc4952 52%,#76263c)!important;
+  color:#fff5eb!important;
+}
+.app[data-easter="russian"] .sidebar :is(.brand,.nav-item,.sidebar-label,.gentle-note,.sidebar-profile),
+.app[data-easter="russian"] .topbar :is(span,strong,.breadcrumb,.icon-button){
+  color:#fff9ec!important;
+}
+.russian-egg-overlay{
+  --rus-red:#cb3948;--rus-dark:#411f35;--rus-cream:#fff3df;
+  position:fixed;z-index:10000;inset:0;isolation:isolate;overflow:auto;
+  background:
+    radial-gradient(ellipse at 86% 15%,#fff4e984,transparent 25%),
+    radial-gradient(ellipse at 12% 79%,#ff879c4a,transparent 37%),
+    linear-gradient(133deg,#4e2b4f,#9b354b 54%,#d75f5b);
+  color:#fff7ea;font-family:"Be Vietnam Pro",Arial,sans-serif;
+}
+.russian-egg-overlay:before{
+  content:"";pointer-events:none;position:absolute;inset:0;z-index:-1;
+  background-image:repeating-linear-gradient(35deg,transparent 0 34px,#ffffff07 35px 38px);
+}
+.russian-snow{position:fixed;inset:0;pointer-events:none;z-index:0;overflow:hidden}
+.russian-snow span{
+  position:absolute;top:-35px;color:#fff7e0b8;font-size:18px;
+  animation:russian-snowfall 9s linear infinite;
+}
+@keyframes russian-snowfall{
+  from{translate:0 -30px;opacity:0}12%{opacity:.9}
+  to{translate:40px 105vh;opacity:.35}
+}
+.russian-egg-header,.russian-egg-bottom{
+  position:relative;z-index:2;display:flex;align-items:center;justify-content:space-between;
+  flex-wrap:wrap;gap:12px;padding:17px clamp(17px,4vw,58px);
+}
+.russian-egg-header{border-bottom:1px solid #fff3d435;background:#341d3166;backdrop-filter:blur(13px)}
+.russian-egg-label{
+  display:flex;align-items:center;gap:12px;font-size:12px;font-weight:900;
+  letter-spacing:2.1px;color:#fff3df;
+}
+.russian-flag{
+  width:36px;height:25px;border-radius:4px;border:2px solid #ffeedc;
+  background:linear-gradient(#fff 0 33.33%,#3466c2 33.33% 66.66%,#ce3645 66.66%);
+  box-shadow:0 3px 8px #200f203b;
+}
+.russian-egg-top-actions{display:flex;gap:10px;align-items:center}
+.russian-music-button,.russian-egg-close{
+  display:inline-flex;align-items:center;justify-content:center;gap:8px;
+  background:#ffffff25;color:#fff7e8;border:1px solid #fff9ea77;
+  border-radius:13px;min-height:39px;padding:9px 13px;
+  cursor:pointer;box-shadow:0 3px 0 #3614254a;
+  font-size:11px;font-weight:850;
+}
+.russian-egg-close{min-width:39px;padding:8px}
+.russian-audio-warning{
+  display:flex;align-items:center;gap:7px;font-size:11px;font-weight:650;color:#ffebc5;
+}
+.russian-egg-stage{
+  position:relative;z-index:1;display:grid;
+  grid-template-columns:minmax(250px,1.1fr) minmax(250px,1fr);
+  gap:clamp(15px,3vw,50px);align-items:center;
+  max-width:1190px;min-height:min(660px,calc(100dvh - 170px));
+  margin:0 auto;padding:24px clamp(18px,4vw,48px);
+}
+.russian-egg-story{max-width:600px;position:relative;z-index:2}
+.russian-egg-stars{letter-spacing:14px;color:#ffd77b;font-size:22px;margin-bottom:9px;animation:russian-star-bounce 1.4s ease-in-out infinite alternate}
+.russian-wavy-title{
+  display:flex;align-items:flex-end;flex-wrap:wrap;
+  font-family:Impact,"Arial Black",Arial,sans-serif;
+  font-size:clamp(39px,6.5vw,86px);letter-spacing:-.7px;line-height:1.25;
+  color:#fff5e8;margin:0 0 8px;
+  text-shadow:2px 4px 0 #702439,4px 8px 0 #501e35,0 14px 28px #29091f7a;
+}
+.russian-wavy-title>span{
+  display:inline-block;transform-origin:50% 90%;
+  animation:russian-wave .96s ease-in-out infinite alternate;
+}
+.russian-egg-subtitle{
+  font-size:clamp(10px,1.5vw,13px);letter-spacing:2px;font-weight:800;color:#ffe9c7;
+  text-shadow:0 2px 8px #462037;
+}
+.russian-shout-bubble{
+  position:relative;display:inline-block;margin:23px 0 21px;
+  background:linear-gradient(160deg,#fffdf4,#ffe3b8);
+  color:#962d46;border:4px solid #472d3d;border-radius:25px 25px 25px 4px;
+  padding:16px 22px;font-weight:1000;font-size:clamp(16px,2.4vw,24px);
+  box-shadow:5px 7px 0 #3b1b3575,0 14px 30px #3513274b;
+  text-transform:uppercase;animation:russian-shout 1s ease-in-out infinite alternate;
+}
+.russian-egg-desc{font-size:13px;line-height:1.85;max-width:460px;color:#fff5e4}
+.russian-egg-desc strong{color:#fff4aa}
+.russian-drink-tracker{display:flex;align-items:center;flex-wrap:wrap;gap:5px;margin:19px 0 10px}
+.russian-drink-tracker span{
+  display:grid;place-items:center;width:35px;height:35px;
+  background:#ffffff20;border:1px solid #fff6e182;border-radius:11px;
+  color:#ffc2b9;font-size:18px;text-shadow:0 3px 6px #52273b;
+  box-shadow:0 4px 0 #45213b88;
+}
+.russian-drink-tracker span.done{
+  background:linear-gradient(140deg,#ffe4a3,#f8a367);color:#fff9e0;
+  animation:russian-spark .28s ease-out both;
+}
+.russian-sip-counter{font-size:13px;font-weight:850;color:#fff2c0}
+.russian-character-stand{display:grid;place-items:center;position:relative;min-height:440px;isolation:isolate}
+.russian-spotlight{
+  position:absolute;z-index:-1;inset:9% -10%;
+  background:radial-gradient(ellipse,#ffc98394 0%,#ffedb34b 32%,transparent 69%);
+  filter:blur(7px);
+}
+.russian-buddy-button{
+  display:block;border:0;padding:0;background:none;cursor:pointer;
+  filter:drop-shadow(0 16px 10px #3a162a65);
+  transform-origin:50% 91%;
+  animation:russian-buddy-dance 1.2s ease-in-out infinite alternate;
+}
+.russian-buddy-button:focus-visible{outline:4px solid #fff6b4;outline-offset:14px;border-radius:50%}
+.russian-buddy-button.sipping .russian-bottle{transform:translate(-38px,-43px) rotate(-57deg);transform-origin:233px 176px}
+.russian-buddy-button.sipping{animation:russian-buddy-sip .58s ease-in-out}
+.russian-buddy-button.sleeping{
+  animation:russian-buddy-sleep 1.1s ease-out forwards;
+  cursor:default;
+  filter:drop-shadow(0 7px 3px #2c1c29aa);
+}
+.russian-character{position:relative;width:min(310px,69vw);height:min(310px,69vw)}
+.russian-character .companion-art,.russian-character .russian-outfit{
+  width:100%;height:100%;display:block;
+}
+.russian-character .russian-outfit{
+  position:absolute;inset:0;overflow:visible;pointer-events:none;
+}
+.russian-outfit .russian-bottle{
+  transition:transform .22s cubic-bezier(.24,.8,.18,1);
+}
+.russian-floor-shadow{position:absolute;bottom:16px;width:250px;height:28px;
+  border-radius:50%;background:#210e2340;filter:blur(7px);z-index:-1}
+.russian-egg-bottom{
+  max-width:1180px;margin:0 auto;
+  border-top:1px solid #ffe5c23b;font-size:11px;font-weight:700;color:#ffe4c5;
+}
+.russian-hidden-call{
+  opacity:.3;display:inline-flex;align-items:center;gap:5px;
+  color:#fff3c5;background:#240e24;border:1px solid #ffdab567;
+  border-radius:8px;cursor:pointer;font-size:10px;letter-spacing:1.5px;
+  padding:7px 10px;transition:opacity .2s,transform .2s;
+}
+.russian-hidden-call:hover,.russian-hidden-call:focus-visible{opacity:1;transform:translateY(-2px)}
+.russian-phone-backdrop{
+  position:fixed;z-index:20;inset:0;display:grid;place-items:center;
+  background:#100c1dcc;backdrop-filter:blur(16px);padding:17px;
+}
+.russian-phone{
+  position:relative;width:min(355px,94vw);min-height:570px;
+  padding:40px 23px 23px;border:9px solid #191f26;border-radius:47px;
+  display:flex;flex-direction:column;align-items:center;
+  text-align:center;color:#fff5e3;
+  background:radial-gradient(circle at 51% 25%,#9a9bc0,#43395c 40%,#151f36 100%);
+  box-shadow:0 0 0 2px #d0c8a1,0 28px 75px #090a18c8,inset 0 1px #fff3c0;
+}
+.russian-phone-notch{position:absolute;top:7px;left:50%;transform:translateX(-50%);
+  width:100px;height:16px;background:#11141c;border-radius:0 0 12px 12px}
+.russian-call-status{
+  display:flex;align-items:center;gap:9px;letter-spacing:2px;font-size:10px;
+  font-weight:900;opacity:.88;margin-bottom:30px;
+}
+.russian-caller-photo{
+  width:154px;height:154px;display:grid;place-items:center;overflow:hidden;
+  border:5px solid #e6e9ed;border-radius:50%;background:#b6bacb;
+  box-shadow:0 7px 25px #03061265;flex:none;
+}
+.russian-caller-photo img{width:100%;height:100%;object-fit:cover}
+.russian-caller-photo span{font-size:75px;color:#33395d}
+.russian-phone h2{font-size:30px;margin:17px 0 6px;color:#fff}
+.russian-phone p{font-size:12px;line-height:1.6}
+.russian-phone-timer{
+  display:grid;place-items:center;width:62px;height:62px;border-radius:50%;
+  background:#b9354f;color:#fff;border:3px solid #ffd6dd;
+  font-size:24px;font-weight:1000;margin:19px 0 10px;
+  box-shadow:0 0 19px #f65e7375;animation:russian-phone-pulse .75s infinite alternate;
+}
+.russian-call-hint{font-size:11px!important;max-width:220px;color:#ffefcf}
+.russian-call-hint kbd{padding:2px 5px;border-radius:5px;background:#ffffff2d;border:1px solid #ffffffa0}
+.russian-call-actions{display:flex;gap:10px;margin-top:auto;width:100%;padding-top:22px}
+.russian-call-actions button{
+  display:grid;justify-items:center;align-content:center;gap:6px;flex:1;
+  background:linear-gradient(140deg,#5ade8e,#289e63);color:#f9fff9;
+  padding:15px 7px;min-height:70px;border:2px solid #8bf5a7;border-radius:20px;
+  box-shadow:0 5px 0 #186144,0 10px 21px #0005;
+  font-size:11px;font-weight:900;cursor:pointer;
+}
+.russian-call-actions button:active{transform:translateY(3px);box-shadow:0 2px 0 #186144}
+.russian-phone-answered{margin:auto 0 30px;font-size:17px;font-weight:900;color:#aff4bd}
+.russian-glitch{
+  position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;
+  justify-content:center;text-align:center;gap:15px;background:#210819;
+  animation:russian-glitch-shake .16s steps(2,end) infinite;z-index:50;
+}
+.russian-glitch strong{font-size:clamp(55px,13vw,180px);font-family:Impact,Arial,sans-serif;
+  color:#fff8ec;text-shadow:8px 0 #fa385f,-9px 0 #44dfe5;animation:russian-glitch-flicker .2s infinite}
+.russian-glitch p,.russian-glitch span{color:#ffd2a2;font-size:14px;font-weight:900;letter-spacing:3px}
+.russian-fake-crash{
+  position:fixed;z-index:99999;inset:0;padding:clamp(35px,9vw,130px);
+  background:#fafafa;color:#32373c;display:flex;flex-direction:column;
+  justify-content:center;align-items:flex-start;
+  font-family:Arial,Helvetica,sans-serif;text-align:left;
+}
+.russian-fake-crash .crash-face{font-size:48px;color:#67727a;font-weight:700}
+.russian-fake-crash h1{font-size:38px;font-weight:500;margin:22px 0 8px}
+.russian-fake-crash>p{font-size:15px;line-height:1.65;margin:9px 0}
+.russian-fake-crash .crash-code{color:#7d8890;font:12px ui-monospace,monospace;margin:18px 0}
+.russian-fake-crash .crash-disclaimer{font-size:12px;color:#668079;max-width:560px}
+.russian-fake-crash .crash-refresh{
+  display:inline-flex;align-items:center;gap:12px;font-size:13px;
+  background:#e7edf2;border-radius:9px;padding:12px 16px;margin-top:19px;
+}
+@keyframes russian-wave{
+  from{transform:translateY(-9px) rotate(-8deg);color:#ffeccc}
+  to{transform:translateY(9px) rotate(8deg);color:#ffffff}
+}
+@keyframes russian-star-bounce{from{transform:translateY(0) scale(.95)}
+  to{transform:translateY(-9px) scale(1.09)}}
+@keyframes russian-shout{from{transform:rotate(-3deg) scale(.98)}
+  to{transform:rotate(3deg) scale(1.03)}}
+@keyframes russian-spark{from{transform:scale(.2);opacity:.1}
+  to{transform:scale(1);opacity:1}}
+@keyframes russian-buddy-dance{from{transform:translateY(0) rotate(-3deg)}
+  to{transform:translateY(-12px) rotate(3deg)}}
+@keyframes russian-buddy-sip{0%{transform:rotate(0)}
+  50%{transform:rotate(-10deg) translateY(5px)}
+  100%{transform:rotate(0)}}
+@keyframes russian-buddy-sleep{from{transform:rotate(0) translateY(0)}
+  to{transform:rotate(77deg) translate(30px,25px)}}
+@keyframes russian-phone-pulse{to{box-shadow:0 0 31px #e86c84}}
+@keyframes russian-glitch-shake{0%{transform:translate(2px,-3px)}
+  50%{transform:translate(-3px,2px)}}
+@keyframes russian-glitch-flicker{0%{opacity:.8}50%{opacity:1}}
+@media(max-width:700px){
+  .russian-egg-stage{grid-template-columns:1fr;justify-items:center;text-align:center;gap:0;padding-top:23px}
+  .russian-egg-story{display:grid;justify-items:center}
+  .russian-wavy-title{justify-content:center;font-size:clamp(35px,9vw,68px)}
+  .russian-egg-desc{font-size:12px}
+  .russian-character-stand{min-height:300px}
+  .russian-character{width:min(260px,67vw);height:min(260px,67vw)}
+  .russian-drink-tracker{justify-content:center}
+  .russian-egg-bottom{padding-bottom:28px}
+}
+@media(max-width:400px){
+  .russian-egg-label{font-size:9px;letter-spacing:1px}
+  .russian-egg-top-actions{gap:4px}
+  .russian-music-button{font-size:9px}
+  .russian-drink-tracker span{width:27px;height:27px}
+}
+@media(prefers-reduced-motion:reduce){
+  .russian-egg-overlay *, .russian-egg-overlay *:before, .russian-egg-overlay *:after{
+    animation:none!important;transition:none!important;
+  }
+  .russian-egg-overlay .russian-wavy-title>span{transform:none}
+  .russian-buddy-button.sleeping{transform:rotate(77deg) translate(30px,25px)}
+  .russian-glitch{animation:none}
+}
