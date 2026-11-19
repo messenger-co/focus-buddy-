@@ -1,4 +1,4 @@
-/** Fictional winter-front arcade game. Stylized, non-graphic, no historical insignia.
+/** Fictional winter-front arcade game with stylized enemy tanks. Non-graphic alternate history.
  * A deterministic state machine when a seeded random source is supplied.
  */
 export const TANK_WIDTH = 900;
@@ -94,7 +94,7 @@ function spawnTroop(state: TankState, random: () => number) {
     state.wave * (type === "scout" ? 10 : 8) + random() * 15;
   state.troops.push({
     id: ++state.nextId, x: 30 + random() * (TANK_WIDTH - 60),
-    y: -18, hp: type === "armored" ? 3 : 1,
+    y: -18, hp: type === "armored" ? 4 : type === "regular" ? 2 : 1,
     type, speed, shotTimer: 1.1 + random() * 2.4,
     wobble: random() * 7,
   });
@@ -189,7 +189,7 @@ export function stepTank(
     if (expired(projectile)) { state.shots.splice(i, 1); continue; }
     for (let j = state.troops.length - 1; j >= 0; j--) {
       const troop = state.troops[j];
-      const radius = troop.type === "armored" ? 23 : 17;
+      const radius = troop.type === "armored" ? 31 : troop.type === "regular" ? 27 : 23;
       if (distanceSq(projectile, troop) > (projectile.radius + radius) ** 2) continue;
       state.shots.splice(i, 1);
       troop.hp--;

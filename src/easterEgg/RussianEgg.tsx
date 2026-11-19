@@ -202,7 +202,7 @@ export default function RussianEgg({ close }: { close: () => void }) {
           <div className="russian-tank-invite">
             <span className="russian-tank-invite-kicker">★ СЕКРЕТНАЯ МИССИЯ ★</span>
             <strong>WINTER FRONT: TANK DEFENSE</strong>
-            <p>Fight five escalating waves of stylized grey-uniform infantry in a fictional Soviet winter-front setting. Extremely hard, no gore.</p>
+            <p>Defend the Soviet winter outpost against five hard waves of enemy tanks flying USA flags. Fictional alternate history, no gore.</p>
             <button type="button" className="russian-tank-launch" onClick={() => {
               audio.current?.pause();
               setSound("manual");
