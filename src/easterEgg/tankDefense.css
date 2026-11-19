@@ -161,3 +161,94 @@
 @media(prefers-reduced-motion:reduce){
   .tank-defense *{animation:none!important;transition:none!important}
 }
+
+
+/* WebGL scene is rendered underneath a transparent pointer-input canvas. */
+.tank-3d-mount{position:absolute;inset:0;z-index:0;overflow:hidden;pointer-events:none}
+.tank-3d-mount>canvas{display:block;width:100%;height:100%;pointer-events:none}
+.tank-canvas{position:relative;z-index:1}
+.tank-canvas.tank-3d-input-layer{opacity:0}
+.tank-missile-hud{
+  position:absolute;z-index:2;bottom:12px;left:12px;
+  display:flex;align-items:center;gap:8px;
+  border:1px solid #ffe4a2b8;border-radius:10px;
+  background:#2a4056ed;color:#fff1c4;
+  padding:7px 10px;font-size:10px;font-weight:850;pointer-events:none;
+  box-shadow:0 3px 0 #273244a3;
+}
+.tank-missile-hud svg{color:#fdd88d}
+.tank-missile-track{width:65px;height:7px;background:#172a40;border-radius:9px;overflow:hidden}
+.tank-missile-track>i{display:block;height:100%;background:linear-gradient(90deg,#e2ad5e,#ffe7a6);border-radius:inherit}
+.tank-missile-button{
+  flex:none;min-width:90px;min-height:88px;padding:7px 9px;
+  display:grid;justify-items:center;align-content:center;gap:7px;
+  color:#fff7df;background:linear-gradient(145deg,#a281cf,#684c9c);
+  border:2px solid #e5d2ff;border-radius:16px;
+  box-shadow:0 6px 0 #3d305c,0 11px 16px #1f162a7d;
+  font-size:12px;font-weight:950;cursor:pointer;
+}
+.tank-missile-button:not(:disabled):hover{filter:brightness(1.12);transform:translateY(-2px)}
+.tank-missile-button:disabled{filter:grayscale(.35);opacity:.6;cursor:default}
+.tank-recruit-panel{
+  display:grid;gap:14px;margin-top:18px;padding:20px;
+  border:2px solid #ebbd77;border-radius:18px;
+  background:linear-gradient(135deg,#412b41,#703b4b 60%,#3d374b);
+  box-shadow:0 6px 0 #342239,0 15px 20px #1d0e2459;
+}
+.tank-recruit-heading{display:flex;justify-content:space-between;gap:12px;align-items:center;flex-wrap:wrap}
+.tank-recruit-heading>div>span{font-size:10px;letter-spacing:1.7px;color:#ffdea2;font-weight:850}
+.tank-recruit-heading h3{font-size:20px;color:#fff4dc;margin:5px 0}
+.tank-recruit-heading p{font-size:11px;line-height:1.5;color:#eecdb5}
+.tank-credit-wallet{
+  display:flex;align-items:center;gap:5px;
+  background:#ffe2a4;color:#4f3140;border:1px solid #fff6cb;
+  border-radius:12px;padding:12px 14px;
+  font-size:16px;font-variant-numeric:tabular-nums;
+  box-shadow:0 4px 0 #8c6949;
+}
+.tank-recruit-cards{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.tank-recruit-card{
+  display:grid;align-content:start;justify-items:start;gap:8px;
+  padding:13px 14px;min-height:160px;text-align:left;
+  color:#e7d6c4;border:2px solid #786773;border-radius:13px;
+  background:linear-gradient(145deg,#4b3e4c,#393747);
+  box-shadow:0 5px 0 #2c2635;
+  position:relative;cursor:default;
+}
+.tank-recruit-card.available{
+  background:linear-gradient(145deg,#fbe2af,#ddb27f);
+  color:#493840;border-color:#fff5d9;cursor:pointer;
+  box-shadow:0 6px 0 #947557,0 9px 16px #1c102248;
+  transition:transform .17s,filter .17s;
+}
+.tank-recruit-card.available:hover{transform:translateY(-3px);filter:brightness(1.07)}
+.tank-recruit-card.available:active{transform:translateY(3px)}
+.tank-recruit-card:disabled{opacity:.75}
+.tank-card-number{position:absolute;right:8px;top:8px;
+  border-radius:6px;padding:3px 7px;background:#2d2c3e5c;color:inherit;
+  font-size:10px;font-weight:950}
+.tank-card-icon{font-size:32px;filter:drop-shadow(0 4px 4px #342b363b)}
+.tank-recruit-card strong{font-size:14px}
+.tank-recruit-card small{font-size:11px;line-height:1.5;min-height:31px}
+.tank-card-price{font-size:12px;font-weight:950;margin-top:auto}
+@media(max-width:740px){
+  .tank-missile-button{min-width:76px;min-height:76px;font-size:10px;padding:6px}
+  .tank-missile-hud{bottom:6px;left:6px;font-size:8px;padding:5px}
+  .tank-missile-track{width:35px}
+  .tank-recruit-panel{padding:13px}
+  .tank-recruit-cards{gap:7px}
+  .tank-recruit-card{padding:11px 8px;min-height:145px}
+  .tank-recruit-card strong{font-size:12px}
+  .tank-recruit-card small{font-size:10px}
+  .tank-card-icon{font-size:27px}
+}
+@media(max-width:410px){
+  .tank-recruit-cards{grid-template-columns:1fr}
+  .tank-recruit-card{min-height:90px}
+  .tank-controls{justify-content:space-between}
+  .tank-missile-button{margin-left:auto}
+}
+@media(prefers-reduced-motion:reduce){
+  .tank-recruit-card{transition:none!important}
+  .tank-recruit-card.available:hover{transform:none!important}
+}
