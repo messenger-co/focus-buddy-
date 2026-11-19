@@ -266,3 +266,92 @@
   .russian-buddy-button.sleeping{transform:rotate(77deg) translate(30px,25px)}
   .russian-glitch{animation:none}
 }
+
+
+/* Chaotic GIF remix: no Buddy SVG, no drink counter, no actual browser crash. */
+.russian-chaos-stage { min-height:min(690px,calc(100dvh - 150px)); }
+.russian-gif-button {
+  display:grid;place-items:center;
+  width:min(340px,70vw);height:min(340px,70vw);
+  padding:10px;border:6px solid #ffe5a3;border-radius:28px;
+  background:linear-gradient(130deg,#e7b8d0,#fbdf9d 50%,#eaa3b9);
+  box-shadow:0 12px 0 #762a48,0 24px 45px #2715268a,inset 0 3px #fff4c0;
+  transform:rotate(-4deg);cursor:pointer;
+  animation:russian-gif-bounce 1.3s ease-in-out infinite alternate;
+}
+.russian-gif-button img {
+  width:100%;height:100%;object-fit:contain;border-radius:19px;
+  filter:drop-shadow(0 9px 8px #3c183866);
+}
+.russian-gif-button:focus-visible { outline:4px solid #fff;outline-offset:7px; }
+.russian-gif-hint {
+  max-width:360px;line-height:1.5;
+  font-size:11px;letter-spacing:1.5px;font-weight:900;text-align:center;
+  color:#fff5a6;text-shadow:0 2px 3px #461b32;
+  animation:russian-hint-pulse 1.7s ease-in-out infinite alternate;
+}
+.russian-dance-fallback {font-size:105px}
+.russian-meow-corner {
+  position:fixed;z-index:5;width:clamp(76px,11vw,156px);
+  height:clamp(76px,11vw,156px);pointer-events:none;
+  display:grid;place-items:center;
+  transition:top .9s,bottom .9s,left .9s,right .9s;
+  filter:drop-shadow(0 8px 12px #301226aa);
+}
+.russian-meow-corner img {
+  width:100%;height:100%;object-fit:contain;
+  animation:russian-cat-spin 2.4s linear infinite;
+}
+.russian-meow-corner span{font-size:70px;animation:russian-cat-spin 2.4s linear infinite}
+.russian-meow-corner.corner-top-right {right:14px;top:80px}
+.russian-meow-corner.corner-bottom-right {right:14px;bottom:18px}
+.russian-meow-corner.corner-bottom-left {left:14px;bottom:18px}
+.russian-meow-corner.corner-top-left {left:14px;top:80px}
+.russian-chaos-tags{display:flex;align-items:center;flex-wrap:wrap;gap:7px;margin:21px 0}
+.russian-chaos-tags span {
+  background:#ffe2a7;border:3px solid #5d263c;border-radius:10px;
+  padding:7px 9px;color:#762838;
+  font-weight:1000;letter-spacing:.5px;font-size:11px;
+  box-shadow:0 4px 0 #3f2137;
+  animation:russian-tag-pop 1.3s ease-in-out infinite alternate;
+}
+.russian-chaos-tags span:nth-child(2){animation-delay:.4s;transform:rotate(-8deg)}
+.russian-chaos-tags span:nth-child(3){animation-delay:.8s}
+.russian-nuked{
+  overflow:hidden;background:
+    radial-gradient(circle at 74% 35%,#ffd4a9 0%,transparent 30%),#fafafa;
+}
+.russian-nuked .nuke-burst{
+  position:absolute;right:12%;top:14%;font-size:clamp(90px,15vw,190px);
+  opacity:.73;filter:drop-shadow(0 15px 11px #a8493a24);
+}
+.russian-nuked .crash-face,.russian-nuked h1,.russian-nuked p,.russian-nuked .crash-refresh{
+  position:relative;z-index:1;
+}
+@keyframes russian-gif-bounce {
+  from{transform:translateY(5px) rotate(-6deg) scale(.98)}
+  to{transform:translateY(-16px) rotate(7deg) scale(1.045)}
+}
+@keyframes russian-hint-pulse{from{opacity:.65;transform:scale(.98)}
+  to{opacity:1;transform:scale(1.05)}}
+@keyframes russian-cat-spin{to{transform:rotate(360deg)}}
+@keyframes russian-tag-pop{from{transform:translateY(0) rotate(-4deg)}
+  to{transform:translateY(-9px) rotate(3deg)}}
+@media(max-width:700px){
+  .russian-chaos-stage{gap:18px}
+  .russian-meow-corner{width:74px;height:74px}
+  .russian-gif-button{width:min(280px,68vw);height:min(280px,68vw)}
+  .russian-egg-stage .russian-character-stand{min-height:325px;gap:9px}
+  .russian-chaos-tags{justify-content:center}
+  .russian-nuked .nuke-burst{right:2%;top:3%;opacity:.25}
+}
+@media(prefers-reduced-motion:reduce){
+  .russian-gif-button,.russian-gif-hint,.russian-chaos-tags span,
+  .russian-meow-corner img,.russian-meow-corner span {animation:none!important}
+  .russian-meow-corner{transition:none!important}
+}
+html:is([data-motion="minimal"],[data-motion="off"]) .russian-gif-button,
+html:is([data-motion="minimal"],[data-motion="off"]) .russian-meow-corner img,
+html:is([data-motion="minimal"],[data-motion="off"]) .russian-meow-corner span {
+  animation:none!important;
+}
