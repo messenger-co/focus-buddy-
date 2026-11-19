@@ -70,6 +70,7 @@ import { useAppearance } from "./foundation/appearance";
 import { english as inEnglish } from "./foundation/language";
 import Boundary from "./foundation/Boundary";
 import StudyNook from "./foundation/StudyNook";
+import { russianShortcut } from "./easterEgg/russianShortcut";
 const ThemeStudio = lazy(() => import("./foundation/ThemeStudio"));
 const World = lazy(() => import("./world3/World"));
 const Journal = lazy(() => import("./foundation/Journal"));
@@ -79,6 +80,7 @@ const Challenges = lazy(() => import("./challenges/Challenges"));
 const Discussion = lazy(() => import("./discussion/Discussion"));
 const BuddyStudio = lazy(() => import("./components/BuddyStudio"));
 const Companion = lazy(() => import("./components/Companion"));
+const RussianEgg = lazy(() => import("./easterEgg/RussianEgg"));
 type Buddy = ReturnType<typeof useBuddy>;
 const navItems = [
   { to: "/", icon: Home, label: "Góc của bạn" },
@@ -232,6 +234,18 @@ function App() {
   const [menu, setMenu] = useState(false);
   const [settings, setSettings] = useState(false);
   const [chat, setChat] = useState(false);
+  const [russianEgg, setRussianEgg] = useState(false);
+  useEffect(() => {
+    const handler = (event: KeyboardEvent) => {
+      if (!russianShortcut(event)) return;
+      event.preventDefault();
+      event.stopPropagation();
+      // Never persist: reload always exits this Easter egg.
+      setRussianEgg(true);
+    };
+    window.addEventListener("keydown", handler, true);
+    return () => window.removeEventListener("keydown", handler, true);
+  }, []);
   const [sleepy, setSleepy] = useState(false);
   const [toast, setToast] = useState("");
   const [busy, setBusy] = useState(false);
@@ -323,6 +337,7 @@ function App() {
     >
       <div
         data-theme={buddy.progress.profile.theme}
+        data-easter={russianEgg ? "russian" : undefined}
         data-palette={dark ? "dark" : "light"}
         data-motion={appearance.motion}
         data-backdrop={appearance.backdrop}
@@ -657,6 +672,11 @@ function App() {
           <SettingsModal buddy={buddy} close={() => setSettings(false)} />
         )}
         {chat && <ChatModal buddy={buddy} close={() => setChat(false)} />}
+        {russianEgg && (
+          <Suspense fallback={<div className="russian-egg-loading" role="status">Открываем секретный режим…</div>}>
+            <RussianEgg profile={buddy.progress.profile} close={() => setRussianEgg(false)} />
+          </Suspense>
+        )}
       </div>
     </MotionConfig>
   );
