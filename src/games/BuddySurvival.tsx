@@ -10,7 +10,7 @@ import type { Profile } from "../state";
 import {
   HOME, PROJECTS, RESOURCE_ICONS, RESOURCE_LABELS,
   WORLD_SIZE, buildWorld, canBuild, gatherWorld, initialWorld, isBlocked,
-  loadWorld, resourceAt, restWorld, stepWorld, storeWorld, tileAt,
+  loadWorld, placeBlock, removeBlock, resourceAt, restWorld, stepWorld, storeWorld, tileAt,
   type Resource, type WorldSave,
 } from "./survival/world";
 import { drawIsland, drawMiniMap, isoPoint, tileFromScreen } from "./survival/paint";
@@ -127,6 +127,42 @@ export default function BuddySurvival({ profile }: { profile: Profile }) {
       setPickup("🏡 Xây dựng xong!");
     }
   }, [update]);
+  const place = useCallback((material: "wood" | "stone") => {
+    const current = latest.current;
+    const pos = selected && Math.abs(selected.x-current.x)+Math.abs(selected.y-current.y)===1
+      ? selected : { x: current.x+facing.current[0], y: current.y+facing.current[1] };
+    const next = placeBlock(current, pos.x, pos.y, material);
+    if (!next) {
+      setMessage("Đứng cạnh ô đất trống và chuẩn bị 1 " +
+        (material === "wood" ? "gỗ" : "đá") + " để đặt khối.");
+      return;
+    }
+    update(next);
+    setSelected(null);
+    setMessage("Đã đặt một khối " + (material === "wood" ? "gỗ" : "đá") +
+      " trong thế giới! Nhấn Q khi đứng cạnh để lấy lại.");
+    setPickup(material === "wood" ? "🪵 Đặt khối gỗ!" : "🪨 Đặt khối đá!");
+  }, [selected, update]);
+  const dismantle = useCallback((target?: { x:number; y:number }) => {
+    const current = latest.current;
+    const positions = target ? [target] : [
+      ...(selected ? [selected] : []),
+      { x:current.x+facing.current[0], y:current.y+facing.current[1] },
+      { x:current.x,y:current.y-1 },{ x:current.x+1,y:current.y },
+      { x:current.x,y:current.y+1 },{ x:current.x-1,y:current.y },
+    ];
+    for (const pos of positions) {
+      const next = removeBlock(current,pos.x,pos.y);
+      if (next) {
+        update(next);
+        setPickup("✨ +1 vật liệu");
+        setMessage("Đã lấy lại khối xây dựng! Vật liệu đã trở về túi đồ.");
+        setSelected(null);
+        return;
+      }
+    }
+    setMessage("Đứng cạnh khối gỗ hoặc đá đã đặt, rồi nhấn Q để tháo khối.");
+  }, [selected, update]);
   const rest = useCallback(() => {
     const next = restWorld(latest.current);
     const atHome = next.day > latest.current.day;
@@ -145,10 +181,13 @@ export default function BuddySurvival({ profile }: { profile: Profile }) {
       else if (event.code === "KeyE") { event.preventDefault(); gather(); }
       else if (event.code === "KeyB") { event.preventDefault(); build(); }
       else if (event.code === "KeyR") { event.preventDefault(); rest(); }
+      else if (event.code === "Digit1") { event.preventDefault(); place("wood"); }
+      else if (event.code === "Digit2") { event.preventDefault(); place("stone"); }
+      else if (event.code === "KeyQ") { event.preventDefault(); dismantle(); }
     };
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
-  }, [move, gather, build, rest]);
+  }, [move, gather, build, rest, place, dismantle]);
 
   // All scenery and movement animation happen in one Canvas loop; React does not
   // render a JSX element for each terrain tile, tree, water block or frame.
@@ -229,6 +268,7 @@ export default function BuddySurvival({ profile }: { profile: Profile }) {
     const distance = Math.abs(pos.x - worldNow.x) + Math.abs(pos.y - worldNow.y);
     if (distance === 1) {
       if (!isBlocked(worldNow, pos.x, pos.y)) move(pos.x - worldNow.x, pos.y - worldNow.y);
+      else if (worldNow.placed.some((b) => b.x===pos.x && b.y===pos.y)) dismantle(pos);
       else gather(pos);
     } else if (distance === 0) gather(pos);
     else {
@@ -308,6 +348,8 @@ export default function BuddySurvival({ profile }: { profile: Profile }) {
             <h2>Đi vào thế giới của Buddy</h2>
             <p><strong>WASD / phím mũi tên:</strong> Di chuyển qua rừng và đồng cỏ.</p>
             <p><strong>E:</strong> Chặt cây, lấy đá, hái quả hoặc lấy nước khi đứng cạnh.</p>
+            <p><strong>1 / 2:</strong> Đặt khối gỗ / đá ngay phía trước.</p>
+            <p><strong>Q:</strong> Tháo khối đã đặt để lấy lại vật liệu.</p>
             <p><strong>B:</strong> Xây công trình khi ở gần trại và đủ vật liệu.</p>
             <p><strong>R:</strong> Nghỉ để hồi sức. Nghỉ tại trại mở ngày mới.</p>
             <p><strong>Chạm bản đồ:</strong> Đi sang ô kề bên, chạm vật cản kề bên để thu thập.</p>
@@ -329,9 +371,12 @@ export default function BuddySurvival({ profile }: { profile: Profile }) {
           <div className="voxel-action-row">
             <button className="voxel-action primary" type="button" onClick={() => gather()}><Leaf size={17}/> Thu thập <kbd>E</kbd></button>
             <button className="voxel-action" type="button" onClick={rest}><BedDouble size={17}/> Nghỉ ngơi <kbd>R</kbd></button>
+            <button className="voxel-action voxel-place-wood" type="button" onClick={() => place("wood")}><span aria-hidden="true">🪵</span> Đặt gỗ <kbd>1</kbd></button>
+            <button className="voxel-action voxel-place-stone" type="button" onClick={() => place("stone")}><span aria-hidden="true">🪨</span> Đặt đá <kbd>2</kbd></button>
+            <button className="voxel-action" type="button" onClick={() => dismantle()}><span aria-hidden="true">⛏️</span> Tháo khối <kbd>Q</kbd></button>
             <button className="voxel-action" type="button" onClick={build} disabled={!next}><Hammer size={17}/> Xây dựng <kbd>B</kbd></button>
           </div>
-          <p className="voxel-control-tip">WASD hoặc phím mũi tên để di chuyển. Tìm cây, đá, quả và nước trên đảo, rồi xây làng quanh trại lửa.</p>
+          <p className="voxel-control-tip">WASD hoặc phím mũi tên để di chuyển. Tìm cây, đá, quả và nước; đặt khối bằng phím 1/2, tháo khối với Q, và xây làng quanh trại lửa.</p>
         </div>
       </div>
 
