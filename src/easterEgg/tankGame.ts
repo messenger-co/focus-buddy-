@@ -164,7 +164,7 @@ function allyActions(state:TankState,dt:number) {
       const distance=dist2(ally,troop);
       if(distance<nearest){nearest=distance;closest=troop;}
     }
-    if(closest) {
+    if(closest && state.allyShots.length<28) {
       const dx=closest.x-ally.x,dy=closest.y-ally.y;
       const n=Math.max(1,Math.hypot(dx,dy));
       const speed=ally.kind==="ranger"?660:540;
