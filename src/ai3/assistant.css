@@ -299,3 +299,99 @@
     max-width: 225px;
   }
 }
+
+
+/* Browser-only attachment picker, compatible with the existing compact chat. */
+.ai-file-input {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  opacity: 0;
+  overflow: hidden;
+  pointer-events: none;
+  clip-path: inset(50%);
+}
+.ai-composer .ai-attach-button {
+  flex: none;
+  width: 36px;
+  height: 36px;
+  border-radius: 9px;
+  background: var(--study-pale, #e8f2e7);
+  color: var(--study-accent, #416d55);
+  border: 1px solid var(--ai-line);
+}
+.ai-composer .ai-attach-button:hover:enabled {
+  background: var(--study-mid, #d2e6d0);
+  transform: translateY(-1px);
+}
+.ai-composer .ai-attach-button:disabled {
+  opacity: .42;
+}
+.ai-attachments {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin: 9px 0 8px;
+}
+.ai-attachment-chip {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  background: linear-gradient(135deg,#fff,var(--study-pale,#edf5ea));
+  border: 1px solid var(--ai-line);
+  border-radius: 13px;
+  min-width: 0;
+  max-width: 100%;
+  padding: 8px 9px;
+  box-shadow: 0 3px 0 #99b69b3d;
+}
+.ai-attachment-chip > svg {
+  flex: none;
+  color: var(--study-accent,#4a8160);
+}
+.ai-attachment-chip > span {
+  display: grid;
+  min-width: 0;
+  gap: 3px;
+}
+.ai-attachment-chip strong {
+  max-width: 195px;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  font-size: 11px;
+  font-weight: 700;
+}
+.ai-attachment-chip small {
+  font-size: 9px;
+  color: var(--ai-muted);
+}
+.ai-attachment-chip > button {
+  border-radius: 8px;
+  padding: 6px;
+  display: grid;
+  place-items: center;
+  flex: none;
+}
+.ai-attachment-chip > button:hover:enabled {
+  background: #d9e9dc;
+}
+.ai-file-status {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--study-accent,#416d55);
+  font-size: 11px;
+  padding: 5px 2px;
+}
+.ai-spin { animation: ai-attach-spin 1s linear infinite; }
+@keyframes ai-attach-spin { to { transform: rotate(360deg); } }
+.ai-attachment-help {
+  font-size: 10px;
+  line-height: 1.6;
+  color: var(--ai-muted);
+  margin: 7px 0 2px;
+}
+@media (prefers-reduced-motion: reduce) {
+  .ai-spin { animation: none; }
+}
