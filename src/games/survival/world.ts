@@ -9,6 +9,7 @@ export type Resource = "wood" | "stone" | "water" | "food";
 export type Terrain = "grass" | "sand" | "rock" | "water";
 export type ObjectKind = "tree" | "pine" | "stone" | "berry" | "flower" | "grass" | null;
 export type Supplies = Record<Resource, number>;
+export type PlacedBlock = { x: number; y: number; material: "wood" | "stone" };
 export type Tile = { terrain: Terrain; elevation: number; object: ObjectKind };
 export type WorldSave = {
   version: 2;
@@ -19,6 +20,7 @@ export type WorldSave = {
   supplies: Supplies;
   projects: number;
   harvested: string[];
+  placed: PlacedBlock[];
   steps: number;
 };
 export type Project = { name: string; hint: string; costs: Partial<Supplies>; site: [number, number]; roof: string };
@@ -105,7 +107,7 @@ export function resourceAt(x: number, y: number): Resource | null {
 }
 export function initialWorld(): WorldSave {
   return { version: 2, x: HOME, y: HOME, day: 1, energy: MAX_ENERGY,
-    supplies: { wood: 0, stone: 0, water: 2, food: 2 }, projects: 0, harvested: [], steps: 0 };
+    supplies: { wood: 0, stone: 0, water: 2, food: 2 }, projects: 0, harvested: [], placed: [], steps: 0 };
 }
 function validCount(n: unknown, max: number) {
   return typeof n === "number" && Number.isSafeInteger(n) && n >= 0 && n <= max;
@@ -131,13 +133,26 @@ export function decodeWorld(input: unknown, legacy = false): WorldSave | null {
     harvested.push(legacy ? keyOf(x + HOME - 3, y + HOME - 3) : candidate);
     if (harvested.length >= WORLD_SIZE * WORLD_SIZE) break;
   }
+  const placed: PlacedBlock[] = [];
+  if (!legacy && Array.isArray(item.placed)) {
+    for (const candidate of item.placed.slice(0, 120)) {
+      if (!candidate || typeof candidate !== "object") continue;
+      const block = candidate as Partial<PlacedBlock>;
+      if (!inside(block.x as number, block.y as number) ||
+        (block.material !== "wood" && block.material !== "stone") ||
+        projectSite(block.x as number, block.y as number) !== -1 ||
+        (block.x === HOME && block.y === HOME) ||
+        placed.some((other) => other.x === block.x && other.y === block.y)) continue;
+      placed.push({ x: block.x as number, y: block.y as number, material: block.material });
+    }
+  }
   return {
     version: 2, x: (item.x as number) + (legacy ? HOME - 3 : 0),
     y: (item.y as number) + (legacy ? HOME - 3 : 0),
     day: item.day as number,
     energy: legacy ? Math.round((item.energy as number) / 12 * MAX_ENERGY) : item.energy as number,
     steps: item.steps as number, projects: item.projects as number,
-    supplies: { ...item.supplies } as Supplies, harvested,
+    supplies: { ...item.supplies } as Supplies, harvested, placed,
   };
 }
 export function loadWorld(): WorldSave {
@@ -160,6 +175,7 @@ export function storeWorld(world: WorldSave) {
 }
 export function isBlocked(world: WorldSave, x: number, y: number) {
   if (!inside(x, y) || tileAt(x, y).terrain === "water") return true;
+  if (world.placed.some((block) => block.x === x && block.y === y)) return true;
   const site = projectSite(x, y);
   if (site !== -1 && site < world.projects) return true;
   const kind = tileAt(x, y).object;
@@ -182,6 +198,29 @@ export function gatherWorld(world: WorldSave, x: number, y: number): WorldSave |
     energy: world.energy - 3,
     harvested: [...world.harvested, keyOf(x, y)],
     supplies: { ...world.supplies, [resource]: world.supplies[resource] + (resource === "water" ? 3 : 2) },
+  };
+}
+/** Place a physical block next to Buddy; blocks cost one inventory item. */
+export function placeBlock(world: WorldSave, x: number, y: number, material: "wood" | "stone"): WorldSave | null {
+  if (!inside(x, y) || Math.abs(world.x - x) + Math.abs(world.y - y) !== 1 ||
+    world.supplies[material] < 1 || world.placed.length >= 120 ||
+    projectSite(x, y) !== -1 || (x === HOME && y === HOME) ||
+    tileAt(x, y).terrain === "water" ||
+    isBlocked(world, x, y)) return null;
+  return { ...world,
+    supplies: { ...world.supplies, [material]: world.supplies[material] - 1 },
+    placed: [...world.placed, { x, y, material }],
+  };
+}
+/** Take back a block without losing resources; adjacent blocks can be reclaimed. */
+export function removeBlock(world: WorldSave, x: number, y: number): WorldSave | null {
+  if (!inside(x, y) || Math.abs(world.x - x) + Math.abs(world.y - y) !== 1) return null;
+  const index = world.placed.findIndex((b) => b.x === x && b.y === y);
+  if (index < 0) return null;
+  const material = world.placed[index].material;
+  return { ...world,
+    supplies: { ...world.supplies, [material]: world.supplies[material] + 1 },
+    placed: world.placed.filter((_, i) => i !== index),
   };
 }
 export function canBuild(world: WorldSave) {
