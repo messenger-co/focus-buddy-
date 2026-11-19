@@ -247,6 +247,31 @@ export function drawTankGame(
   ctx.clearRect(0,0,W,H);
   background(ctx,seconds,effects);
   for (const troop of state.troops) enemyTank(ctx, troop, seconds, flag);
+  // Stylized allied units on the southern defense line.
+  for(const ally of state.allies){
+    ellipse(ctx,ally.x+3,ally.y+13,13,4,"#294c4160");
+    const uniform=ally.kind==="ranger"?"#527c88":ally.kind==="guard"?"#788b62":"#659b75";
+    ctx.fillStyle=uniform;
+    ctx.beginPath();ctx.roundRect(ally.x-9,ally.y-9,18,23,4);ctx.fill();
+    ellipse(ctx,ally.x,ally.y-13,9,9,"#d8bfa2");
+    ellipse(ctx,ally.x,ally.y-19,11,5,uniform);
+    line(ctx,"#3b5d58",3,ally.x+9,ally.y-3,ally.x+17,ally.y-9);
+  }
+  for(const blast of state.missileBlasts){
+    const ratio=Math.min(1,blast.age/blast.ttl);
+    const progress=.18+ratio*.82;
+    ctx.save();
+    ctx.globalAlpha=1-ratio;
+    ellipse(ctx,blast.x,blast.y,blast.radius*progress,blast.radius*progress,"#ffdb8c52");
+    ctx.strokeStyle="#fff2c5";ctx.lineWidth=5;
+    ctx.beginPath();ctx.arc(blast.x,blast.y,blast.radius*progress,0,pi2);ctx.stroke();
+    line(ctx,"#ffe7a999",5,blast.originX,blast.originY,blast.x,blast.y);
+    ctx.restore();
+  }
+  for(const shot of state.allyShots){
+    ellipse(ctx,shot.x,shot.y,6,6,"#b4ffe885");
+    ellipse(ctx,shot.x,shot.y,3,3,"#e1fff0");
+  }
   for (const shot of state.shots) {
     ellipse(ctx,shot.x,shot.y,7,7,"#ffde8b80");
     ellipse(ctx,shot.x,shot.y,3.2,3.2,"#fff4c8");

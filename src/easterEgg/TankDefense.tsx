@@ -1,10 +1,12 @@
 import { useEffect, useRef, useState, type PointerEvent } from "react";
-import { ArrowDown, ArrowLeft, ArrowRight, ArrowUp, Crosshair, Flag, Gauge, Pause, Play, RotateCcw, Shield, X } from "lucide-react";
+import { ArrowDown, ArrowLeft, ArrowRight, ArrowUp, Crosshair, Flag, Gauge, Pause, Play, RotateCcw, Shield, X, Zap, Users, Box } from "lucide-react";
 import {
-  createTankState, stepTank, TANK_DURATION, TANK_HEIGHT, TANK_WIDTH,
-  type TankInput, type TankPhase, type TankState,
+  ALLY_CARDS, createTankState, recruitAlly, stepTank,
+  MISSILE_COOLDOWN, TANK_DURATION, TANK_HEIGHT, TANK_WIDTH,
+  type AllyKind, type TankInput, type TankPhase, type TankState,
 } from "./tankGame";
 import { drawTankGame, USA_TANK_FLAG_URL } from "./tankPaint";
+import { createTank3D, type Tank3DRenderer } from "./tank3d";
 import "./tankDefense.css";
 
 type View = {
@@ -16,11 +18,17 @@ type View = {
   tankHp: number;
   baseHp: number;
   heat: number;
+  missiles: number;
+  credits: number;
+  allies: number;
+  allyKinds: AllyKind[];
 };
 const snapshot=(state:TankState):View=>({
   phase:state.phase,score:state.score,defeated:state.defeated,
   wave:state.wave,seconds:Math.max(0,Math.ceil(TANK_DURATION-state.elapsed)),
   tankHp:state.player.hp,baseHp:state.baseHp,heat:Math.round(state.player.heat),
+  missiles:state.missileCooldown,credits:state.credits,
+  allies:state.allies.length,allyKinds:state.allies.map(ally=>ally.kind),
 });
 type Direction = "left"|"right"|"up"|"down";
 const arrowKeys:Record<string,Direction> = {
@@ -30,13 +38,17 @@ const arrowKeys:Record<string,Direction> = {
 export default function TankDefense({ onExit }: { onExit:()=>void }) {
   const state=useRef(createTankState());
   const canvas=useRef<HTMLCanvasElement>(null);
+  const webglMount=useRef<HTMLDivElement>(null);
+  const visual3d=useRef<Tank3DRenderer|null>(null);
   const enemyFlag=useRef<HTMLImageElement|null>(null);
   const held=useRef(new Set<Direction>());
   const firing=useRef(false);
+  const missileQueued=useRef(false);
   const aim=useRef({x:450,y:40});
   const aimedByPointer=useRef(false);
   const [view,setView]=useState<View>(()=>snapshot(state.current));
   const [effects,setEffects]=useState(true);
+  const [renderMode,setRenderMode]=useState<"3d"|"2d">("3d");
   const previousUpdate=useRef(0);
   const renderedPhase=useRef<TankPhase>("ready");
 
@@ -55,11 +67,19 @@ export default function TankDefense({ onExit }: { onExit:()=>void }) {
     };
   }, []);
 
+  function recruit(kind:AllyKind){
+    if(recruitAlly(state.current,kind))setView(snapshot(state.current));
+  }
+  function missile(){
+    if(state.current.phase==="running"&&state.current.missileCooldown<=0)
+      missileQueued.current=true;
+  }
   function start() {
     state.current=createTankState();
     state.current.phase="running";
     held.current.clear();
     firing.current=false;
+    missileQueued.current=false;
     aimedByPointer.current=false;
     setView(snapshot(state.current));
   }
@@ -69,6 +89,7 @@ export default function TankDefense({ onExit }: { onExit:()=>void }) {
     else if(game.phase==="paused")game.phase="running";
     held.current.clear();
     firing.current=false;
+    missileQueued.current=false;
     setView(snapshot(game));
   }
   useEffect(()=>{
@@ -81,6 +102,14 @@ export default function TankDefense({ onExit }: { onExit:()=>void }) {
       } else if(event.code==="Space"){
         event.preventDefault();
         firing.current=true;
+      } else if(event.code==="KeyM") {
+        event.preventDefault();if(!event.repeat)missile();
+      } else if(event.code==="Digit1") {
+        event.preventDefault();if(!event.repeat)recruit("rifle");
+      } else if(event.code==="Digit2") {
+        event.preventDefault();if(!event.repeat)recruit("ranger");
+      } else if(event.code==="Digit3") {
+        event.preventDefault();if(!event.repeat)recruit("guard");
       } else if(event.code==="KeyP") {
         event.preventDefault();
         togglePause();
@@ -96,6 +125,7 @@ export default function TankDefense({ onExit }: { onExit:()=>void }) {
     };
     const release=()=>{
       firing.current=false;
+      missileQueued.current=false;
       held.current.clear();
       if(document.visibilityState==="hidden" && state.current.phase==="running"){
         state.current.phase="paused";
@@ -116,69 +146,90 @@ export default function TankDefense({ onExit }: { onExit:()=>void }) {
 
   useEffect(()=>{
     const element=canvas.current;
-    const ctx=element?.getContext("2d",{alpha:false});
-    if(!element||!ctx)return;
-    const surface: HTMLCanvasElement = element;
-    const drawing: CanvasRenderingContext2D = ctx;
-    let width=900,height=540,dpr=1;
-    let last=0,raf=0,lastFrame=0;
-    let active=true;
+    const mount=webglMount.current;
+    if(!element||!mount)return;
+    const surface:HTMLCanvasElement=element;
+    let visual:Tank3DRenderer|null=null;
+    let drawing:CanvasRenderingContext2D|null=null;
+    let active=true,raf=0,last=0,lastFrame=0;
+    try {
+      if(renderMode==="3d"){
+        visual=createTank3D(mount);
+        visual3d.current=visual;
+      } else {
+        visual3d.current=null;
+        drawing=surface.getContext("2d",{alpha:false});
+      }
+    } catch {
+      visual3d.current=null;
+      setRenderMode("2d");
+      return;
+    }
+    const scene=visual;
+    const ctx=drawing;
+    if(!scene && !ctx)return;
     const resize=()=>{
-      const rect=surface.getBoundingClientRect();
-      width=Math.max(320,rect.width);
-      height=Math.max(180,rect.height);
-      dpr=Math.min(window.devicePixelRatio||1,1.5);
-      const w=Math.floor(width*dpr),h=Math.floor(height*dpr);
-      if(surface.width!==w)surface.width=w;
-      if(surface.height!==h)surface.height=h;
+      const bounds=surface.getBoundingClientRect();
+      const width=Math.max(320,bounds.width),height=Math.max(180,bounds.height);
+      if(scene)scene.resize(width,height);
+      if(ctx){
+        const dpr=Math.min(window.devicePixelRatio||1,1.4);
+        const w=Math.floor(width*dpr),h=Math.floor(height*dpr);
+        if(surface.width!==w)surface.width=w;
+        if(surface.height!==h)surface.height=h;
+      }
     };
     const observer=typeof ResizeObserver!=="undefined"?new ResizeObserver(resize):null;
-    resize();
-    observer?.observe(element);
+    resize();observer?.observe(surface);
     function frame(time:number){
       if(!active)return;
       raf=requestAnimationFrame(frame);
-      if(document.visibilityState==="hidden" || time-lastFrame<1000/(state.current.phase==="running"?36:16))return;
-      const dt=Math.min(.045,Math.max(0,(time-last)/1000 || .02));
-      lastFrame=time;last=time;
       const game=state.current;
+      const fps=game.phase==="running" ? (renderMode==="3d"?30:36) : 12;
+      if(document.visibilityState==="hidden"||time-lastFrame<1000/fps)return;
+      const dt=Math.min(.045,Math.max(0,(time-last)/1000||.02));
+      lastFrame=time;last=time;
       const input:TankInput={
-        left:held.current.has("left"),
-        right:held.current.has("right"),
-        up:held.current.has("up"),
-        down:held.current.has("down"),
-        firing:firing.current,
+        left:held.current.has("left"),right:held.current.has("right"),
+        up:held.current.has("up"),down:held.current.has("down"),
+        firing:firing.current,missile:missileQueued.current,
         aimX:aim.current.x,aimY:aim.current.y,
       };
-      // Accessible keyboard mode: aim at the closest target if no pointer was used.
-      if(!aimedByPointer.current && game.troops.length){
+      missileQueued.current=false;
+      if(!aimedByPointer.current&&game.troops.length){
         let best=game.troops[0],dist=Infinity;
-        for(const troop of game.troops){
-          const dx=troop.x-game.player.x,dy=troop.y-game.player.y;
+        for(const enemy of game.troops){
+          const dx=enemy.x-game.player.x,dy=enemy.y-game.player.y;
           const next=dx*dx+dy*dy;
-          if(next<dist){dist=next;best=troop;}
+          if(next<dist){dist=next;best=enemy;}
         }
         input.aimX=best.x;input.aimY=best.y;
       }
       stepTank(game,input,dt);
-      drawing.setTransform(surface.width/TANK_WIDTH,0,0,surface.height/TANK_HEIGHT,0,0);
-      drawTankGame(drawing,game,input,time/1000,effects,enemyFlag.current);
-      if(time-previousUpdate.current>135 || game.phase!==renderedPhase.current){
+      if(scene)scene.draw(game,input,time/1000);
+      else if(ctx){
+        ctx.setTransform(surface.width/TANK_WIDTH,0,0,surface.height/TANK_HEIGHT,0,0);
+        drawTankGame(ctx,game,input,time/1000,effects,enemyFlag.current);
+      }
+      if(time-previousUpdate.current>125||game.phase!==renderedPhase.current){
         renderedPhase.current=game.phase;
         previousUpdate.current=time;
         setView(snapshot(game));
       }
     }
     raf=requestAnimationFrame(frame);
-    return ()=>{active=false;cancelAnimationFrame(raf);observer?.disconnect();};
-  },[effects]);
+    return ()=>{
+      active=false;cancelAnimationFrame(raf);observer?.disconnect();
+      if(visual3d.current===scene)visual3d.current=null;
+      scene?.dispose();
+    };
+  },[effects,renderMode]);
 
   function pointerAim(event:PointerEvent<HTMLCanvasElement>){
     const rect=event.currentTarget.getBoundingClientRect();
-    aim.current={
-      x:(event.clientX-rect.left)/rect.width*TANK_WIDTH,
-      y:(event.clientY-rect.top)/rect.height*TANK_HEIGHT,
-    };
+    const u=(event.clientX-rect.left)/rect.width;
+    const v=(event.clientY-rect.top)/rect.height;
+    aim.current=visual3d.current?.pick(u,v) || {x:u*TANK_WIDTH,y:v*TANK_HEIGHT};
     aimedByPointer.current=true;
   }
   function pressDirection(direction:Direction){
@@ -200,9 +251,13 @@ export default function TankDefense({ onExit }: { onExit:()=>void }) {
         <div>
           <span className="tank-eyebrow">★ ЗИМНИЙ РУБЕЖ · 1943 ★</span>
           <h2>THE WINTER FRONT</h2>
-          <p>Fictional Soviet winter defense • Five waves of flag-bearing enemy tanks • No gore</p>
+          <p>True 3D winter battlefield · Easier waves · Missile support · Allied soldier cards</p>
         </div>
         <div className="tank-header-buttons">
+          <button type="button" onClick={()=>setRenderMode(mode=>mode==="3d"?"2d":"3d")}
+            aria-label="Toggle 3D and 2D rendering"><Box size={16}/>
+            {renderMode==="3d"?"3D ON · SWITCH 2D":"2D FALLBACK · TRY 3D"}
+          </button>
           <button type="button" onClick={()=>setEffects(x=>!x)}
             aria-pressed={!effects}><Gauge size={16}/>{effects?"LIGHT FX":"LOW FX"}</button>
           <button type="button" onClick={togglePause} disabled={view.phase==="ready"||finished}>
@@ -215,7 +270,9 @@ export default function TankDefense({ onExit }: { onExit:()=>void }) {
         </div>
       </div>
       <div className="tank-board">
-        <canvas ref={canvas} className="tank-canvas"
+        <div ref={webglMount} className="tank-3d-mount" aria-hidden="true"/>
+        <canvas ref={canvas}
+          className={"tank-canvas" + (renderMode==="3d"?" tank-3d-input-layer":"")}
           role="img" aria-label="Winter battlefield: tank defending an outpost against enemy tanks carrying USA flags"
           onPointerMove={pointerAim}
           onPointerDown={event=>{
@@ -233,10 +290,17 @@ export default function TankDefense({ onExit }: { onExit:()=>void }) {
           <span>WAVE <b>{view.wave}/5</b></span>
           <span>TIME <b>{view.seconds}s</b></span>
           <span>SCORE <b>{view.score.toLocaleString("en-US")}</b></span>
+          <span><Users size={14}/> ALLIES <b>{view.allies}/6</b></span>
         </div>
         <div className="tank-heat" role="progressbar" aria-label="Weapon heat"
           aria-valuenow={view.heat} aria-valuemin={0} aria-valuemax={100}>
           <small>HEAT</small><span><i style={{width:String(view.heat)+"%"}}/></span>
+        </div>
+        <div className="tank-missile-hud" aria-label="Missile cooldown status">
+          <Zap size={17}/>
+          <span>{view.missiles<=0?"MISSILE READY":"RECHARGE "+view.missiles.toFixed(1)+"s"}</span>
+          <div className="tank-missile-track"><i
+            style={{width:String(100*(1-view.missiles/MISSILE_COOLDOWN))+"%"}}/></div>
         </div>
         {view.phase!=="running" && (
           <div className="tank-overlay" role="status">
@@ -247,7 +311,7 @@ export default function TankDefense({ onExit }: { onExit:()=>void }) {
                 view.phase==="won"?"ПОБЕДА!":"МИССИЯ ПРОВАЛЕНА"}
               </h3>
               <p>{view.phase==="ready"
-                ?"DEFEND THE OUTPOST! Enemy tanks carrying USA flags advance in increasingly hard waves. Move, aim and defend the outpost for 95 seconds."
+                ?"Defend your base for 95 seconds! Easier enemy waves, a rechargeable M missile and soldier squad cards help you survive."
                 :view.phase==="paused"?"Take a short break. The battle is frozen."
                 :view.phase==="won"?"You survived all five winter waves. Impressive!"
                 :"Your tank or the outpost was overwhelmed. Try again!"}
@@ -258,7 +322,7 @@ export default function TankDefense({ onExit }: { onExit:()=>void }) {
               <div className="tank-start-actions">
                 <button type="button" onClick={view.phase==="paused"?togglePause:start}>
                   {view.phase==="paused"?<Play size={18}/>:<Crosshair size={18}/>}
-                  {view.phase==="ready"?"START HARD MODE":
+                  {view.phase==="ready"?"START DEFENSE":
                     view.phase==="paused"?"RESUME":"RETRY MISSION"}
                 </button>
                 <button type="button" className="tank-secondary" onClick={onExit}>
@@ -287,8 +351,9 @@ export default function TankDefense({ onExit }: { onExit:()=>void }) {
         <div className="tank-control-copy">
           <strong>УДЕРЖИВАЙ РУБЕЖ! • DEFEND THE LINE</strong>
           <span><kbd>WASD</kbd> / <kbd>↑↓←→</kbd> Move</span>
-          <span><kbd>Mouse</kbd> Aim · <kbd>Space</kbd> Shoot (auto-aim for keyboard)</span>
-          <span>Mobile: move with arrows, tap/hold the battlefield or FIRE button.</span>
+          <span><kbd>Mouse</kbd> Aim · <kbd>Space</kbd> Fire · <kbd>M</kbd> Missile</span>
+          <span><kbd>1</kbd> Rifle · <kbd>2</kbd> Rangers · <kbd>3</kbd> Guards</span>
+          <span>Mobile: movement pad, FIRE/MISSILE buttons, tap squad cards.</span>
         </div>
         <button className="tank-fire-button" type="button"
           disabled={view.phase!=="running"}
@@ -301,13 +366,43 @@ export default function TankDefense({ onExit }: { onExit:()=>void }) {
           onLostPointerCapture={()=>{firing.current=false;}}>
           <Crosshair size={25}/> FIRE
         </button>
+        <button className="tank-missile-button" type="button" onClick={missile}
+          disabled={view.phase!=="running"||view.missiles>0}
+          title="Launch area missile (M)">
+          <Zap size={24}/>
+          {view.missiles>0?view.missiles.toFixed(1)+"s":"MISSILE"}
+        </button>
         <button className="tank-retry-mini" type="button" onClick={start}>
           <RotateCcw size={16}/> RESTART
         </button>
       </div>
+      <section className="tank-recruit-panel" aria-label="Recruit allied soldier cards">
+        <div className="tank-recruit-heading">
+          <div><span>★ ALLIED SUPPORT ★</span><h3>Recruit soldier cards</h3>
+            <p>Recruit up to six cartoon allies. They automatically help protect your base.</p>
+          </div>
+          <strong className="tank-credit-wallet">★ {view.credits} credits</strong>
+        </div>
+        <div className="tank-recruit-cards">
+          {ALLY_CARDS.map((card,index)=>{
+            const owned=view.allyKinds.filter(kind=>kind===card.kind).length;
+            const affordable=view.phase==="running"&&view.credits>=card.cost&&owned<2&&view.allies<6;
+            return <button type="button" key={card.kind}
+              className={"tank-recruit-card"+(affordable?" available":"")}
+              disabled={!affordable}
+              onClick={()=>recruit(card.kind)}
+              aria-label={"Recruit "+card.name+" for "+card.cost+" credits"}>
+              <span className="tank-card-number">{index+1}</span>
+              <span className="tank-card-icon" aria-hidden="true">{card.icon}</span>
+              <strong>{card.name}</strong><small>{card.description}</small>
+              <span className="tank-card-price">{owned}/2 · ★ {card.cost}</span>
+            </button>;
+          })}
+        </div>
+      </section>
       <p className="tank-game-note">
-        Fictional alternate-history winter arcade: opposing tanks use the exact usa flag.webp
-        image from the repository. Not a historical depiction. No gore, cloud saves or purchases.
+        Fictional, non-graphic winter arcade: opposing tanks carry usa flag.webp from the repository.
+        Real WebGL 3D with a 2D fallback, simplified arcade mechanics, no cloud saves or purchases.
         The game pauses when its tab is hidden.
       </p>
     </div>
