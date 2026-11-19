@@ -441,3 +441,12 @@
     grid-template-columns: 1fr;
   }
 }
+.trail-rule {
+  margin: 0 0 10px;
+  color: var(--study-ink);
+  font-size: 14px;
+}
+.trail-rule b {
+  display: inline-block;
+  margin-left: 0.4em;
+}

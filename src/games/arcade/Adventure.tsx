@@ -35,42 +35,10 @@ import {
 import { displayFrame, sizeCanvas, type Particle } from "./paint";
 import { advance, newRun, STEP, type GameEvent } from "./simulation";
 
+import { LevelPicker, levelKey, readScore, recordScore } from "../levels";
+
 type Phase = "ready" | "playing" | "paused" | "won";
 type Command = "left" | "right" | "action";
-type Score = { count: number; seconds: number };
-function bestKey(c: Course) {
-  return `focus-buddy-arcade-v1/${c.mode}/${c.biome}`;
-}
-function readScore(c: Course): Score | null {
-  try {
-    const s = JSON.parse(localStorage.getItem(bestKey(c)) || "null");
-    return s &&
-      Number.isInteger(s.count) &&
-      s.count >= 0 &&
-      s.count <= c.gems.length &&
-      Number.isFinite(s.seconds) &&
-      s.seconds > 0
-      ? { count: s.count, seconds: s.seconds }
-      : null;
-  } catch {
-    return null;
-  }
-}
-function recordScore(c: Course, s: Score) {
-  const best = readScore(c);
-  if (
-    best &&
-    (best.count > s.count ||
-      (best.count === s.count && best.seconds < s.seconds))
-  )
-    return best;
-  try {
-    localStorage.setItem(bestKey(c), JSON.stringify(s));
-  } catch {
-    /* Vẫn hiển thị kết quả của ván hiện tại. */
-  }
-  return s;
-}
 function chime(audio: AudioContext | null, event: GameEvent) {
   if (!audio || audio.state !== "running") return;
   const notes: Record<GameEvent, number[]> = {
@@ -120,11 +88,13 @@ function Stage({
   course,
   profile,
   next,
+  recordKey,
   onNext,
 }: {
   course: Course;
   profile: Profile;
   next: boolean;
+  recordKey: string;
   onNext: () => void;
 }) {
   const flight = course.mode === "glide";
@@ -148,7 +118,9 @@ function Stage({
   const [phase, setPhase] = useState<Phase>("ready");
   const [count, setCount] = useState(0);
   const [eventText, setEventText] = useState("");
-  const [best, setBest] = useState(() => readScore(course));
+  const [best, setBest] = useState(() =>
+    readScore(recordKey, course.gems.length),
+  );
   const [available, setAvailable] = useState(true);
   const [sound, setSound] = useState(false);
   const audio = useRef<AudioContext | null>(null);
@@ -254,7 +226,11 @@ function Stage({
       if (e === "win") {
         setEventText("");
         setBest(
-          recordScore(course, { count: r.collected.size, seconds: r.time }),
+          recordScore(
+            recordKey,
+            { count: r.collected.size, seconds: r.time },
+            course.gems.length,
+          ),
         );
         phaseRef.current = "won";
         setPhase("won");
@@ -324,7 +300,7 @@ function Stage({
         audio.current = null;
       }
     };
-  }, [course, pause, clearKeys]);
+  }, [course, pause, clearKeys, recordKey]);
 
   function press(cmd: Command, token: string) {
     if (phaseRef.current !== "playing") return;
@@ -543,7 +519,10 @@ function Stage({
       <div className="arcade-readout">
         <p id={helpId}>
           {flight
-            ? "Giữ phím Cách hoặc nút bay để lên cao, thả để hạ xuống. Lượn qua vòng và tránh mây giông."
+            ? "Giữ phím Cách hoặc nút bay để lên cao, thả để hạ xuống. Lượn qua vòng và tránh mây giông." +
+              (course.winds
+                ? " Mũi tên trong dải gió cho biết bạn sẽ bị đẩy lên hay xuống."
+                : "")
             : "Dùng ← → hoặc A, D để chạy. Phím Cách hoặc ↑ để nhảy. Nhấn thêm lần nữa khi đang ở trên không."}
         </p>
         <p className="arcade-signal" role="status">
@@ -576,23 +555,16 @@ export default function Adventure({
         <h1>{info.title}</h1>
         <p>{info.blurb}</p>
       </div>
-      <div className="course-picker" aria-label="Chọn chặng">
-        {courses[mode].map((c, i) => (
-          <button
-            key={c.title}
-            aria-label={`Chặng ${i + 1}: ${c.title}`}
-            aria-pressed={i === index}
-            className={`course-${c.biome}`}
-            onClick={() => setIndex(i)}
-          >
-            <span>{i + 1}</span>
-            {c.title}
-          </button>
-        ))}
-      </div>
+      <LevelPicker
+        slug={info.slug}
+        titles={courses[mode].map((c) => c.title)}
+        index={index}
+        onSelect={setIndex}
+      />
       <Stage
         key={course.title}
         course={course}
+        recordKey={levelKey(info.slug, index)}
         profile={profile}
         next={index < courses[mode].length - 1}
         onNext={() => setIndex((i) => i + 1)}

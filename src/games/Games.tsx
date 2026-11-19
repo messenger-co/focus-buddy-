@@ -25,13 +25,22 @@ import Companion from "../components/Companion";
 import {
   gameShelf,
   numberPuzzle,
-  phrases,
+  quickTitles,
+  pairsAt,
+  searchSize,
+  searchRounds,
+  numberTrail,
+  trailHints,
+  wordSets,
   shuffle,
   type GameId,
 } from "./puzzles";
 import "./games.css";
+import { expeditions } from "./arcade/boards";
+import { LevelPicker, LevelCount, levelKey, recordScore } from "./levels";
 import { adventures } from "./arcade/courses";
 import { AdventureShelf } from "./arcade/Gallery";
+const Expedition = lazy(() => import("./arcade/Expedition"));
 const Adventure = lazy(() => import("./arcade/Adventure"));
 
 const symbols = [
@@ -39,6 +48,11 @@ const symbols = [
   { icon: Moon, name: "Trăng" },
   { icon: Sun, name: "Nắng" },
   { icon: Flower2, name: "Hoa" },
+  { icon: Feather, name: "Lông vũ" },
+  { icon: Star, name: "Sao" },
+  { icon: Sprout, name: "Mầm cây" },
+  { icon: Footprints, name: "Dấu chân" },
+  { icon: TrainFront, name: "Đầu tàu" },
 ];
 const icons = {
   "lat-the": Grid2X2,
@@ -66,10 +80,14 @@ function Cover({ id }: { id: GameId }) {
     </div>
   );
 }
-type PlayProps = { finish: () => void };
+type PlayProps = { finish: () => void; level: number };
 
-function MemoryGame({ finish }: PlayProps) {
-  const [deck] = useState(() => shuffle([0, 1, 2, 3, 0, 1, 2, 3]));
+function MemoryGame({ finish, level }: PlayProps) {
+  const target = pairsAt(level);
+  const [deck] = useState(() => {
+    const faces = Array.from({ length: target }, (_, i) => i);
+    return shuffle([...faces, ...faces]);
+  });
   const [flipped, setFlipped] = useState<number[]>([]);
   const [pairs, setPairs] = useState<number[]>([]);
   const [feedback, setFeedback] = useState("Lật một thẻ để bắt đầu.");
@@ -95,11 +113,15 @@ function MemoryGame({ finish }: PlayProps) {
     setPairs([...pairs, value]);
     setFlipped([]);
     setFeedback("Bạn vừa tìm được một đôi!");
-    if (pairs.length === 3) finish();
+    if (pairs.length + 1 === target) finish();
   }
   return (
     <>
-      <RoundCaption label="Số cặp đã ghép" value={pairs.length} total={4} />
+      <RoundCaption
+        label="Số cặp đã ghép"
+        value={pairs.length}
+        total={target}
+      />
       <div className="play-grid memory-grid">
         {deck.map((value, index) => {
           const open = flipped.includes(index) || pairs.includes(value);
@@ -140,23 +162,31 @@ const lookalikes = [
     { icon: Moon, name: "mặt trăng" },
   ],
 ];
-function SearchGame({ finish }: PlayProps) {
-  const [boards] = useState(() =>
-    shuffle(lookalikes).map(([same, odd]) => ({
-      same,
-      odd,
-      target: Math.floor(Math.random() * 12),
-    })),
-  );
+function SearchGame({ finish, level }: PlayProps) {
+  const size = searchSize(level);
+  const [boards] = useState(() => {
+    const deck = shuffle(lookalikes);
+    return Array.from({ length: searchRounds(level) }, (_, i) => {
+      const [same, other] = deck[i % deck.length];
+      const rotated = level >= 3 && i % 2 === 1;
+      const base = rotated ? { icon: Feather, name: "lông vũ" } : same;
+      return {
+        same: base,
+        odd: rotated ? { ...base, name: "lông vũ đổi hướng" } : other,
+        rotated,
+        target: Math.floor(Math.random() * size),
+      };
+    });
+  });
   const [round, setRound] = useState(0);
   const [feedback, setFeedback] = useState("");
-  const { same, odd, target } = boards[round];
+  const { same, odd, target, rotated } = boards[round];
   function pick(index: number) {
     if (index !== target) {
       setFeedback("Ô này giống đa số. Hãy nhìn đường nét một lần nữa.");
       return;
     }
-    if (round === 2) finish();
+    if (round + 1 === boards.length) finish();
     else {
       setRound(round + 1);
       setFeedback("Đúng rồi! Bảng tiếp theo đã sẵn sàng.");
@@ -164,9 +194,13 @@ function SearchGame({ finish }: PlayProps) {
   }
   return (
     <>
-      <RoundCaption label="Lượt quan sát" value={round + 1} total={3} />
+      <RoundCaption
+        label="Lượt quan sát"
+        value={round + 1}
+        total={boards.length}
+      />
       <div className="play-grid eye-grid">
-        {Array.from({ length: 12 }, (_, i) => {
+        {Array.from({ length: size }, (_, i) => {
           const { icon: Icon, name } = i === target ? odd : same;
           return (
             <button
@@ -175,7 +209,13 @@ function SearchGame({ finish }: PlayProps) {
               onClick={() => pick(i)}
               aria-label={`Ô ${i + 1}, ${name}`}
             >
-              <Icon />
+              <Icon
+                style={
+                  rotated && i === target
+                    ? { transform: "rotate(65deg)" }
+                    : undefined
+                }
+              />
             </button>
           );
         })}
@@ -187,34 +227,39 @@ function SearchGame({ finish }: PlayProps) {
   );
 }
 
-function OrderGame({ finish }: PlayProps) {
-  const [tiles] = useState(() => shuffle([1, 2, 3, 4, 5, 6, 7, 8, 9]));
-  const [next, setNext] = useState(1);
-  const [hint, setHint] = useState("");
+function OrderGame({ finish, level }: PlayProps) {
+  const [trail] = useState(() => numberTrail(level)),
+    [tiles] = useState(() => shuffle(trail));
+  const [index, setIndex] = useState(0),
+    [hint, setHint] = useState("");
+  const next = trail[index];
   function pick(n: number) {
     if (n !== next) {
       setHint(`Hãy tìm số ${next} trước nhé.`);
       return;
     }
-    if (n === 9) finish();
+    if (index + 1 === trail.length) finish();
     else {
-      setNext(n + 1);
+      setIndex(index + 1);
       setHint("");
     }
   }
   return (
     <>
-      <RoundCaption label="Số cần tìm" value={next} total={9} />
+      <RoundCaption label="Bước chân" value={index + 1} total={trail.length} />
+      <p className="trail-rule">
+        {trailHints[level]} <b>Số cần tìm: {next}</b>
+      </p>
       <div className="play-grid number-grid">
         {tiles.map((n) => (
           <button
             className="tile"
             key={n}
-            disabled={n < next}
+            disabled={trail.indexOf(n) < index}
             aria-label={`Số ${n}`}
             onClick={() => pick(n)}
           >
-            {n < next ? <Check /> : n}
+            {trail.indexOf(n) < index ? <Check /> : n}
           </button>
         ))}
       </div>
@@ -225,17 +270,21 @@ function OrderGame({ finish }: PlayProps) {
   );
 }
 
-function PatternGame({ finish }: PlayProps) {
-  const [puzzles] = useState(() => [0, 1, 2].map(numberPuzzle));
+function PatternGame({ finish, level }: PlayProps) {
+  const [puzzles] = useState(() =>
+    Array.from({ length: [3, 4, 4, 4, 4, 5][level] }, (_, i) =>
+      numberPuzzle(i, level),
+    ),
+  );
   const [round, setRound] = useState(0);
   const [hint, setHint] = useState("");
   const current = puzzles[round];
   function pick(n: number) {
     if (n !== current.answer) {
-      setHint("Thử so sánh hai số đứng cạnh nhau nhé.");
+      setHint(current.hint);
       return;
     }
-    if (round === 2) finish();
+    if (round + 1 === puzzles.length) finish();
     else {
       setRound(round + 1);
       setHint("Chính xác! Bạn đã tới trạm kế tiếp.");
@@ -243,7 +292,7 @@ function PatternGame({ finish }: PlayProps) {
   }
   return (
     <>
-      <RoundCaption label="Trạm" value={round + 1} total={3} />
+      <RoundCaption label="Trạm" value={round + 1} total={puzzles.length} />
       <div className="rail-sequence" aria-label="Dãy số">
         {current.shown.map((n) => (
           <b key={n}>{n}</b>
@@ -264,22 +313,27 @@ function PatternGame({ finish }: PlayProps) {
   );
 }
 
-function WordGame({ finish }: PlayProps) {
+function WordGame({ finish, level }: PlayProps) {
   const [puzzles] = useState(() =>
-    shuffle(phrases)
-      .slice(0, 3)
-      .map((phrase) => ({ ...phrase, bank: shuffle(phrase.words) })),
+    shuffle(wordSets[level])
+      .slice(0, level === 5 ? 4 : 3)
+      .map((phrase) => ({
+        ...phrase,
+        bank: shuffle(phrase.words.map((_, i) => i)),
+      })),
   );
   const [round, setRound] = useState(0);
-  const [words, setWords] = useState<string[]>([]);
+  const [words, setWords] = useState<number[]>([]);
   const [hint, setHint] = useState("");
   const current = puzzles[round];
   function check() {
-    if (words.join(" ") !== current.words.join(" ")) {
+    if (
+      words.map((i) => current.words[i]).join(" ") !== current.words.join(" ")
+    ) {
       setHint("Chưa đúng thứ tự. Chạm vào một mảnh đã ghép để gỡ ra.");
       return;
     }
-    if (round === 2) finish();
+    if (round + 1 === puzzles.length) finish();
     else {
       setRound(round + 1);
       setWords([]);
@@ -288,20 +342,20 @@ function WordGame({ finish }: PlayProps) {
   }
   return (
     <>
-      <RoundCaption label="Cụm từ" value={round + 1} total={3} />
+      <RoundCaption label="Cụm từ" value={round + 1} total={puzzles.length} />
       <p className="word-clue">{current.clue}</p>
       <div className="sentence" aria-label="Cụm từ đang ghép">
         {words.length ? (
           words.map((w) => (
             <button
               key={w}
-              aria-label={`Gỡ ${w}`}
+              aria-label={`Gỡ ${current.words[w]}`}
               onClick={() => {
                 setWords(words.filter((x) => x !== w));
                 setHint("");
               }}
             >
-              {w}
+              {current.words[w]}
             </button>
           ))
         ) : (
@@ -318,7 +372,7 @@ function WordGame({ finish }: PlayProps) {
               setHint("");
             }}
           >
-            {w}
+            {current.words[w]}
           </button>
         ))}
       </div>
@@ -365,6 +419,25 @@ const games = {
 
 function PlayTable({ id, profile }: { id: GameId; profile: Profile }) {
   const [done, setDone] = useState(false);
+  const [level, setLevel] = useState(0);
+  const started = useRef(performance.now());
+  function restart(next: number) {
+    started.current = performance.now();
+    setLevel(next);
+    setVersion((v) => v + 1);
+    setDone(false);
+  }
+  function finish() {
+    recordScore(
+      levelKey(id, level),
+      {
+        count: 1,
+        seconds: Math.max(0.001, (performance.now() - started.current) / 1000),
+      },
+      1,
+    );
+    setDone(true);
+  }
   const [version, setVersion] = useState(0);
   const heading = useRef<HTMLHeadingElement>(null);
   useEffect(() => {
@@ -384,6 +457,14 @@ function PlayTable({ id, profile }: { id: GameId; profile: Profile }) {
           <h1>{game.name}</h1>
         </div>
       </div>
+      <LevelPicker
+        slug={id}
+        titles={quickTitles[id]}
+        index={level}
+        onSelect={(i) => {
+          if (i !== level) restart(i);
+        }}
+      />
       {done ? (
         <div className="game-result">
           <Companion
@@ -397,18 +478,22 @@ function PlayTable({ id, profile }: { id: GameId; profile: Profile }) {
           <h2 ref={heading} tabIndex={-1}>
             Hoàn thành rồi!
           </h2>
-          <p>Bạn đã vượt qua {game.goal.toLowerCase()}.</p>
+          <p>
+            Bạn đã vượt chặng {level + 1} · {quickTitles[id][level]}.
+          </p>
           <div className="button-row">
-            <Link className="button primary" to="/tap-trung">
+            {level < quickTitles[id].length - 1 && (
+              <button
+                className="button primary"
+                onClick={() => restart(level + 1)}
+              >
+                Chặng tiếp theo <ArrowRight size={16} />
+              </button>
+            )}
+            <Link className="button secondary" to="/tap-trung">
               Về đồng hồ <ArrowRight size={16} />
             </Link>
-            <button
-              className="button secondary"
-              onClick={() => {
-                setVersion(version + 1);
-                setDone(false);
-              }}
-            >
+            <button className="button secondary" onClick={() => restart(level)}>
               <RotateCcw size={15} />
               Chơi lại
             </button>
@@ -417,7 +502,7 @@ function PlayTable({ id, profile }: { id: GameId; profile: Profile }) {
       ) : (
         <>
           <p className="game-instructions">{game.detail}</p>
-          <Game key={version} finish={() => setDone(true)} />
+          <Game key={version} level={level} finish={finish} />
         </>
       )}
     </section>
@@ -433,6 +518,7 @@ export default function Games({
 }) {
   const { slug } = useParams();
   const selected = gameShelf.find((g) => g.id === slug);
+  const expedition = expeditions.find((g) => g.slug === slug);
   const adventure = adventures.find((g) => g.slug === slug);
   return (
     <div className="games-page">
@@ -443,19 +529,29 @@ export default function Games({
           <ArrowRight size={16} />
         </Link>
       )}
-      {selected || adventure ? (
+      {selected || adventure || expedition ? (
         <>
           <Link className="back-to-shelf" to="/tro-choi">
             <ArrowLeft size={16} />
             Tất cả trò chơi
           </Link>
-          {adventure ? (
+          {expedition || adventure ? (
             <Suspense fallback={<p>Đang mở đường chơi…</p>}>
-              <Adventure
-                key={adventure.mode}
-                mode={adventure.mode}
-                profile={profile}
-              />
+              {expedition ? (
+                <Expedition
+                  key={expedition.mode}
+                  mode={expedition.mode}
+                  profile={profile}
+                />
+              ) : (
+                adventure && (
+                  <Adventure
+                    key={adventure.mode}
+                    mode={adventure.mode}
+                    profile={profile}
+                  />
+                )
+              )}
             </Suspense>
           ) : (
             selected && (
@@ -484,7 +580,7 @@ export default function Games({
                 <Cover id={game.id} />
                 <div className="game-card-copy">
                   <small>
-                    {game.skill} · {game.goal}
+                    {game.skill} · <LevelCount slug={game.id} />
                   </small>
                   <h2>{game.name}</h2>
                   <p>{game.detail}</p>

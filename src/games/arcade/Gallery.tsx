@@ -1,6 +1,6 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import { Link } from "react-router-dom";
-import { ArrowUpRight, Gamepad2, Wind } from "lucide-react";
+import { ArrowUpRight, Gamepad2, Snowflake, Waves, Wind } from "lucide-react";
 import Companion from "../../components/Companion";
 import type { Profile } from "../../state";
 import {
@@ -11,6 +11,15 @@ import {
 } from "./courses";
 import { displayFrame, sizeCanvas } from "./paint";
 import { newRun } from "./simulation";
+import {
+  boards,
+  expeditions,
+  raftX,
+  startBoard,
+  type BoardMode,
+} from "./boards";
+import { LevelCount } from "../levels";
+import BoardScene from "./BoardScene";
 import "./arcade.css";
 
 function Poster({ mode, profile }: { mode: AdventureMode; profile: Profile }) {
@@ -81,23 +90,56 @@ function Poster({ mode, profile }: { mode: AdventureMode; profile: Profile }) {
     </div>
   );
 }
+function BoardPoster({ mode, profile }: { mode: BoardMode; profile: Profile }) {
+  const board = boards[mode][mode === "river" ? 0 : 3];
+  const run = useMemo(() => {
+    const r = startBoard(board);
+    if (mode === "river") {
+      r.y = 2;
+      r.time = 1.4;
+      r.x = raftX(board, 3, r.y, r.time);
+    } else {
+      r.x = 2;
+      r.y = 3;
+    }
+    return r;
+  }, [board, mode]);
+  return (
+    <div
+      aria-hidden="true"
+      className={`adventure-poster board-poster poster-${mode}`}
+    >
+      <BoardScene poster board={board} run={run} profile={profile} />
+    </div>
+  );
+}
+const gameIcons = { river: Waves, ice: Snowflake, jump: Gamepad2, glide: Wind };
 export function AdventureShelf({ profile }: { profile: Profile }) {
   return (
     <div className="adventure-shelf">
-      {adventures.map((game) => {
-        const Icon = game.mode === "jump" ? Gamepad2 : Wind;
+      {[...expeditions, ...adventures].map((game) => {
+        const Icon = gameIcons[game.mode];
         return (
           <Link
-            key={game.mode}
+            key={game.slug}
             to={`/tro-choi/${game.slug}`}
             className={`adventure-card card-${game.mode}`}
           >
-            <Poster mode={game.mode} profile={profile} />
+            {game.mode === "river" || game.mode === "ice" ? (
+              <BoardPoster mode={game.mode} profile={profile} />
+            ) : (
+              <Poster mode={game.mode} profile={profile} />
+            )}
             <div className="adventure-card-copy">
               <div>
                 <span className="adventure-type">
                   <Icon size={15} />
-                  {game.mode === "jump" ? "Đi cảnh" : "Bay lượn"} · 3 chặng
+                  {"genre" in game
+                    ? game.genre
+                    : game.mode === "jump"
+                      ? "Đi cảnh"
+                      : "Bay lượn"}{" "}
+                  · <LevelCount slug={game.slug} />
                 </span>
                 <h2>{game.title}</h2>
                 <p>{game.blurb}</p>

@@ -535,6 +535,26 @@ export function paintFrame(
     gate(ctx, c.goal, c.islands[c.islands.length - 1].y, decorTime);
     if (r.ground !== null) ellipse(ctx, r.x, r.y + 0.6, 11, 2, "#34405342");
   } else {
+    for (const w of c.winds ?? []) {
+      if (w.x + w.width < camera || w.x > camera + width) continue;
+      const direction = Math.sign(w.force);
+      ctx.fillStyle = "#9ef7d51e";
+      ctx.fillRect(w.x, 0, w.width, HEIGHT);
+      for (let x = w.x + 18; x < w.x + w.width; x += 37) {
+        for (let row = -1; row < 5; row++) {
+          const y = row * 64 + ((direction * decorTime * 24 + x) % 64);
+          line(ctx, "#e0ffed95", 1.6, [
+            x - 4,
+            y - direction * 5,
+            x,
+            y,
+            x + 4,
+            y - direction * 5,
+          ]);
+          line(ctx, "#e0ffed63", 1.4, [x, y, x, y - direction * 13]);
+        }
+      }
+    }
     for (const s of c.storms) {
       if (s.x < camera - 50 || s.x > camera + width + 50) continue;
       const y = stormY(s.y, s.x, r.time);

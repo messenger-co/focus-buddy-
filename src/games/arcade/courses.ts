@@ -34,6 +34,7 @@ export interface Course {
   gems: Point[];
   checkpoint: Point;
   storms: Point[];
+  winds?: { x: number; width: number; force: number }[];
   speed: number;
 }
 const land = (
@@ -137,6 +138,130 @@ const jumps: Course[] = [
     storms: [],
   },
 ];
+// Đặt cờ trên đảo cố định để người chơi luôn có chỗ đáp khi hồi sinh.
+function ridge(
+  biome: Biome,
+  title: string,
+  speed: number,
+  islands: Island[],
+  flag: number,
+  gems: [number, number][],
+): Course {
+  const end = islands[islands.length - 1];
+  return {
+    mode: "jump",
+    biome,
+    title,
+    speed,
+    islands,
+    goal: end.x + end.width - 38,
+    checkpoint: { x: islands[flag].x + 42, y: islands[flag].y },
+    storms: [],
+    gems: gems.map(([x, y]) => ({ x, y })),
+  };
+}
+jumps.push(
+  ridge(
+    "grove",
+    "Tán rừng bồng bềnh",
+    184,
+    [
+      land(-40, 204, 225),
+      land(262, 171, 103, { drift: 18 }),
+      land(446, 195, 157, { spring: 80 }),
+      land(530, 105, 96),
+      land(695, 154, 105),
+      land(871, 190, 189),
+      land(1134, 163, 96, { drift: 22 }),
+      land(1308, 187, 140, { thorns: 72 }),
+      land(1526, 149, 108, { drift: 14 }),
+      land(1702, 188, 154, { spring: 94 }),
+      land(1932, 137, 186),
+    ],
+    5,
+    [
+      [153, 172],
+      [304, 132],
+      [561, 75],
+      [746, 122],
+      [960, 155],
+      [1180, 127],
+      [1383, 128],
+      [1570, 115],
+      [1788, 120],
+      [2003, 104],
+    ],
+  ),
+  ridge(
+    "coral",
+    "Cầu vồng san hô",
+    190,
+    [
+      land(-42, 202, 228, { spring: 164 }),
+      land(252, 137, 92),
+      land(421, 164, 104, { drift: 20 }),
+      land(600, 197, 165, { thorns: 76 }),
+      land(841, 166, 83, { drift: 17 }),
+      land(1004, 190, 194),
+      land(1282, 185, 134, { spring: 76 }),
+      land(1375, 98, 96),
+      land(1553, 139, 90, { drift: 20 }),
+      land(1713, 181, 155, { thorns: 85 }),
+      land(1943, 161, 92),
+      land(2110, 186, 175),
+    ],
+    5,
+    [
+      [134, 126],
+      [285, 104],
+      [467, 126],
+      [679, 137],
+      [879, 131],
+      [1130, 156],
+      [1360, 110],
+      [1413, 65],
+      [1598, 104],
+      [1801, 119],
+      [1988, 127],
+      [2200, 153],
+    ],
+  ),
+  ridge(
+    "night",
+    "Đỉnh cực quang",
+    196,
+    [
+      land(-42, 204, 220),
+      land(253, 170, 81, { drift: 24 }),
+      land(426, 197, 132, { spring: 72 }),
+      land(632, 132, 87),
+      land(803, 170, 90, { drift: 21 }),
+      land(965, 197, 150, { thorns: 82 }),
+      land(1192, 178, 172),
+      land(1440, 150, 82, { drift: 26 }),
+      land(1603, 189, 142, { spring: 83 }),
+      land(1695, 101, 82),
+      land(1862, 151, 101, { drift: 18 }),
+      land(2040, 182, 145, { thorns: 77 }),
+      land(2260, 151, 174),
+    ],
+    6,
+    [
+      [148, 172],
+      [297, 131],
+      [505, 119],
+      [668, 101],
+      [839, 134],
+      [1047, 133],
+      [1300, 141],
+      [1481, 115],
+      [1709, 73],
+      [1900, 114],
+      [2117, 120],
+      [2333, 116],
+    ],
+  ),
+);
 function flight(
   biome: Biome,
   title: string,
@@ -188,5 +313,39 @@ export const courses: Record<AdventureMode, Course[]> = {
       149,
       [140, 94, 148, 180, 98, 69, 139, 177, 106, 63, 133],
     ),
+    {
+      ...flight(
+        "grove",
+        "Hẻm gió ngược",
+        154,
+        [145, 111, 65, 112, 165, 137, 84, 119, 173, 132, 92, 146],
+      ),
+      winds: [{ x: 668, width: 220, force: -100 }],
+    },
+    {
+      ...flight(
+        "coral",
+        "Vũ điệu diều đỏ",
+        164,
+        [143, 90, 123, 177, 138, 83, 105, 162, 142, 87, 67, 125, 163],
+      ),
+      winds: [
+        { x: 475, width: 200, force: 104 },
+        { x: 1430, width: 230, force: -100 },
+      ],
+    },
+    {
+      ...flight(
+        "night",
+        "Dải Ngân Hà",
+        175,
+        [136, 84, 115, 171, 134, 79, 103, 163, 142, 85, 107, 173, 129, 74],
+      ),
+      winds: [
+        { x: 455, width: 190, force: -112 },
+        { x: 1110, width: 200, force: 118 },
+        { x: 1790, width: 210, force: -108 },
+      ],
+    },
   ],
 };

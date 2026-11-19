@@ -169,7 +169,12 @@ function stepGlide(
 ) {
   r.vx = c.speed;
   r.x += r.vx * dt;
-  r.vy = clamp(r.vy + (input.lift ? -370 : 310) * dt, -120, 115);
+  const wind = c.winds?.find((w) => r.x >= w.x && r.x <= w.x + w.width);
+  r.vy = clamp(
+    r.vy + ((input.lift ? -370 : 310) + (wind?.force ?? 0)) * dt,
+    -120,
+    115,
+  );
   r.y += r.vy * dt;
   if (
     r.y < 18 ||
