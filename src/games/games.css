@@ -455,7 +455,6 @@
 .buddy-big-games{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;margin:19px 0 24px}
 .buddy-feature-game{min-height:184px;display:flex;align-items:center;gap:16px;padding:23px;border:1px solid var(--study-line);border-radius:21px;color:var(--study-ink);background:linear-gradient(135deg,var(--study-pale),#fefefb);transition:transform .2s,box-shadow .2s}
 .buddy-feature-game:hover{transform:translateY(-3px);box-shadow:0 13px 27px #324d3719}
-.buddy-feature-game.survival-feature{background:linear-gradient(135deg,#fff4d3,var(--study-pale))}
 .buddy-feature-emoji{display:grid;place-items:center;min-width:75px;height:75px;border-radius:23px;font-size:42px;background:#ffffffa0}
 .buddy-feature-game>div{display:grid;gap:7px}
 .buddy-feature-game small{font-size:10px;font-weight:800;letter-spacing:.5px;color:var(--study-accent)}

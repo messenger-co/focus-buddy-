@@ -1,73 +1,16 @@
-import type { SupabaseClient } from "@supabase/supabase-js";
-import { readNote, type DisplayNote, type Note } from "./messages";
-
-export type RoomStatus = "joining" | "online" | "offline";
-const EVENT = "tin-nhan-v1";
-const leaving = new Map<string, Promise<void>>();
-
-export async function connectRoom(
-  client: SupabaseClient,
-  topic: string,
-  signal: AbortSignal,
-  onStatus: (s: RoomStatus) => void,
-  onNote: (note: DisplayNote) => void,
-) {
-  // Supabase tái sử dụng kênh cùng tên. Chờ lần rời phòng trước hoàn tất khi người dùng nhấn kết nối lại.
-  await leaving.get(topic);
-  if (signal.aborted) return null;
-
-  let online = false;
-  let queue = Promise.resolve();
-  let pending = 0;
-  const channel = client.channel(topic, {
-    config: { broadcast: { ack: true, self: false } },
-  });
-  signal.addEventListener(
-    "abort",
-    () => {
-      const done = client
-        .removeChannel(channel)
-        .then(() => {})
-        .catch(() => {});
-      leaving.set(topic, done);
-      void done.then(() => {
-        if (leaving.get(topic) === done) leaving.delete(topic);
-      });
-    },
-    { once: true },
-  );
-
-  channel
-    .on("broadcast", { event: EVENT }, ({ payload }) => {
-      if (signal.aborted || pending >= 24) return;
-      pending++;
-      queue = queue
-        .then(async () => {
-          if (signal.aborted) return;
-          const note = await readNote(payload, topic);
-          if (!signal.aborted && note) onNote(note);
-        })
-        .catch(() => {})
-        .finally(() => {
-          pending--;
-        });
-    })
-    .subscribe((status) => {
-      if (signal.aborted) return;
-      online = status === "SUBSCRIBED";
-      onStatus(online ? "online" : "offline");
-    });
-
-  return {
-    async send(note: Note) {
-      if (signal.aborted || !online)
-        throw new Error("Phòng đang mất kết nối. Bạn hãy kết nối lại.");
-      const ack = await channel.send(
-        { type: "broadcast", event: EVENT, payload: note },
-        { timeout: 6500 },
-      );
-      if (ack !== "ok")
-        throw new Error("Phòng chưa xác nhận đã nhận tin. Bạn có thể gửi lại.");
-    },
-  };
+import {supabase} from "../cloud";
+export interface Room {id:string;name:string;description:string;private?:boolean}
+export interface Status {enabled:boolean;verified:boolean;moderator:boolean;rooms:Room[]}
+export interface Profile {alias:string;buddy:string;theme:string;interest:string}
+export interface Message extends Profile {id:string;body:string;mine:boolean;created:string;state:"pending"|"approved";pinned:boolean;reply:string|null;reactions:Record<string,number>;myReaction:string|null}
+export interface Feed {online:number;messages:Message[]}
+export interface Review {id:string;room:string;body:string;alias:string;state:string;reasons:string[]}
+export async function rpc<T>(name:string,args:Record<string,unknown>={}):Promise<T> {
+  if(!supabase)throw new Error("Cần kết nối để dùng phòng học chung.");
+  const {data,error}=await supabase.rpc(name,args);
+  if(error){
+    const safe=/^(Tin cần|Hãy |Cần |Phòng |Tài khoản |Bạn |Nội dung |Tin |Thao tác |Chỉ người|Cổng )/.test(error.message);
+    throw new Error(safe?error.message:"Chưa kết nối được phòng học. Hãy thử lại sau.");
+  }
+  return data as T;
 }

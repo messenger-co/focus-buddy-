@@ -159,93 +159,6 @@
 @keyframes runner-scarf {from{transform:rotate(9deg)}to{transform:rotate(18deg)}}
 @keyframes runner-impact {0%{transform:translateX(0)}25%{transform:translateX(-3px)}60%{transform:translateX(3px)}100%{transform:translateX(0)}}
 
-/* Survival: hand-painted raised diorama tiles remain a 2D grid. */
-.survival-page .survival-hero{
-  background:radial-gradient(circle at 85% 14%,#fff9cda8,transparent 32%),linear-gradient(118deg,var(--study-mid),var(--study-pale));
-  box-shadow:0 6px 0 #b5cdbda1,0 17px 33px #1d4a381a;
-}
-.survival-page .survival-map-panel{
-  position:relative;isolation:isolate;overflow:hidden;
-  background:linear-gradient(155deg,#fdfef9,#e9f4e7);
-  border:1px solid #bbd5bd;
-  box-shadow:0 8px 0 #aac8ad,0 23px 36px #2d51422a;
-}
-.survival-page .survival-map-panel::before {
-  content:"";position:absolute;z-index:-1;pointer-events:none;
-  top:-120px;right:-140px;width:280px;height:280px;border-radius:50%;
-  background:radial-gradient(circle,#fff6c9ad,transparent 70%);
-}
-.survival-page .survival-map{
-  position:relative;transform:perspective(1100px) rotateX(14deg);
-  transform-style:preserve-3d;
-  background:linear-gradient(145deg,#c6e8c0,#95be9d);
-  border:9px solid #dbe9cd;
-  border-bottom-color:#85a88c;
-  border-radius:25px;
-  box-shadow:0 7px 0 #80aa8f,0 13px 0 #678e79,0 27px 37px #1f554232,
-    inset 0 0 0 2px #ffffff55,inset 0 5px 18px #285b3321;
-  margin:8px 4px 19px;
-  padding:15px;
-}
-.survival-page .survival-tile{
-  position:relative;isolation:isolate;
-  background:linear-gradient(140deg,#ecf8d8 0%,#b5d9a4 100%);
-  border:1px solid #bad4af;
-  border-radius:11px;
-  box-shadow:0 5px 0 #78ae7d,0 8px 10px #2855423b,inset 0 2px 2px #ffffffa8;
-  transform:translateY(-3px);
-  transition:transform .18s,box-shadow .18s,filter .18s;
-}
-.survival-page .survival-tile::before{
-  content:"";position:absolute;inset:2px 2px auto 2px;height:45%;border-radius:9px 9px 50% 50%;
-  background:linear-gradient(#ffffff59,transparent);
-  pointer-events:none;z-index:0;
-}
-.survival-page .survival-tile>span,.survival-page .survival-tile>.companion-art {
-  position:relative;z-index:1;filter:drop-shadow(0 4px 2px #30503953);
-}
-.survival-page .survival-tile.tile-f{background:linear-gradient(145deg,#d7edb1,#9bbb79);box-shadow:0 5px 0 #65945e,0 8px 12px #27543840,inset 0 2px #effddd}
-.survival-page .survival-tile.tile-s{background:linear-gradient(135deg,#f4f0e3,#bbc2bb);box-shadow:0 5px 0 #8b9b94,0 8px 12px #27543838,inset 0 2px #fff}
-.survival-page .survival-tile.tile-w{
-  background:linear-gradient(120deg,#e1f9ff,#79c5e2,#bce9f7);
-  box-shadow:0 5px 0 #5ca3c5,0 8px 13px #2754823d,inset 0 2px #f0ffff;
-}
-.survival-page .survival-tile.tile-b{background:linear-gradient(145deg,#fff6cc,#e5ce84);box-shadow:0 5px 0 #b59d53,0 8px 12px #5f4a2640,inset 0 2px #fff}
-.survival-page .survival-tile.tile-c{background:linear-gradient(145deg,#fff9db,#eac989);box-shadow:0 5px 0 #bd9153,0 8px 12px #6e4c274d,inset 0 2px #fff}
-.survival-page .survival-tile.is-buddy{
-  transform:translateY(-9px);z-index:3;border:2px solid #fffbe1;
-  outline:2px solid #4d9379;outline-offset:1px;
-  box-shadow:0 7px 0 #7aa88b,0 14px 20px #224f4977,0 0 14px #ffe8a1c9;
-}
-.survival-page .survival-tile.is-buddy .companion-art{filter:drop-shadow(0 5px 2px #234b4a66)}
-.survival-page .survival-tile.tile-w>span {animation:survival-water 2.6s ease-in-out infinite}
-.survival-page .survival-tile.is-neighbor{cursor:pointer}
-.survival-page .survival-tile.is-neighbor:hover {
-  transform:translateY(-8px);
-  box-shadow:0 8px 0 #75a477,0 17px 19px #2b594b45;
-  filter:brightness(1.05);
-}
-.survival-page .survival-tile.is-neighbor:focus-visible{outline:3px solid #3e6c59;outline-offset:3px}
-.survival-page .survival-tile.was-collected:not(.is-buddy){opacity:.7;filter:saturate(.7)}
-.survival-page .survival-dashboard span,.survival-page .survival-box{
-  background:linear-gradient(155deg,#fff,var(--study-paper));
-  border:1px solid #d0e1cf;
-  box-shadow:0 5px 0 #b7d1b9b0,0 13px 20px #1d4b3915;
-}
-.survival-progress {height:10px;background:#daebd4;border-radius:999px;overflow:hidden;box-shadow:inset 0 2px 4px #284f3825;margin:12px 0}
-.survival-progress>i{display:block;height:100%;border-radius:inherit;background:linear-gradient(90deg,#7abd9d,#ffe2a1);transition:width .3s;box-shadow:0 0 10px #d2df9280}
-.survival-page .survival-map-actions .button,.survival-page .survival-controls button{
-  box-shadow:0 4px 0 #aacbb0,0 9px 12px #2b53341c;
-}
-.survival-page .survival-controls button:active:not(:disabled){transform:translateY(3px);box-shadow:0 1px 0 #aacbb0}
-.survival-page .survival-status{
-  background:linear-gradient(150deg,var(--study-pale),#fff);
-  border:1px solid #d2e4ce;box-shadow:inset 0 1px #fff;
-}
-.survival-page .survival-costs span {border:1px solid #e7d4c3;box-shadow:0 3px 0 #d5bca080}
-.survival-page .survival-costs span.ready {border-color:#b4d2b6;box-shadow:0 3px 0 #a7cfa280}
-@keyframes survival-water {0%,100%{transform:translateY(0) scale(1)}50%{transform:translateY(-2px) scale(1.09)}}
-
 /* Garden: tactile illuminated flowers with depth, not flat buttons. */
 .garden-play .garden-heading {
   background:radial-gradient(circle at 85% 14%,#fff9d4a9,transparent 28%),linear-gradient(118deg,var(--study-mid),var(--study-pale));
@@ -294,12 +207,9 @@
 .games-page.fx-lite .garden-promo,
 .games-page.fx-lite .adventure-card,
 .games-page.fx-lite .tile,
-.games-page.fx-lite .garden-plot,
-.games-page.fx-lite .survival-map,
-.games-page.fx-lite .survival-tile {
+.games-page.fx-lite .garden-plot {
   transform:none;transition:none;
 }
-.games-page.fx-lite .survival-tile.tile-w>span,
 .games-page.fx-lite .runner-buddy .sprite-foot-left,
 .games-page.fx-lite .runner-buddy .sprite-foot-right,
 .games-page.fx-lite .runner-buddy .sprite-scarf,
@@ -321,9 +231,6 @@
 @media(max-width:680px) {
   .games-page .arcade-lobby-heading{padding:23px 20px}
   .games-page .arcade-lobby-heading::after{right:-10px;font-size:90px;opacity:.5}
-  .survival-page .survival-map{padding:6px;border-width:5px;transform:perspective(1000px) rotateX(8deg);gap:3px}
-  .survival-page .survival-tile{border-radius:7px;box-shadow:0 3px 0 #79a67b,0 6px 8px #26533c33}
-  .survival-page .survival-tile.is-buddy{transform:translateY(-4px)}
   .game-graphics-bar{padding:10px}
 }
 @media(prefers-reduced-motion:reduce) {
@@ -337,68 +244,4 @@
   .games-page .tile:hover,.games-page .garden-plot:hover{
     transform:none;
   }
-}
-
-/* Survival atmosphere: parallax-like layer remains decorative and 2D. */
-.survival-page .survival-map-panel > h2{position:relative;z-index:2;flex-wrap:wrap}
-.survival-page .survival-map-panel > h2 small {
-  font-size:10px;font-weight:600;letter-spacing:0;color:#7c987e;
-  margin-left:auto;
-}
-.survival-page .survival-scenery {
-  position:absolute;pointer-events:none;z-index:0;
-  top:0;left:0;right:0;height:190px;
-  background:linear-gradient(180deg,#d6f1f1b0,transparent);
-  overflow:hidden;
-}
-.survival-page .survival-season-1 .survival-scenery {
-  background:linear-gradient(180deg,#f9e7cbcb,transparent);
-}
-.survival-page .survival-season-2 .survival-scenery {
-  background:linear-gradient(180deg,#dee4f9b8,transparent);
-}
-.survival-page .survival-sun{
-  position:absolute;top:23px;right:21%;height:68px;width:68px;border-radius:50%;
-  background:radial-gradient(circle at 35% 30%,#fff9de,#fbdc81);
-  box-shadow:0 0 0 12px #fff6c742,0 0 0 30px #fff6c71e,0 0 55px #fff6bf;
-  animation:survival-sun-glow 5s ease-in-out infinite alternate;
-}
-.survival-page .survival-cloud {
-  position:absolute;width:110px;height:32px;border-radius:45px;
-  background:#ffffffa9;filter:drop-shadow(0 8px 12px #8aa8ab2a);
-  animation:survival-cloud-drift 15s ease-in-out infinite alternate;
-}
-.survival-page .survival-cloud::before,.survival-page .survival-cloud::after{
-  content:"";position:absolute;background:inherit;border-radius:50%;
-}
-.survival-page .survival-cloud::before{width:55px;height:43px;top:-16px;left:15px}
-.survival-page .survival-cloud::after{width:60px;height:45px;top:-22px;right:10px}
-.survival-page .survival-cloud.cloud-one{top:55px;left:8%;transform:scale(.75)}
-.survival-page .survival-cloud.cloud-two{top:19px;right:7%;transform:scale(.5);animation-delay:-6s}
-.survival-page .survival-mountain{
-  position:absolute;bottom:0;height:75px;width:64%;opacity:.7;
-  background:linear-gradient(160deg,#8dc3ad,#5b9d8b);
-  clip-path:polygon(0 100%,22% 41%,33% 69%,53% 10%,70% 75%,87% 36%,100% 100%);
-}
-.survival-page .survival-mountain.mountain-one{left:-5%}
-.survival-page .survival-mountain.mountain-two{right:-10%;transform:scaleX(-1);opacity:.46}
-.survival-page .survival-map-panel > .survival-map{
-  z-index:1;
-}
-.survival-page .survival-tile:disabled{opacity:1;cursor:default}
-.survival-page .survival-tile:not(:disabled){cursor:pointer}
-.survival-page .survival-tile.is-neighbor::after{
-  content:"";position:absolute;inset:-3px;border-radius:inherit;
-  border:2px solid #fffbd7a8;pointer-events:none;
-  animation:survival-neighbor-glow 2s infinite alternate;
-}
-.survival-page .survival-map-panel .survival-map-actions{position:relative;z-index:2}
-.survival-page .survival-chapter-note{font-size:11px!important;color:#64836b;font-weight:700}
-@keyframes survival-cloud-drift{from{translate:-15px 0}to{translate:18px 2px}}
-@keyframes survival-sun-glow{from{filter:brightness(.98)}to{filter:brightness(1.1)}}
-@keyframes survival-neighbor-glow{from{opacity:.5}to{opacity:1}}
-.games-page.fx-lite .survival-sun,.games-page.fx-lite .survival-cloud,.games-page.fx-lite .survival-tile.is-neighbor::after{animation:none}
-@media(prefers-reduced-motion:reduce){
-  .survival-page .survival-sun,.survival-page .survival-cloud,
-  .survival-page .survival-tile.is-neighbor::after{animation:none}
 }

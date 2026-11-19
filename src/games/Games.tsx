@@ -1,5 +1,5 @@
 import { lazy, Suspense, useEffect, useRef, useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import { Link, Navigate, useParams } from "react-router-dom";
 import {
   ArrowLeft,
   ArrowRight,
@@ -36,7 +36,6 @@ import { AdventureShelf } from "./arcade/Gallery";
 const Adventure = lazy(() => import("./arcade/Adventure"));
 const BuddyGarden = lazy(() => import("./BuddyGarden"));
 const BuddyRunner = lazy(() => import("./BuddyRunner"));
-const BuddySurvival = lazy(() => import("./BuddySurvival"));
 
 const symbols = [
   { icon: Leaf, name: "Lá" },
@@ -448,7 +447,7 @@ export default function Games({
   const adventure = adventures.find((g) => g.slug === slug);
   const buddyGarden = slug === "vuon-buddy";
   const buddyRunner = slug === "buddy-run";
-  const buddySurvival = slug === "dao-xanh";
+  if (slug === "dao-xanh") return <Navigate replace to="/tro-choi"/>;
   return (
     <div className={`games-page ${richEffects ? "fx-rich" : "fx-lite"}`}>
       <div className="game-graphics-bar">
@@ -465,7 +464,7 @@ export default function Games({
           <ArrowRight size={16} />
         </Link>
       )}
-      {selected || adventure || buddyGarden || buddyRunner || buddySurvival ? (
+      {selected || adventure || buddyGarden || buddyRunner ? (
         <>
           <Link className="back-to-shelf" to="/tro-choi">
             <ArrowLeft size={16} />
@@ -474,10 +473,6 @@ export default function Games({
           {buddyRunner ? (
             <Suspense fallback={<p>Đang mở đường chạy Buddy…</p>}>
               <BuddyRunner profile={profile}/>
-            </Suspense>
-          ) : buddySurvival ? (
-            <Suspense fallback={<p>Đang mở Đảo Xanh…</p>}>
-              <BuddySurvival profile={profile}/>
             </Suspense>
           ) : buddyGarden ? (
             <Suspense fallback={<p>Đang mở vườn hoa…</p>}>
@@ -515,10 +510,6 @@ export default function Games({
             <Link to="/tro-choi/buddy-run" className="buddy-feature-game runner-feature">
               <span className="buddy-feature-emoji" aria-hidden="true">🏃</span>
               <div><small>NHẢY · THỬ PHẢN XẠ · CẤP ĐỘ TĂNG DẦN</small><h2>Buddy Runner</h2><p>Trò chơi giống khủng long offline, nhưng chính Buddy của bạn chạy và nhảy. Có kỷ lục lưu cục bộ.</p><span>Chơi ngay <ArrowRight size={15}/></span></div>
-            </Link>
-            <Link to="/tro-choi/dao-xanh" className="buddy-feature-game survival-feature">
-              <span className="buddy-feature-emoji" aria-hidden="true">🌍</span>
-              <div><small>THẾ GIỚI 40×40 · 10 CÔNG TRÌNH · LƯU MÁY</small><h2>Buddy Survival: Đảo Xanh</h2><p>Đi tự do trong thế giới khối kiểu Minecraft: rừng, hồ, bãi đá, cây cối, thu thập tài nguyên và dựng làng. Tiến độ chỉ lưu trên thiết bị.</p><span>Khám phá đảo <ArrowRight size={15}/></span></div>
             </Link>
           </div>
           <AdventureShelf profile={profile} />
