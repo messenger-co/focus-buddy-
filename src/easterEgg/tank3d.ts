@@ -3,7 +3,7 @@
  * Game mechanics remain in tankGame.ts; the renderer is presentation-only.
  */
 import * as THREE from "three";
-import { TANK_WIDTH, TANK_HEIGHT, type TankInput, type TankState, type Troop, type Ally } from "./tankGame";
+import { TANK_WIDTH, TANK_HEIGHT, type TankInput, type TankState, type Ally } from "./tankGame";
 import { USA_TANK_FLAG_URL } from "./tankPaint";
 
 type TankVisual = { root:THREE.Group; turret:THREE.Group };
