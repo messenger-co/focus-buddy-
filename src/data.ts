@@ -22,12 +22,21 @@ export type BuddyAccessory =
   | "beret"
   | "headphones"
   | "satchel"
-  | "sprout";
+  | "sprout"
+  | "flower"
+  | "beanie"
+  | "star"
+  | "wizard";
 export type BuddyScene = "garden" | "space" | "sunset";
 export const THEMES = [
   { id: "meadow", name: "Đồng cỏ", tones: ["#294f45", "#85a97e", "#e6dfaa"] },
   { id: "tide", name: "Thủy triều", tones: ["#214d65", "#7bbcb6", "#ffe2bd"] },
   { id: "dusk", name: "Chạng vạng", tones: ["#554465", "#b59ac8", "#efc6aa"] },
+  { id: "sakura", name: "Hoa anh đào", tones: ["#8a4d70", "#dda6c9", "#ffe9f1"] },
+  { id: "cocoa", name: "Cà phê ấm", tones: ["#5b4334", "#c6aa8e", "#f5eadb"] },
+  { id: "starlight", name: "Ngân hà dịu", tones: ["#4d557e", "#a8b6e1", "#eff0ff"] },
+  { id: "frost", name: "Băng tuyết", tones: ["#2e6076", "#a0d5db", "#e8f6fb"] },
+  { id: "sunrise", name: "Bình minh", tones: ["#925748", "#e6b488", "#fff1c9"] },
 ] as const;
 export type StudyTheme = (typeof THEMES)[number]["id"];
 export type Mood = "great" | "okay" | "tired";
@@ -148,6 +157,10 @@ export const ACCESSORIES: {
   { id: "headphones", name: "Tai nghe", symbol: "🎧" },
   { id: "satchel", name: "Túi thám hiểm", symbol: "🎒" },
   { id: "sprout", name: "Kẹp mầm non", symbol: "🌱" },
+  { id: "flower", name: "Vòng hoa", symbol: "🌸" },
+  { id: "beanie", name: "Mũ len", symbol: "🧢" },
+  { id: "star", name: "Ngôi sao", symbol: "⭐" },
+  { id: "wizard", name: "Mũ phép thuật", symbol: "🪄" },
 ];
 export const SCENES: { id: BuddyScene; name: string; description: string }[] = [
   { id: "garden", name: "Vườn nhỏ", description: "Lá xanh và chút bình yên" },
