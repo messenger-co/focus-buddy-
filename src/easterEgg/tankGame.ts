@@ -89,7 +89,7 @@ function spawn(state:TankState,random:()=>number) {
   const speed=(type==="scout"?42:type==="armored"?20:31)+state.wave*2.6+random()*8;
   state.troops.push({
     id:++state.nextId,x:38+random()*(TANK_WIDTH-76),y:-33,
-    hp:type==="armored"?3:type==="regular"?2:1,type,speed,
+    hp:type==="armored"?4:type==="regular"?2:1,type,speed,
     shotTimer:2.7+random()*2,wobble:random()*7,
   });
 }
@@ -241,7 +241,7 @@ export function stepTank(
       troop.shotTimer=4.2+random()*1.7;
     }
     if(troop.y>TANK_HEIGHT-22) {
-      state.baseHp=Math.max(0,state.baseHp-(troop.type==="armored"?16:9));
+      state.baseHp=Math.max(0,state.baseHp-(troop.type==="armored"?18:12));
       state.troops.splice(i,1);
       effect(state,troop.x,TANK_HEIGHT-23,random,4);
     }
