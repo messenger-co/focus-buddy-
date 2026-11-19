@@ -33,6 +33,9 @@ import "./games.css";
 import { adventures } from "./arcade/courses";
 import { AdventureShelf } from "./arcade/Gallery";
 const Adventure = lazy(() => import("./arcade/Adventure"));
+const BuddyGarden = lazy(() => import("./BuddyGarden"));
+const BuddyRunner = lazy(() => import("./BuddyRunner"));
+const BuddySurvival = lazy(() => import("./BuddySurvival"));
 
 const symbols = [
   { icon: Leaf, name: "Lá" },
@@ -434,6 +437,9 @@ export default function Games({
   const { slug } = useParams();
   const selected = gameShelf.find((g) => g.id === slug);
   const adventure = adventures.find((g) => g.slug === slug);
+  const buddyGarden = slug === "vuon-buddy";
+  const buddyRunner = slug === "buddy-run";
+  const buddySurvival = slug === "dao-xanh";
   return (
     <div className="games-page">
       {countdown && (
@@ -443,13 +449,25 @@ export default function Games({
           <ArrowRight size={16} />
         </Link>
       )}
-      {selected || adventure ? (
+      {selected || adventure || buddyGarden || buddyRunner || buddySurvival ? (
         <>
           <Link className="back-to-shelf" to="/tro-choi">
             <ArrowLeft size={16} />
             Tất cả trò chơi
           </Link>
-          {adventure ? (
+          {buddyRunner ? (
+            <Suspense fallback={<p>Đang mở đường chạy Buddy…</p>}>
+              <BuddyRunner profile={profile}/>
+            </Suspense>
+          ) : buddySurvival ? (
+            <Suspense fallback={<p>Đang mở Đảo Xanh…</p>}>
+              <BuddySurvival profile={profile}/>
+            </Suspense>
+          ) : buddyGarden ? (
+            <Suspense fallback={<p>Đang mở vườn hoa…</p>}>
+              <BuddyGarden profile={profile}/>
+            </Suspense>
+          ) : adventure ? (
             <Suspense fallback={<p>Đang mở đường chơi…</p>}>
               <Adventure
                 key={adventure.mode}
@@ -472,6 +490,21 @@ export default function Games({
               {profile.buddy_name || "bạn nhỏ của bạn"}.
             </p>
           </header>
+          <Link className="garden-promo" to="/tro-choi/vuon-buddy">
+            <span className="garden-promo-icon"><Flower2 size={31}/></span>
+            <span><small>TRÒ CHƠI CÙNG BUDDY · 1 PHÚT</small><strong>Vườn hoa lấp lánh</strong><em>Tìm 10 bông hoa phát sáng. Một cuộc phiêu lưu nhỏ trong giờ nghỉ!</em></span>
+            <ArrowRight size={21}/>
+          </Link>
+          <div className="buddy-big-games">
+            <Link to="/tro-choi/buddy-run" className="buddy-feature-game runner-feature">
+              <span className="buddy-feature-emoji" aria-hidden="true">🏃</span>
+              <div><small>NHẢY · THỬ PHẢN XẠ · CẤP ĐỘ TĂNG DẦN</small><h2>Buddy Runner</h2><p>Trò chơi giống khủng long offline, nhưng chính Buddy của bạn chạy và nhảy. Có kỷ lục lưu cục bộ.</p><span>Chơi ngay <ArrowRight size={15}/></span></div>
+            </Link>
+            <Link to="/tro-choi/dao-xanh" className="buddy-feature-game survival-feature">
+              <span className="buddy-feature-emoji" aria-hidden="true">🏝️</span>
+              <div><small>PHIÊU LƯU · BỐN CHƯƠNG · TỰ LƯU</small><h2>Buddy Survival: Đảo Xanh</h2><p>Đi khám phá, nhặt vật liệu, xây nơi ở và mở khóa công trình mới. Tiến độ chỉ lưu trên thiết bị.</p><span>Khám phá đảo <ArrowRight size={15}/></span></div>
+            </Link>
+          </div>
           <AdventureShelf profile={profile} />
           <h2 className="shelf-caption">Thử thách nhanh</h2>
           <div className="game-shelf">
