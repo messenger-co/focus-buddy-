@@ -601,6 +601,41 @@ export default function Companion({
             {renderFace({ eyeY: 138, eyeX: 29 })}
           </>
         )}
+        {accessory === "flower" && (
+          <g transform="translate(160 76)">
+            {[-54, -27, 0, 27, 54].map((x, i) => (
+              <g key={i} transform={`translate(${x} ${x === 0 ? -13 : Math.abs(x) === 54 ? 5 : -5})`}>
+                <circle r="10" fill={i % 2 ? "#f2a9b8" : "#ffe4b5"}/>
+                <circle cx="-9" cy="0" r="7" fill="#ffd8e6"/>
+                <circle cx="9" cy="0" r="7" fill="#ffd8e6"/>
+                <circle cx="0" cy="-9" r="7" fill="#ffd8e6"/>
+                <circle cx="0" cy="9" r="7" fill="#ffd8e6"/>
+                <circle r="5" fill="#f5b84b"/>
+              </g>
+            ))}
+          </g>
+        )}
+        {accessory === "beanie" && (
+          <g transform="translate(160 67)">
+            <path d="M-53 30Q-49-39 0-48Q49-39 53 30Z" fill={accent.dark} stroke="#425e55" strokeWidth="2.5"/>
+            <rect x="-56" y="18" width="112" height="22" rx="10" fill={accent.light} stroke="#425e55" strokeWidth="2.3"/>
+            <circle cy="-50" r="15" fill={accent.light}/>
+          </g>
+        )}
+        {accessory === "star" && (
+          <g transform="translate(204 83) rotate(15)">
+            <path d="M0-30L8-9L31-9L13 6L19 29L0 16L-19 29L-13 6L-31-9L-8-9Z" fill="#f9d478" stroke="#b48739" strokeWidth="3"/>
+            <circle cx="-5" cy="-5" r="3" fill="#fff4bf"/>
+          </g>
+        )}
+        {accessory === "wizard" && (
+          <g transform="translate(160 79) rotate(-8)">
+            <path d="M-49 8L-12-72Q0-84 10-72L39 8Z" fill="#7866ab" stroke="#524378" strokeWidth="3"/>
+            <ellipse cy="10" rx="62" ry="13" fill="#5d5195"/>
+            <path d="M-23-12L-9-4L0-16L9-4L22-12" fill="none" stroke="#f7dc98" strokeWidth="6"/>
+            <circle cx="0" cy="-46" r="5" fill="#ffe7a0"/>
+          </g>
+        )}
         {accessory === "beret" && (
           <g transform="rotate(-11 155 83)">
             <path
