@@ -22,10 +22,16 @@ type Save = { x: number; y: number; day: number; energy: number; supplies: Suppl
 type Tile = "F" | "S" | "W" | "B" | "C" | "G";
 type Project = { title: string; description: string; need: Partial<Supplies> };
 const PROJECTS: readonly Project[] = [
-  { title: "Lều ấm áp", description: "Dựng nơi nghỉ chân cho Buddy trong khu vườn.", need: {wood: 4, stone: 2} },
-  { title: "Hồ nước nhỏ", description: "Trang trí điểm lấy nước của hòn đảo.", need: {wood: 3, stone: 3, water: 2} },
-  { title: "Vườn trái cây", description: "Cùng Buddy tạo góc vườn xanh mát.", need: {wood: 3, stone: 2, food: 2} },
-  { title: "Ngọn hải đăng", description: "Hoàn thành chuyến phiêu lưu và thắp sáng hòn đảo.", need: {wood: 5, stone: 5, water: 3, food: 3} },
+  { title: "Lều ấm áp", description: "Dựng nơi nghỉ chân cho Buddy trong khu vườn.", need: { wood: 4, stone: 2 } },
+  { title: "Hồ nước nhỏ", description: "Trang trí điểm lấy nước của hòn đảo.", need: { wood: 3, stone: 3, water: 2 } },
+  { title: "Vườn trái cây", description: "Cùng Buddy tạo góc vườn xanh mát.", need: { wood: 3, stone: 2, food: 2 } },
+  { title: "Cầu gỗ nhỏ", description: "Kết nối con đường qua suối để khám phá thuận tiện hơn.", need: { wood: 6, stone: 3 } },
+  { title: "Góc đọc sách", description: "Tạo một nơi nghỉ ngơi và đọc sách dưới tán cây.", need: { wood: 6, stone: 2, food: 2 } },
+  { title: "Đài ngắm sao", description: "Xây đài quan sát những vì sao buổi tối.", need: { wood: 4, stone: 6, water: 2 } },
+  { title: "Xưởng thủ công", description: "Cùng Buddy trang trí và sửa chữa đồ đạc.", need: { wood: 7, stone: 4, food: 2 } },
+  { title: "Nhà kính", description: "Chăm những mầm cây xanh trong khu vườn.", need: { wood: 4, stone: 5, water: 5 } },
+  { title: "Quảng trường đèn lồng", description: "Thắp sáng con đường bằng đèn lồng nhiều màu.", need: { wood: 6, stone: 6, food: 3 } },
+  { title: "Ngọn hải đăng", description: "Hoàn thành chuyến phiêu lưu và thắp sáng cả hòn đảo.", need: { wood: 7, stone: 7, water: 4, food: 4 } },
 ];
 const LABELS: Record<Resource,string> = { wood: "Gỗ", stone: "Đá", water: "Nước", food: "Trái cây" };
 const ICONS: Record<Tile,string> = { F:"🌳", S:"🪨", W:"💧", B:"🍓", C:"🏡", G:"🌿" };
@@ -102,7 +108,7 @@ export default function BuddySurvival({ profile }: { profile: Profile }) {
       ...previous,projects:previous.projects+1,
       supplies:Object.fromEntries(Object.keys(LABELS).map((name) => [name,previous.supplies[name as Resource]-(costs[name as Resource] || 0)])) as Supplies,
     }));
-    setNotice(`Hoàn thành ${nextProject.title}! Buddy đã mở khóa chương ${world.projects+2}.`);
+    setNotice(`Hoàn thành ${nextProject.title}! Buddy đã mở khóa chương ${Math.min(world.projects + 2, PROJECTS.length)}.`);
   }
   function rest() {
     const inCamp = current === "C";
@@ -122,7 +128,7 @@ export default function BuddySurvival({ profile }: { profile: Profile }) {
       <header className="survival-hero">
         <span><Compass size={18}/> BUDDY SURVIVAL · LƯU TIẾN ĐỘ TRÊN THIẾT BỊ</span>
         <h1>Đảo Xanh phiêu lưu</h1>
-        <p>Khám phá, thu thập tài nguyên và xây dựng khu trại ấm áp cùng Buddy. Bốn chương chơi được lưu trên máy, không cần cloud.</p>
+        <p>Khám phá, thu thập tài nguyên và xây dựng khu trại ấm áp cùng Buddy. Mười chương phiêu lưu với bản đồ nổi 2.5D. Mỗi bước và công trình chỉ lưu trên thiết bị, không dùng cloud.</p>
       </header>
       <section className="survival-dashboard">
         <span><Sun size={17}/> Ngày <b>{world.day}</b></span>
@@ -131,17 +137,22 @@ export default function BuddySurvival({ profile }: { profile: Profile }) {
         <span><Compass size={17}/> Bước đi <b>{world.steps}</b></span>
       </section>
       <div className="survival-layout">
-        <section className="survival-map-panel">
-          <h2><Trees size={19}/> Bản đồ hòn đảo</h2>
-          <div className="survival-map" role="grid" aria-label="Bản đồ Đảo Xanh">
+        <section className={`survival-map-panel survival-season-${world.day % 3}`}>
+          <div className="survival-scenery" aria-hidden="true"><span className="survival-sun"/><span className="survival-cloud cloud-one"/><span className="survival-cloud cloud-two"/><span className="survival-mountain mountain-one"/><span className="survival-mountain mountain-two"/></div>
+          <h2><Trees size={19}/> Bản đồ hòn đảo <small>Nhấn ô sáng bên cạnh để di chuyển</small></h2>
+          <div className="survival-map" role="group" aria-label="Bản đồ Đảo Xanh, chạm ô liền kề để di chuyển">
             {LAND.map((row,y) => [...row].map((land,x) => {
               const code = land as Tile;
               const here = world.x === x && world.y === y;
               const cleared = world.harvested.includes(coord(x,y));
-              return <div key={coord(x,y)} role="gridcell" aria-label={`${TILE_LABELS[code]}${here ? ", Buddy ở đây" : ""}`}
-                className={`survival-tile tile-${code.toLowerCase()}${here ? " is-buddy" : ""}${cleared ? " was-collected" : ""}`}>
+              const adjacent = Math.abs(world.x - x) + Math.abs(world.y - y) === 1;
+              return <button type="button" key={coord(x,y)}
+                disabled={!adjacent || world.energy === 0}
+                onClick={() => move(x - world.x, y - world.y)}
+                aria-label={`${TILE_LABELS[code]}${here ? ", Buddy ở đây" : ""}${adjacent ? ", chạm để đi tới" : ""}`}
+                className={`survival-tile tile-${code.toLowerCase()}${here ? " is-buddy" : ""}${cleared ? " was-collected" : ""}${adjacent ? " is-neighbor" : ""}`}>
                 {here ? <Companion kind={profile.companion} color={profile.color} accessory={profile.accessory} size={62} sprite paused/> : <span aria-hidden="true">{cleared ? "🌱" : ICONS[code]}</span>}
-              </div>;
+              </button>;
             }))}
           </div>
           <p className="survival-status" role="status">{notice}</p>
@@ -178,6 +189,11 @@ export default function BuddySurvival({ profile }: { profile: Profile }) {
               <>
                 <h3>Chương {world.projects+1}: {nextProject.title}</h3>
                 <p>{nextProject.description}</p>
+                <div className="survival-progress" role="progressbar" aria-label="Tiến độ mở khóa công trình"
+                  aria-valuemin={0} aria-valuemax={PROJECTS.length} aria-valuenow={world.projects}>
+                  <i style={{ width: `${(world.projects / PROJECTS.length) * 100}%` }}/>
+                </div>
+                <p className="survival-chapter-note">Đã hoàn thành {world.projects}/{PROJECTS.length} công trình</p>
                 <div className="survival-costs">
                   {Object.entries(nextProject.need).map(([key,value]) => (
                     <span key={key} className={world.supplies[key as Resource] >= (value || 0) ? "ready" : ""}>
