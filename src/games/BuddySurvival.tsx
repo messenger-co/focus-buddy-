@@ -8,7 +8,7 @@ import { Link } from "react-router-dom";
 import Companion from "../components/Companion";
 import type { Profile } from "../state";
 import {
-  HOME, MAX_ENERGY, PROJECTS, RESOURCE_ICONS, RESOURCE_LABELS,
+  HOME, PROJECTS, RESOURCE_ICONS, RESOURCE_LABELS,
   WORLD_SIZE, buildWorld, canBuild, gatherWorld, initialWorld, isBlocked,
   loadWorld, resourceAt, restWorld, stepWorld, storeWorld, tileAt,
   type Resource, type WorldSave,
