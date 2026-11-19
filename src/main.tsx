@@ -8,12 +8,14 @@ import "@fontsource/be-vietnam-pro/700.css";
 import "./styles.css";
 import "./delight.css";
 import "./study-themes.css";
+import "./foundation/foundation.css";
+import Boundary from "./foundation/Boundary";
 import App from "./App";
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
     <HashRouter>
-      <App />
+      <Boundary><App /></Boundary>
     </HashRouter>
   </React.StrictMode>,
 );

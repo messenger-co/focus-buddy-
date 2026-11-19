@@ -1,3 +1,4 @@
+import {paletteLibrary,palette,type ThemeId} from "./foundation/themes";
 export type CompanionKind =
   | "fox"
   | "owl"
@@ -24,12 +25,10 @@ export type BuddyAccessory =
   | "satchel"
   | "sprout";
 export type BuddyScene = "garden" | "space" | "sunset";
-export const THEMES = [
-  { id: "meadow", name: "Đồng cỏ", tones: ["#294f45", "#85a97e", "#e6dfaa"] },
-  { id: "tide", name: "Thủy triều", tones: ["#214d65", "#7bbcb6", "#ffe2bd"] },
-  { id: "dusk", name: "Chạng vạng", tones: ["#554465", "#b59ac8", "#efc6aa"] },
-] as const;
-export type StudyTheme = (typeof THEMES)[number]["id"];
+export const THEMES = paletteLibrary.map(([id,name])=>{
+  const p=palette(id);return {id,name,tones:[p["--study-ink"],p["--study-mid"],p["--study-pale"]]};
+});
+export type StudyTheme=ThemeId;
 export type Mood = "great" | "okay" | "tired";
 
 export const COMPANIONS: {

@@ -1,7 +1,12 @@
-import { useId } from "react";
+import { useId, useSyncExternalStore } from "react";
 import { motion, useReducedMotion } from "motion/react";
 import type { BuddyAccessory, CompanionColor, CompanionKind } from "../data";
 
+import { useWardrobe, bodies } from "../buddy3/wardrobe";
+import { Garment, Headwear, Finishing, StudyBook, Glints, type BuddyActivity } from "../buddy3/Layers";
+import "../buddy3/character.css";
+
+const trackMotion=(notify:()=>void)=>{window.addEventListener("focus-buddy-appearance",notify);return ()=>window.removeEventListener("focus-buddy-appearance",notify);};
 export interface CompanionProps {
   kind: CompanionKind;
   color: CompanionColor;
@@ -10,6 +15,9 @@ export interface CompanionProps {
   size?: number;
   className?: string;
   sprite?: boolean;
+  activity?: BuddyActivity;
+  offset?:{x:number;y:number};
+  night?: boolean;
   accessory?: BuddyAccessory;
   reaction?: "idle" | "happy" | "love" | "snack" | "play" | "wave";
 }
@@ -45,12 +53,25 @@ export default function Companion({
   sprite = false,
   accessory = "none",
   reaction = "idle",
+  activity = "idle", night = false, offset,
 }: CompanionProps) {
   const uid = useId().replace(/:/g, "");
   const reduceMotion = useReducedMotion();
-  const animate = !sprite && !paused && !reduceMotion;
+  const {look:storedLook}=useWardrobe();
+  const look=offset?{...storedLook,...offset}:storedLook;
+  const intensity=useSyncExternalStore(trackMotion,()=>document.documentElement.dataset.motion??"normal",()=>"normal");
+  const pose=sleepy?"sleeping":activity==="study"?"studying":activity==="stretch"?"stretching":activity==="celebrate"?"celebrating":activity;
+  const animate=!sprite&&!paused&&!reduceMotion&&look.motion!=="still"&&intensity!=="off"&&intensity!=="minimal";
+  const face=pose==="sleeping"?"sleepy":reaction==="love"||reaction==="happy"?"happy":pose==="idle"?look.face:pose;
+  const leap=pose==="jumping"||pose==="celebrating"||reaction==="play";
+  const dancing=pose==="dancing"||pose==="celebrating";
+  const waving=pose==="waving"||pose==="waking"||reaction==="wave";
+  const eyesClosed=face==="sleepy"||face==="happy"||face==="relaxed"||look.eyes==="crescent";
+  const primaryHat=["beret","bow","sprout","crown"].includes(accessory);
+  const showAccessory=!(primaryHat&&look.hat!=="none" || accessory==="glasses"&&look.glasses!=="none" || accessory==="satchel"&&look.bag!=="none");
+  const hasBody=look.body!=="original";
   const accent = accents[color];
-  const bodyColors = {
+  const bodyColors = bodies[look.body].shades ?? {
     fox: ["#f7c48b", "#cb8455"],
     owl: ["#C9B69B", "#A99072"],
     cat: ["#DACFC3", "#BCAE9E"],
@@ -95,40 +116,29 @@ export default function Companion({
           d={`M${145 - eyeX} ${eyeY + 21}l2-4m2 5 2-4m${2 * eyeX + 15} 3 2-4m2 5 2-4`}
         />
       </g>
-      {sleepy || reaction === "love" || reaction === "happy" ? (
-        <g fill="none" stroke="#55463F" strokeWidth="4" strokeLinecap="round">
-          <path d={`M ${150 - eyeX} ${eyeY} q 10 10 20 0`} />
-          <path d={`M ${150 + eyeX} ${eyeY} q 10 10 20 0`} />
-        </g>
-      ) : (
-        <motion.g
-          animate={animate ? { scaleY: [1, 1, 0.12, 1, 1] } : { scaleY: 1 }}
-          transition={{
-            duration: 5.3,
-            times: [0, 0.72, 0.74, 0.76, 1],
-            repeat: animate ? Infinity : 0,
-          }}
-          style={{ originX: "160px", originY: `${eyeY}px` }}
-        >
-          <ellipse cx={160 - eyeX} cy={eyeY} rx="7" ry="9.4" fill="#473d3a" />
-          {reaction === "wave" ? (
-            <path
-              d={`M${152 + eyeX} ${eyeY + 1}q8-9 16 0`}
-              fill="none"
-              stroke="#4b3f39"
-              strokeWidth="3.5"
-              strokeLinecap="round"
-            />
-          ) : (
-            <ellipse cx={160 + eyeX} cy={eyeY} rx="7" ry="9.4" fill="#473d3a" />
-          )}
-          <circle cx={158 - eyeX} cy={eyeY - 3} r="2.1" fill="#FFFCF4" />
-          {reaction !== "wave" && (
-            <circle cx={158 + eyeX} cy={eyeY - 3} r="2.5" fill="#fff9e9" />
-          )}
-        </motion.g>
-      )}
-      {kind === "axolotl" ? (
+      <g className="buddy-face-detail">
+        {look.texture==="freckles"&&[0,1,2,3,4,5].map(i=><g key={i} fill={bodyColors[1]}>{[-1,1].map(k=><circle key={k} cx={160+k*(eyeX+6+i%3*4)} cy={eyeY+14+Math.floor(i/3)*4} r="1.65"/>)}</g>)}
+        {look.texture==="stitch"&&<path d={`M115 ${eyeY+16}q6 10 18 14m54 0q12-3 18-14`} fill="none" stroke={bodyColors[1]} strokeWidth="2.2" strokeDasharray="3 3"/>}
+        {eyesClosed?<g fill="none" stroke="#574447" strokeWidth="4" strokeLinecap="round">{[-1,1].map(k=><path key={k} d={`M${150+k*eyeX} ${eyeY+1}q10 ${face==="happy"?-12:10} 20 0`}/>)}</g>:<motion.g
+          animate={animate?{scaleY:[1,1,.09,1,1]}:{scaleY:1}}
+          transition={{duration:5.1,times:[0,.69,.71,.735,1],repeat:animate?Infinity:0}}
+          style={{originX:"160px",originY:`${eyeY}px`}}>
+          {[-1,1].map(k=>{
+            const x=160+k*eyeX+(face==="curious"?3:0),y=eyeY+(face==="studying"?4:0)+(face==="curious"&&k===1?-2:0);
+            if(k===1&&waving)return <path key={k} d={`M${x-9} ${y+1}q9-10 18 0`} fill="none" stroke="#574447" strokeWidth="3.5" strokeLinecap="round"/>;
+            const large=face==="surprised"||face==="excited"||face==="celebrating";
+            return <g key={k}>
+              <ellipse cx={x} cy={y} rx={large?12:10} ry={large?15:12} fill={`url(#iris-${uid})`}/>
+              {look.eyes==="button"?<path d={`m${x-4} ${y-4} 8 8m-8 0 8-8`} stroke="#e8c5a4" strokeWidth="1.8"/>:
+              <><path d={`M${x-6} ${y+5}q5 8 12-1`} fill="none" stroke="#c09a76" strokeWidth="2.1"/>
+              {look.eyes==="star"||face==="excited"||face==="celebrating"?<path d={`m${x-2} ${y-10} 2 4 4 1-4 2-1 4-2-4-4-2 4-1Z`} fill="#fff5de"/>:<ellipse cx={x-3} cy={y-5} rx="3.5" ry="3" fill="#fff5e6"/>}
+              <circle cx={x+4} cy={y+2} r="1.4" fill="#fff8e8"/></>}
+            </g>;
+          })}
+        </motion.g>}
+        {(face==="surprised"||face==="curious")&&<path d={`M${151-eyeX} ${eyeY-17}q8-7 15-3m${2*eyeX-14} -2q8-7 15-2`} stroke="#81685e" strokeWidth="2.7" fill="none" strokeLinecap="round"/>}
+      </g>
+      {face==="surprised"||face==="excited"?<ellipse cx="160" cy={eyeY+25} rx="5.5" ry={face==="surprised"?7:4} fill="#845c58"/>:kind === "axolotl" ? (
         <g fill="#976465">
           <circle cx="153" cy="153" r="1.4" />
           <circle cx="167" cy="153" r="1.4" />
@@ -169,6 +179,7 @@ export default function Companion({
       height={size}
       viewBox={sprite ? "42 -5 236 270" : "0 0 320 300"}
       className={`companion-art ${className || ""} ${animate ? "buddy-moving" : ""} reaction-${reaction}`}
+      data-pose={pose} data-expression={face} data-effect={look.effect} data-eye={look.eyes} data-body={look.body}
       role="img"
       aria-labelledby={titleId}
       style={{ maxWidth: "100%", overflow: "visible" }}
@@ -184,6 +195,7 @@ export default function Companion({
               : " đang đồng hành cùng bạn"}
       </title>
       <defs>
+        <linearGradient id={`iris-${uid}`} x2=".2" y2="1"><stop stopColor="#302d39"/><stop offset=".62" stopColor="#554146"/><stop offset="1" stopColor="#896a56"/></linearGradient>
         <radialGradient id={bodyId} cx="36%" cy="23%" r="85%">
           <stop stopColor={bodyColors[0]} />
           <stop offset=".52" stopColor={bodyColors[0]} />
@@ -245,16 +257,15 @@ export default function Companion({
         animate={
           animate
             ? {
-                y:
-                  reaction === "play"
-                    ? [0, -24, 0, -15, 0]
-                    : [0, reaction === "idle" ? -7 : -12, 0],
-                rotate: reaction === "play" ? [-4, 5, -4, 3, -4] : [0, -1, 0],
+                y: leap ? [0,-26,0,-13,0] : dancing ? [0,-5,0,-8,0] : [0,pose==="studying"||pose==="sleeping"?-1:-4,0],
+                x: pose==="walking"?[-6,2,7,-2,-6]:[0,0,0],
+                scaleY: pose==="stretching"?[1,1.065,1]:[1,1.012,1],
+                rotate:dancing?[-5,6,-5,6,-5]:pose==="curious"?[0,7,7,0]:[0,-1,0],
               }
             : { y: 0, rotate: 0 }
         }
         transition={{
-          duration: 4,
+          duration:dancing?1.45:leap?2:look.motion==="lively"||pose==="walking"?2.15:4.6,
           repeat: animate ? Infinity : 0,
           ease: "easeInOut",
         }}
@@ -421,14 +432,14 @@ export default function Companion({
         )}
         {kind === "rabbit" && (
           <>
-            <ellipse cx="160" cy="216" rx="49" ry="44" fill="#EEDFD9" />
+            <ellipse cx="160" cy="216" rx="49" ry="44" fill={hasBody?bodyColors[0]:"#EEDFD9"} />
             <ellipse cx="238" cy="221" rx="20" ry="20" fill="#FFF7EF" />
             <ellipse
               cx="126"
               cy="73"
               rx="20"
               ry="62"
-              fill="#EFE1DA"
+              fill={hasBody?bodyColors[0]:"#EFE1DA"}
               transform="rotate(-12 126 73)"
             />
             <ellipse
@@ -436,7 +447,7 @@ export default function Companion({
               cy="73"
               rx="20"
               ry="62"
-              fill="#EFE1DA"
+              fill={hasBody?bodyColors[0]:"#EFE1DA"}
               transform="rotate(12 194 73)"
             />
             <ellipse
@@ -455,7 +466,7 @@ export default function Companion({
               fill="#E8B7BA"
               transform="rotate(12 194 73)"
             />
-            <ellipse cx="160" cy="138" rx="69" ry="59" fill="#FFF4E9" />
+            <ellipse cx="160" cy="138" rx="69" ry="59" fill={hasBody?bodyColors[0]:"#FFF4E9"} />
             <ellipse cx="160" cy="219" rx="28" ry="32" fill="#FFF7F1" />
             {renderFace()}
           </>
@@ -466,7 +477,7 @@ export default function Companion({
             <ellipse cx="160" cy="214" rx="37" ry="37" fill="#FFFAEA" />
             <circle cx="111" cy="85" r="25" fill="#44534D" />
             <circle cx="209" cy="85" r="25" fill="#44534D" />
-            <ellipse cx="160" cy="135" rx="74" ry="62" fill="#FFF9EB" />
+            <ellipse cx="160" cy="135" rx="74" ry="62" fill={hasBody?bodyColors[0]:"#FFF9EB"} />
             <ellipse
               cx="129"
               cy="137"
@@ -498,13 +509,13 @@ export default function Companion({
               stroke="#7EA58A"
               strokeWidth="3"
             />
-            <ellipse cx="160" cy="214" rx="52" ry="48" fill="#8CBAA4" />
+            <ellipse cx="160" cy="214" rx="52" ry="48" fill={hasBody?bodyColors[0]:"#8CBAA4"} />
             <ellipse cx="160" cy="218" rx="31" ry="35" fill="#E5EAC6" />
             <path
               d="M113 102L108 58L133 86 M187 86L212 58L207 102"
               fill="#DCC698"
             />
-            <ellipse cx="160" cy="137" rx="70" ry="61" fill="#A6CDB5" />
+            <ellipse cx="160" cy="137" rx="70" ry="61" fill={hasBody?bodyColors[0]:"#A6CDB5"} />
             <path
               d="M148 79L161 57L174 79 M153 64L160 47L169 64"
               fill="#77A18B"
@@ -601,6 +612,9 @@ export default function Companion({
             {renderFace({ eyeY: 138, eyeX: 29 })}
           </>
         )}
+        <Garment look={look}/>
+        <g transform={`translate(${look.x} ${look.y})`}>
+        {showAccessory && <g>
         {accessory === "beret" && (
           <g transform="rotate(-11 155 83)">
             <path
@@ -708,6 +722,9 @@ export default function Companion({
             <circle cy="-19" r="5" fill={accent.dark} />
           </g>
         )}
+        </g>}
+        <Headwear look={look}/>
+        </g>
         <path
           d="M130 183 Q160 193 190 183 L190 196 Q160 208 130 196Z"
           fill={`url(#${scarfId})`}
@@ -725,7 +742,7 @@ export default function Companion({
           />
         </g>
         <ellipse
-          className={sprite ? "sprite-foot-left" : undefined}
+          className={sprite ? "sprite-foot-left" : "buddy-foot-left"}
           cx="134"
           cy="254"
           rx="18"
@@ -735,7 +752,7 @@ export default function Companion({
           }
         />
         <ellipse
-          className={sprite ? "sprite-foot-right" : undefined}
+          className={sprite ? "sprite-foot-right" : "buddy-foot-right"}
           cx="186"
           cy="254"
           rx="18"
@@ -760,7 +777,7 @@ export default function Companion({
           strokeWidth="1.7"
           strokeDasharray="3 4"
         />
-        {accessory === "satchel" && (
+        {showAccessory && accessory === "satchel" && (
           <g stroke="#745640" strokeWidth="2.4" strokeLinejoin="round">
             <path d="M127 187Q155 218 197 231" fill="none" strokeWidth="7" />
             <g transform="rotate(-9 191 233)">
@@ -784,7 +801,7 @@ export default function Companion({
             </g>
           </g>
         )}
-        {reaction === "wave" && (kind === "owl" || kind === "penguin") && (
+        {waving && (kind === "owl" || kind === "penguin") && (
           <path
             className="waving-paw"
             d="M205 202Q225 197 228 173Q207 174 200 191Z"
@@ -794,13 +811,14 @@ export default function Companion({
         {kind !== "owl" && kind !== "penguin" && (
           <>
             <path
+              className="buddy-left-paw"
               d="M115 211 q-8 16 2 20 q11 4 14-11"
               fill={`url(#${bodyId})`}
             />
             <path
               className="waving-paw"
               d={
-                reaction === "wave"
+                waving
                   ? "M192 215Q204 186 216 191Q226 201 205 220Z"
                   : "M205 211 q8 16-2 20 q-11 4-14-11"
               }
@@ -808,6 +826,8 @@ export default function Companion({
             />
           </>
         )}
+        <Finishing look={look}/>
+        {pose==="studying"&&<StudyBook night={night}/>}
       </motion.g>
       {!sprite && (
         <>
@@ -853,6 +873,7 @@ export default function Companion({
           </motion.g>
         </>
       )}
+      <Glints effect={look.effect}/>
       {reaction === "love" && (
         <g className="buddy-hearts" fill="#D791AD" aria-hidden="true">
           <path d="M78 77C57 57 45 84 78 102C111 84 99 57 78 77Z" />
@@ -881,7 +902,7 @@ export default function Companion({
           />
         </g>
       )}
-      {sleepy && (
+      {pose==="sleeping" && (
         <g
           fill={accent.dark}
           fontFamily="sans-serif"

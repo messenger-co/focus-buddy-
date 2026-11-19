@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import {
-  Check,
+  Check, Shirt, Compass, Music2, BookOpen, Footprints,
   Cookie,
   Heart,
   Hand,
@@ -25,12 +25,17 @@ import {
   type CompanionColor,
   type CompanionKind,
 } from "../data";
+import { buddyActivities } from "../games/club/catalog";
+import {dress,useWardrobe,personalities, type Wardrobe} from "../buddy3/wardrobe";
+import type {BuddyActivity} from "../buddy3/Layers";
+import WardrobePanel from "../buddy3/WardrobePanel";
 import "../buddy-studio.css";
 
 export interface BuddyStudioProps {
   profile: {
     companion: CompanionKind;
     color: CompanionColor;
+    total_xp?:number;
     buddy_name?: string;
     accessory?: string;
     scene?: string;
@@ -49,7 +54,20 @@ export default function BuddyStudio({
   const [reaction, setReaction] = useState<Reaction>("idle");
   const [sleepy, setSleepy] = useState(false);
   const [name, setName] = useState(profile.buddy_name || "");
-  const [tab, setTab] = useState<"friends" | "style" | "world">("friends");
+  const [tab, setTab] = useState<"friends" | "style" | "closet" | "world">("friends");
+  const {look}=useWardrobe();
+  const [pose,setPose]=useState<BuddyActivity>("idle"),[playMenu,setPlayMenu]=useState(false);
+  const [positioning,setPositioning]=useState(false),[dragDraft,setDragDraft]=useState<{x:number;y:number}|null>(null);
+  const drag=useRef<{id:number;clientX:number;clientY:number;x:number;y:number;ratio:number}|null>(null);
+  const clicks=useRef(0);
+  const movingAccessory=positioning&&tab==="closet"&&!paused;
+  function stopPositioning(){drag.current=null;setDragDraft(null);setPositioning(false);}
+  function updateDrag(clientX:number,clientY:number){
+    const d=drag.current;
+    if(!d)return null;
+    const clamp=(v:number)=>Math.max(-22,Math.min(22,Math.round(v)));
+    return {x:clamp(d.x+(clientX-d.clientX)*d.ratio),y:clamp(d.y+(clientY-d.clientY)*d.ratio)};
+  }
   const [saving, setSaving] = useState(false);
   const [notice, setNotice] = useState("");
   const timer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
@@ -71,7 +89,7 @@ export default function BuddyStudio({
   useEffect(() => {
     if (paused) {
       clearTimeout(timer.current);
-      setReaction("idle");
+      setReaction("idle");setPlayMenu(false);setPose("idle");stopPositioning();
     }
   }, [paused]);
   const save = async (changes: Record<string, string>) => {
@@ -80,23 +98,43 @@ export default function BuddyStudio({
     try {
       await onSave(changes);
       setNotice("Đã lưu vào góc nhỏ của bạn.");
+      return true;
     } catch (error) {
       setNotice(
         error instanceof Error
           ? error.message
           : "Chưa lưu được. Bạn thử lại nhé.",
       );
+      return false;
     } finally {
       setSaving(false);
     }
   };
-  const interact = (next: Reaction) => {
+  const interact = (next: Reaction,action:BuddyActivity="idle") => {
     if (paused) return;
     clearTimeout(timer.current);
-    setSleepy(false);
+    setSleepy(false);setPose(action);
     setReaction(next);
-    timer.current = setTimeout(() => setReaction("idle"), 4200);
+    timer.current = setTimeout(() => {setReaction("idle");setPose("idle");}, 4200);
   };
+  useEffect(()=>{
+    if(still||sleepy||reaction!=="idle"||pose!=="idle"||look.motion==="still"||movingAccessory)return;
+    const patterns:Record<Wardrobe["personality"],BuddyActivity[]>={calm:["relaxed","studying"],playful:["walking","curious"],sunny:["waving","dancing"],curious:["curious","studying"],coach:["stretching","waving"]};
+
+    const idle=setTimeout(()=>{
+      if(document.visibilityState==="hidden"||["off","minimal"].includes(document.documentElement.dataset.motion??""))return;
+      const variants=patterns[look.personality];
+      setPose(variants[Math.floor(Math.random()*variants.length)]);
+    },26000+Math.random()*14000);
+    return ()=>{clearTimeout(idle);};
+  },[still,sleepy,reaction,pose,look.personality,look.motion,movingAccessory]);
+  useEffect(()=>{
+    if(pose==="idle"||reaction!=="idle")return;
+    const reset=setTimeout(()=>setPose("idle"),3300);
+    return ()=>clearTimeout(reset);
+  },[pose,reaction]);
+  const greeting={calm:"Mình ngồi đây với bạn. Bắt đầu bằng một việc nhỏ nhé.",playful:"Chạm vào mình nhé, mình đang đợi bạn đó!",sunny:"Thấy bạn rồi! Hôm nay mình cùng khám phá nhé.",curious:"Hôm nay bạn muốn tìm hiểu điều gì?",coach:"Chọn một mục tiêu vừa sức. Mình sẽ đi cùng bạn."}[look.personality];
+  const poseLine=({dancing:"Một, hai, ba… cùng nhún chân nào!",walking:"Đi vài bước cho giãn chân nhé.",studying:"Mình tìm thấy một đoạn sách rất hay.",surprised:"Ồ, bạn ở đây từ lúc nào thế?",curious:"Bạn mang theo điều gì thú vị vậy?",celebrating:"Hoan hô! Vỗ tay cùng mình nào.",waking:"Chào bạn, mình tỉnh rồi đây!"} as Partial<Record<BuddyActivity,string>>)[pose];
   const bubble = paused
     ? "Mình sẽ ngồi yên ở đây cùng bạn tập trung."
     : sleepy
@@ -111,7 +149,7 @@ export default function BuddyStudio({
               ? "Bắt được rồi! Đến lượt bạn nè."
               : reaction === "happy"
                 ? "Hôm nay được ở bên bạn, vui thật đấy!"
-                : "Chạm vào mình nhé, mình đang đợi bạn đó!";
+                : poseLine || greeting;
   return (
     <div className={`buddy-studio ${still ? "studio-still" : ""}`}>
       <header className="studio-heading">
@@ -145,7 +183,7 @@ export default function BuddyStudio({
               className="room-sleep"
               aria-label={sleepy ? "Đánh thức nhẹ nhàng" : "Nghỉ ngơi một chút"}
               onClick={() => {
-                setSleepy((v) => !v);
+                clearTimeout(timer.current);setPose(sleepy?"waking":"sleeping");setSleepy((v) => !v);
                 setReaction("idle");
               }}
               disabled={paused}
@@ -196,9 +234,14 @@ export default function BuddyStudio({
             </AnimatePresence>
           </div>
           <button
-            className="studio-character"
-            aria-label={`Vuốt ve ${displayName}`}
-            onClick={() => interact("happy")}
+            className={`studio-character ${movingAccessory?"position-accessory":""}`}
+            onPointerDown={e=>{if(!movingAccessory||e.button!==0)return;const rect=e.currentTarget.querySelector("svg")?.getBoundingClientRect();if(!rect)return;
+              e.preventDefault();e.currentTarget.setPointerCapture(e.pointerId);drag.current={id:e.pointerId,clientX:e.clientX,clientY:e.clientY,x:look.x,y:look.y,ratio:1/Math.min(rect.width/320,rect.height/300)};}}
+            onPointerMove={e=>{if(drag.current?.id===e.pointerId)setDragDraft(updateDrag(e.clientX,e.clientY));}}
+            onPointerUp={e=>{if(drag.current?.id!==e.pointerId)return;const patch=updateDrag(e.clientX,e.clientY);drag.current=null;setDragDraft(null);if(patch)dress(patch);}}
+            onPointerCancel={()=>{drag.current=null;setDragDraft(null);}}
+            aria-label={movingAccessory?"Kéo để đặt vị trí phụ kiện":`Vuốt ve ${displayName}`}
+            onClick={() => {if(movingAccessory)return;const choices:BuddyActivity[]=["excited","surprised","curious","celebrating"];const next=choices[clicks.current++%choices.length];interact(next==="excited"?"happy":"idle",next);}}
             disabled={paused}
           >
             <Companion
@@ -206,6 +249,7 @@ export default function BuddyStudio({
               color={profile.color}
               accessory={accessory}
               reaction={reaction}
+              activity={paused?"studying":sleepy?"sleeping":pose} night={scene==="space"} offset={dragDraft??undefined}
               paused={paused}
               sleepy={sleepy}
               size={340}
@@ -216,7 +260,7 @@ export default function BuddyStudio({
             <p>{selected.description}</p>
           </div>
           <div className="buddy-interactions">
-            <button disabled={paused} onClick={() => interact("wave")}>
+            <button disabled={paused} onClick={() => interact("wave","waving")}>
               <Hand size={18} />
               <span>Vẫy tay</span>
             </button>
@@ -228,11 +272,16 @@ export default function BuddyStudio({
               <Cookie size={18} />
               <span>Mời bánh</span>
             </button>
-            <button disabled={paused} onClick={() => interact("play")}>
+            <button disabled={paused} aria-expanded={playMenu} aria-controls="buddy-play-choices" onClick={() => {setPlayMenu(!playMenu);interact("play","jumping");}}>
               <Sparkles size={18} />
               <span>Chơi cùng</span>
             </button>
           </div>
+          {playMenu&&!paused&&<div className="buddy-play-choices" id="buddy-play-choices">
+            <h3>Chơi với {displayName}</h3>
+            <div className="buddy-pose-choices"><button onClick={()=>interact("idle","dancing")}><Music2 size={15}/>Nhảy múa</button><button onClick={()=>interact("idle","walking")}><Footprints size={15}/>Đi dạo</button><button onClick={()=>interact("idle","studying")}><BookOpen size={15}/>Đọc sách</button></div>
+            <div className="buddy-activity-links">{buddyActivities.map(g=><Link key={g.slug} to={`/tro-choi/${g.slug}`}>{g.title}</Link>)}</div>
+          </div>}
           {paused && (
             <p className="studio-pause-note">
               Bạn nhỏ đang ngồi yên trong phiên tập trung.
@@ -252,6 +301,7 @@ export default function BuddyStudio({
               [
                 { id: "friends", name: "Bạn nhỏ", icon: Heart },
                 { id: "style", name: "Phong cách", icon: Palette },
+                { id: "closet", name:"Tủ đồ", icon:Shirt },
                 { id: "world", name: "Không gian", icon: WandSparkles },
               ] as const
             ).map(({ id, name, icon: Icon }) => (
@@ -262,7 +312,7 @@ export default function BuddyStudio({
                 role="tab"
                 tabIndex={tab === id ? 0 : -1}
                 onKeyDown={(event) => {
-                  const ids = ["friends", "style", "world"] as const;
+                  const ids = ["friends", "style", "closet", "world"] as const;
                   const index = ids.indexOf(id);
                   let next: number | undefined;
                   if (event.key === "ArrowRight")
@@ -273,13 +323,13 @@ export default function BuddyStudio({
                   else if (event.key === "End") next = ids.length - 1;
                   if (next !== undefined) {
                     event.preventDefault();
-                    setTab(ids[next]);
+                    stopPositioning();setTab(ids[next]);
                     document.getElementById(`studio-tab-${ids[next]}`)?.focus();
                   }
                 }}
                 aria-selected={tab === id}
                 aria-controls={`studio-panel-${id}`}
-                onClick={() => setTab(id)}
+                onClick={() => {stopPositioning();setTab(id);}}
                 className={tab === id ? "active" : ""}
               >
                 <Icon size={16} />
@@ -323,6 +373,7 @@ export default function BuddyStudio({
                     </button>
                   ))}
                 </div>
+                <label className="wardrobe-field buddy-personality"><span><Compass size={15}/>Tính cách bạn đồng hành</span><select value={look.personality} onChange={e=>dress({personality:e.target.value as Wardrobe["personality"]})}>{Object.entries(personalities).map(([id,label])=><option key={id} value={id}>{label}</option>)}</select></label>
                 <form
                   className="buddy-name-form"
                   onSubmit={(e) => {
@@ -377,7 +428,7 @@ export default function BuddyStudio({
                       disabled={saving}
                       aria-pressed={accessory === item.id}
                       className={accessory === item.id ? "chosen" : ""}
-                      onClick={() => void save({ accessory: item.id })}
+                      onClick={async() => {if(!await save({ accessory:item.id }))return; if(["beret","bow","sprout","crown"].includes(item.id))dress({hat:"none"});else if(item.id==="glasses")dress({glasses:"none"});else if(item.id==="satchel")dress({bag:"none"});}}
                     >
                       <span aria-hidden="true">{item.symbol}</span>
                       <strong>{item.name}</strong>
@@ -387,6 +438,7 @@ export default function BuddyStudio({
                 </div>
               </>
             )}
+            {tab==="closet"&&<WardrobePanel base={{companion:profile.companion,color:profile.color,accessory}} xp={profile.total_xp??0} busy={saving} restoreBase={base=>save({...base})} positioning={positioning} togglePosition={()=>setPositioning(v=>!v)}/>}
             {tab === "world" && (
               <>
                 <div className="studio-panel-title">
@@ -458,7 +510,7 @@ export default function BuddyStudio({
       <div className="studio-bottom-note">
         <Heart size={15} />
         <p>
-          Không cần mở khóa hay đổi điểm. Tất cả bạn nhỏ đều sẵn sàng ở bên bạn.
+          Tất cả bạn nhỏ đều sẵn sàng đồng hành từ hôm nay.
         </p>
       </div>
     </div>

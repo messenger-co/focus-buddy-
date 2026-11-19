@@ -1,11 +1,19 @@
 import { apiBaseUrl, apiConfigured, supabase } from "./cloud";
 
+import type { StudyMode } from "../supabase/functions/chat/modes";
+
+export type ChatOptions = { mode: StudyMode; language: "vi" | "en" };
+export class ChatRateLimitError extends Error {
+  retryAfter: number;
+  constructor(message: string, seconds: number) {super(message);this.retryAfter=seconds;}
+}
+
 export const CHAT_MODEL = "openai/gpt-oss-120b";
 
 export type ChatMessage = { role: "user" | "assistant"; content: string };
 
 /** Giữ ngữ cảnh gần nhất trong hạn mức của Edge Function, luôn giữ nguyên câu hỏi mới. */
-export function prepareChatMessages(messages: ChatMessage[]): ChatMessage[] {
+export function prepareChatMessages(messages: ChatMessage[], options?: ChatOptions): ChatMessage[] {
   const last = messages.at(-1);
   if (!last || last.role !== "user" || !last.content.trim())
     throw new Error("Bạn viết câu hỏi trước khi gửi nhé.");
@@ -26,10 +34,11 @@ export function prepareChatMessages(messages: ChatMessage[]): ChatMessage[] {
   }
   while (
     selected.length > 1 &&
-    new TextEncoder().encode(JSON.stringify({ messages: selected }))
+    new TextEncoder().encode(JSON.stringify({ ...options, messages: selected }))
       .byteLength > 24000
   )
     selected.shift();
+  if (new TextEncoder().encode(JSON.stringify({ ...options, messages: selected })).byteLength > 24000) throw new Error("Câu hỏi vượt quá dung lượng cho phép. Bạn hãy rút gọn nội dung.");
   return selected;
 }
 
@@ -118,16 +127,20 @@ export async function streamChat(
   messages: ChatMessage[],
   onDelta: (text: string) => void,
   signal?: AbortSignal,
+  options?: ChatOptions,
 ): Promise<void> {
   if (!apiConfigured || !supabase)
     throw new Error(
       "Trợ lý trực tuyến chưa được cấu hình. Bạn có thể dùng gợi ý mẫu trong chế độ dùng thử.",
     );
+  const preparedMessages = prepareChatMessages(messages, options);
+  signal?.throwIfAborted();
   // Tạo phiên khách tự động khi chưa có phiên; không cần email hoặc đăng nhập.
   const { data: existing, error: sessionError } =
     await supabase.auth.getSession();
   if (sessionError)
     throw new Error("Chưa khôi phục được phiên trò chuyện. Bạn hãy thử lại.");
+  signal?.throwIfAborted();
   let session = existing.session;
   if (!session) {
     const { data, error } = await supabase.auth.signInAnonymously();
@@ -137,7 +150,7 @@ export async function streamChat(
       );
     session = data.session;
   }
-  const preparedMessages = prepareChatMessages(messages);
+  signal?.throwIfAborted();
   let response: Response;
   try {
     response = await fetch(`${apiBaseUrl}/chat`, {
@@ -146,7 +159,7 @@ export async function streamChat(
         "Content-Type": "application/json",
         Authorization: `Bearer ${session.access_token}`,
       },
-      body: JSON.stringify({ messages: preparedMessages }),
+      body: JSON.stringify({ ...options, messages: preparedMessages }),
       signal,
     });
   } catch (error) {
@@ -166,6 +179,10 @@ export async function streamChat(
         message = body.error;
     } catch {
       /* Giữ thông báo mặc định nếu máy chủ không trả về JSON. */
+    }
+    if (response.status === 429) {
+      const retry = Number(response.headers.get("Retry-After"));
+      throw new ChatRateLimitError(message, Number.isFinite(retry) && retry > 0 ? Math.min(86400,Math.ceil(retry)) : 60);
     }
     throw new Error(message);
   }

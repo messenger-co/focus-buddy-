@@ -1,0 +1,71 @@
+// Chỉ dùng PostgreSQL trong bộ nhớ. Không nhận URL cơ sở dữ liệu.
+import {readFile} from "node:fs/promises";
+import assert from "node:assert/strict";
+const {PGlite}=await import(process.env.FOCUS_PGLITE_MODULE||"@electric-sql/pglite");
+const db=new PGlite();
+const q=(sql,args=[])=>db.query(sql,args);
+const one=async(sql,args=[])=>Object.values((await q(sql,args)).rows[0])[0];
+const ids=["11111111","22222222","33333333","44444444"].map(x=>x+"-1111-4111-8111-111111111111");
+const [alice,bob,mod,guest]=ids;
+let checks=0;
+function eq(actual,expected){assert.deepEqual(actual,expected);checks++;}
+async function deny(sql,args=[]){await assert.rejects(q(sql,args));checks++;}
+async function as(uid){await db.exec("reset role");await q("select set_config('request.jwt.claim.sub',$1,false)",[uid||""]);await db.exec(uid?"set role authenticated":"set role anon");}
+async function root(){await db.exec("reset role");}
+const feed=async(room)=>await one("select public.fb_room_feed($1)",[room]);
+const send=async(body,reply=null,room="toan")=>one("select public.fb_room_send($1,$2,$3)",[room,body,reply]);
+const approve=async(id,act="approve")=>one("select public.fb_moderate($1,$2)",[id,act]);
+try{
+ await db.exec(`create role anon; create role authenticated; create schema auth;
+ create table auth.users(id uuid primary key,is_anonymous boolean,email_confirmed_at timestamptz);
+ create function auth.uid() returns uuid language sql stable as $$select nullif(current_setting('request.jwt.claim.sub',true),'')::uuid$$;
+ grant usage on schema auth to authenticated,anon;`);
+ await db.exec(await readFile(new URL("../migrations/202611190001_moderated_rooms.sql",import.meta.url),"utf8"));
+ for(const id of ids)await q("insert into auth.users values($1,$2,$3)",[id,id===guest,id===guest?null:new Date()]);
+ await q("insert into buddy_community.moderators values($1)",[mod]);
+ await as(null);eq((await one("select public.fb_community_status()")).enabled,false);
+ await deny("select public.fb_room_join('toan')");await deny("select * from public.fb_room_updates");
+ await as(alice);await deny("select public.fb_room_join('toan')");
+ await root();await q("update buddy_community.settings set enabled=true");
+ await q("insert into buddy_community.rooms values('rieng','Nhóm có lời mời','Ôn bài chung',true)");
+ await as(guest);await deny("select public.fb_room_join('toan')");
+ await as(alice);eq((await one("select public.fb_community_status()")).rooms.length,9);
+ await deny("select public.fb_room_join('rieng')");await deny("select public.fb_room_feed('toan')");
+ await deny("insert into buddy_community.moderators values(auth.uid())");await deny("update public.fb_room_updates set revision=88");
+ eq((await q("select * from public.fb_room_updates")).rows.length,0);
+ await q("select public.fb_room_join('toan')");eq((await q("select room from public.fb_room_updates")).rows,[{room:"toan"}]);
+ await deny("select public.fb_room_profile('Số 123','fox','forest','Toán')");
+ await q("select public.fb_room_profile('Trúc Nhỏ','owl','forest','Toán')");
+ for(const body of [" ","x".repeat(321),"Đọc https://example.org","Nhắn test@example.org","Số 0912 345 678","Xem example.com", "Chào\u202eđảo"])await deny("select public.fb_room_send('toan',$1)",[body]);
+ const mid=await send("Tại sao ba góc cộng lại thành 180 độ?");
+ eq((await feed("toan")).messages[0].state,"pending");
+ await deny("select public.fb_room_send('toan','Tin nhắn khác')");
+ await as(bob);await q("select public.fb_room_join('toan')");eq((await feed("toan")).messages,[]);
+ await deny("select public.fb_room_feedback($1,'report','spam')",[mid]);await deny("select public.fb_moderation_queue()");
+ await deny("select public.fb_moderate($1,'approve')",[mid]);await deny("select * from buddy_community.messages");
+ await as(mod);eq((await one("select public.fb_moderation_queue()"))[0].id,mid);await approve(mid);await approve(mid,"pin");
+ await as(bob);let m=(await feed("toan")).messages[0];eq(m.pinned,true);eq(m.mine,false);eq(m.alias,"Trúc Nhỏ");eq("author" in m,false);
+ await q("select public.fb_room_join('go-bai')");await deny("select public.fb_room_send('go-bai','Ý hay',$1)",[mid]);
+ await q("select public.fb_room_feedback($1,'react','💡')",[mid]);eq((await feed("toan")).messages[0].reactions["💡"],1);
+ await deny("select public.fb_room_feedback($1,'react','👏')",[mid]);
+ await q("select public.fb_room_feedback($1,'report','contact')",[mid]);await deny("select public.fb_room_feedback($1,'report','spam')",[mid]);
+ await root();await q("update buddy_community.rooms set last_send=null where id='toan'");
+ await as(bob);const reply=await send("Mình sẽ thử vẽ đường song song.",mid);
+ await as(mod);await approve(reply);eq((await one("select public.fb_moderation_queue()"))[0].reasons,["contact"]);
+ await as(bob);eq((await feed("toan")).messages.find(x=>x.id===reply).reply,m.body);
+ await q("select public.fb_room_feedback($1,'block')",[mid]);eq((await feed("toan")).messages.length,1);
+ eq((await feed("toan")).messages[0].reply,null);await as(alice);eq((await feed("toan")).messages.length,1);
+ await as(mod);await approve(mid,"suspend");await as(alice);await deny("select public.fb_room_join('toan')");eq((await q("select * from public.fb_room_updates")).rows.length,0);
+ await q("select public.fb_room_erase()");await deny("select public.fb_room_join('toan')");
+ await as(bob);await q("select public.fb_room_delete($1)",[reply]);eq((await feed("toan")).messages.length,0);
+ await q("select public.fb_room_leave('toan')");await deny("select public.fb_room_feed('toan')");
+ await root();await q("insert into buddy_community.members(room,account,invited) values('rieng',$1,true)",[bob]);
+ await as(bob);await q("select public.fb_room_join('rieng')");eq((await one("select public.fb_community_status()")).rooms.length,10);
+ await root();await q("update buddy_community.profiles set last_send=null,sent_count=15,send_window=now() where account=$1",[bob]);
+ await as(bob);await deny("select public.fb_room_send('rieng','Thử tiếp')");
+ await q("select public.fb_room_erase()");await q("select public.fb_room_join('toan')");await deny("select public.fb_room_send('toan','Thử sau khi xóa')");
+ await root();await q("insert into buddy_community.messages(room,author,body,state,created) values('toan',$1,'Tin cũ','approved',now()-interval '31 days')",[bob]);
+ await q("select buddy_community.prune()");eq(await one("select count(*)::int from buddy_community.messages"),0);
+ await q("update buddy_community.settings set enabled=false");await as(bob);await deny("select public.fb_room_feed('toan')");eq((await q("select * from public.fb_room_updates")).rows.length,0);
+ console.log(`Đạt ${checks} kiểm tra cộng đồng trên PostgreSQL cục bộ.`);
+}finally{await db.close();}

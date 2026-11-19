@@ -1,0 +1,25 @@
+.ai-desk{--ai-ink:var(--study-ink,#263b34);--ai-muted:var(--study-muted,#576a62);--ai-line:var(--study-line,#cbd8d1);color:var(--ai-ink);min-width:0}
+.ai-buddy-line{display:flex;align-items:center;gap:12px;margin:-4px 0 12px}
+.ai-live-art{width:62px;height:59px;overflow:hidden;border-radius:20px;background:var(--study-pale,#edf4ea);display:grid;place-items:center;flex:none}
+.ai-live-art svg{max-height:68px}
+.ai-buddy-line strong{font-size:16px}.ai-buddy-line p,.ai-footer small,.ai-history,.ai-notice{font-size:12px;color:var(--ai-muted)}
+.ai-options,.ai-footer,.ai-turn-tools,.ai-confirm{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.ai-options{padding-bottom:12px;border-bottom:1px solid var(--ai-line)}
+.ai-mode,.ai-history{display:flex;align-items:center;gap:8px}.ai-mode{font-size:12px;font-weight:600;flex-wrap:wrap}
+.ai-mode span{display:flex;align-items:center;position:relative}.ai-mode span svg{pointer-events:none;position:absolute;right:8px}
+.ai-mode select{background:var(--study-pale,#edf4ea);color:var(--ai-ink);padding:8px 30px 8px 10px;border:1px solid var(--ai-line);border-radius:8px;appearance:none;font:inherit}
+.ai-history input{width:16px;height:16px;accent-color:#52765d}
+.ai-conversation{height:clamp(175px,35dvh,420px);overflow:auto;overscroll-behavior:contain;padding:12px 4px}
+.ai-turn{max-width:91%;width:fit-content;padding:9px 14px;border-radius:14px;margin:0 0 10px;background:var(--study-pale,#edf4ea);font-size:13px;line-height:1.55;overflow-wrap:anywhere}
+.ai-turn small{display:block;font-size:10px;font-weight:700;margin-bottom:4px}.ai-assistant{border-bottom-left-radius:2px}.ai-user{margin-left:auto;background:var(--study-mid,#c9dcce);border-bottom-right-radius:2px}
+.ai-question{white-space:pre-wrap}.ai-markdown p{margin:4px 0}.ai-markdown h3{font-size:15px;margin:8px 0 3px}.ai-markdown ol,.ai-markdown ul{padding-left:21px;margin:5px 0;list-style:revert}.ai-markdown li{list-style:inherit}
+.ai-markdown code{font-family:ui-monospace,monospace;font-size:.92em}.ai-markdown :not(pre)>code{background:#687d7530;border-radius:3px;padding:0 3px}
+.ai-code{margin:8px 0;background:#19282d;border-radius:9px;overflow:hidden;color:#edf2f4}
+.ai-code>div{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:4px 8px;background:#2f4249;font-size:11px}
+.ai-code pre{overflow-x:auto;white-space:pre;padding:10px;margin:0}.ai-code-keyword{color:#bcb6ff}.ai-code-string{color:#a8e1bc}.ai-code-number{color:#ffd99c}.ai-code-comment{color:#a9bdc5}
+.ai-turn-tools{justify-content:flex-end;margin-top:4px;font-size:11px}.ai-copy,.ai-text-button,.ai-confirm button,.ai-status-panel button,.ai-start button{display:inline-flex;align-items:center;gap:5px;background:none;color:inherit;border:0;padding:4px 2px;cursor:pointer;font:inherit}
+.ai-copy,.ai-text-button{font-size:11px}.ai-copy:hover,.ai-text-button:hover,.ai-confirm button:hover{text-decoration:underline}.ai-start{display:grid;justify-items:center;align-content:center;gap:9px;min-height:145px}.ai-start p{font-weight:650}.ai-status-panel,.ai-start button{font-size:12px}
+.ai-status-panel{padding:10px;border-radius:10px;background:var(--study-pale,#edf4ea);margin-top:8px}.ai-status-panel button,.ai-start button{border:1px solid var(--ai-line);border-radius:12px;padding:6px 10px;margin:4px}
+.ai-composer{display:flex;align-items:flex-end;gap:6px;border:1px solid var(--ai-line);border-radius:13px;padding:6px}.ai-composer textarea{background:transparent;border:0;color:inherit;padding:5px;flex:1;min-width:0;resize:vertical;max-height:18dvh;font:inherit;font-size:14px}.ai-composer button{background:#426957;color:#fff;border:0;border-radius:8px;width:36px;height:36px;display:grid;place-items:center}
+.ai-desk button:disabled{opacity:.55;cursor:default}.ai-notice:empty{display:none}.ai-notice,.ai-footer{margin-top:6px}.ai-footer small{font-size:10px}.ai-confirm{font-size:12px}
+@media(max-width:500px){.ai-conversation{height:clamp(150px,34dvh,270px)}.ai-options{gap:5px}.ai-buddy-line{margin-bottom:8px}.ai-history{font-size:11px}.ai-turn{max-width:95%}.ai-mode select{max-width:225px}}

@@ -1,0 +1,391 @@
+.focus3 {
+  --face: #4b815e;
+  --face-light: #e5eedb;
+  color: var(--study-ink, #294a3d);
+}
+.focus3[data-look="ocean"] {
+  --face: #36788c;
+  --face-light: #deeff2;
+}
+.focus3[data-look="dusk"] {
+  --face: #95636c;
+  --face-light: #f4e6e1;
+}
+.f3-heading,
+.f3-clock-head,
+.f3-actions,
+.f3-looks,
+.f3-sound,
+.f3-icon,
+.f3-tasks form,
+.f3-tasks li,
+.f3-target span,
+.f3-break-banner,
+.f3-shortcuts,
+.f3-notes li,
+.f3-recess a {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.f3-heading,
+.f3-clock-head,
+.f3-tasks li,
+.f3-target span {
+  justify-content: space-between;
+}
+.f3-heading {
+  margin-bottom: 22px;
+}
+.f3-heading h1 {
+  font-size: clamp(30px, 4vw, 45px);
+  letter-spacing: -0.05em;
+  line-height: 1.15;
+}
+.f3-heading p,
+.f3-friend p,
+.f3-week p,
+.f3-tip,
+.f3-recess p {
+  font-size: 14px;
+  line-height: 1.55;
+  margin: 7px 0;
+  color: inherit;
+}
+.f3-grid,
+.f3-lower {
+  display: grid;
+  grid-template-columns: minmax(0, 1.5fr) minmax(245px, 1fr);
+  gap: 18px;
+}
+.focus3 .card {
+  min-width: 0;
+  border: 1px solid var(--study-line, #d4e1d1);
+  border-radius: 20px;
+  padding: clamp(16px, 2.6vw, 30px);
+}
+.focus3 h2 {
+  font-size: 20px;
+  line-height: 1.4;
+  letter-spacing: -0.03em;
+}
+.focus3 .f3-clock {
+  text-align: center;
+  background:
+    radial-gradient(
+      ellipse at 48% 38%,
+      color-mix(in srgb, var(--face-light) 42%, transparent),
+      transparent 65%
+    ),
+    var(--study-paper, #fffdf7);
+}
+.f3-clock-head {
+  font-size: 14px;
+  justify-content: flex-start;
+}
+.f3-clock-head span {
+  margin-left: auto;
+  font-size: 12px;
+}
+.f3-dial {
+  width: min(255px, 84%);
+  aspect-ratio: 1;
+  margin: 8px auto;
+  position: relative;
+}
+.f3-dial svg {
+  width: 100%;
+  height: 100%;
+  position: absolute;
+  inset: 0;
+}
+.f3-dial circle {
+  fill: none;
+  stroke-width: 5.2;
+  stroke-linecap: round;
+}
+.f3-track {
+  stroke: var(--face-light);
+}
+.f3-fill {
+  stroke: var(--face);
+  transition: stroke-dashoffset 0.35s;
+}
+.f3-dial > div {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  font-size: 12px;
+}
+.f3-time {
+  font-size: clamp(44px, 6vw, 63px);
+  font-weight: 700;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.065em;
+}
+.f3-actions {
+  justify-content: center;
+  flex-wrap: wrap;
+}
+.f3-tip {
+  font-size: 12px;
+}
+.f3-clock .focus-games-link {
+  font-size: 12px;
+  margin: 8px auto 0;
+}
+.f3-friend {
+  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+}
+.f3-friend > svg {
+  max-width: min(200px, 100%);
+}
+.f3-sound {
+  margin-top: 12px;
+  align-items: flex-end;
+  text-align: left;
+}
+.f3-icon {
+  justify-content: center;
+  min-width: 36px;
+  min-height: 36px;
+  border: 1px solid var(--study-line);
+  background: var(--study-pale);
+  color: var(--study-ink);
+  border-radius: 10px;
+  cursor: pointer;
+}
+.f3-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  min-width: 0;
+}
+.focus3 input:not([type="checkbox"]),
+.focus3 textarea,
+.focus3 select {
+  width: 100%;
+  min-width: 0;
+  border: 1px solid var(--study-line);
+  border-radius: 9px;
+  background: var(--study-paper, #fff);
+  color: var(--study-ink);
+  font: inherit;
+  font-size: 14px;
+  padding: 9px 10px;
+}
+.focus3 textarea {
+  min-height: 80px;
+  resize: vertical;
+}
+.focus3 fieldset {
+  padding: 0;
+  border: 0;
+  margin: 12px 0;
+}
+.focus3 fieldset:disabled {
+  opacity: 0.72;
+}
+.f3-plan,
+.f3-lower,
+.f3-notes {
+  margin-top: 18px;
+}
+.f3-fields {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 165px), 1fr));
+  gap: 12px;
+}
+.f3-wide {
+  grid-column: 1/-1;
+}
+.f3-looks {
+  font-size: 13px;
+  flex-wrap: wrap;
+}
+.f3-swatch {
+  border: 2px solid transparent;
+  border-radius: 50%;
+  width: 26px;
+  height: 26px;
+  display: grid;
+  place-items: center;
+  background: #487855;
+  color: #fff;
+}
+.f3-swatch[data-color="ocean"] {
+  background: #326b86;
+}
+.f3-swatch[data-color="dusk"] {
+  background: #925d68;
+}
+.f3-swatch[aria-pressed="true"] {
+  outline: 2px solid var(--study-ink);
+  outline-offset: 2px;
+}
+.f3-tasks form,
+.f3-notes .f3-field,
+.f3-week details,
+.f3-notes details {
+  margin-top: 12px;
+}
+.f3-tasks ul,
+.f3-notes ul {
+  list-style: none;
+  padding: 0;
+  margin: 10px 0 0;
+}
+.f3-tasks li,
+.f3-notes li {
+  border-top: 1px solid var(--study-line);
+  padding: 7px 0;
+  font-size: 13px;
+}
+.f3-tasks li label {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  overflow-wrap: anywhere;
+}
+.f3-bars {
+  display: flex;
+  gap: 7px;
+  margin: 12px 0;
+}
+.f3-bars > div {
+  flex: 1;
+  text-align: center;
+  display: grid;
+  gap: 4px;
+  font-size: 11px;
+}
+.f3-bars i {
+  position: relative;
+  display: block;
+  height: 44px;
+  background: var(--study-pale);
+  border-radius: 6px;
+}
+.f3-bars i:after {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  border-radius: 5px;
+  background: var(--face);
+  height: var(--bar);
+}
+.f3-target span,
+.f3-week summary,
+.f3-notes summary,
+.f3-shortcuts {
+  font-size: 12px;
+}
+.f3-target progress {
+  accent-color: var(--face);
+  width: 100%;
+  height: 6px;
+  margin: 4px 0;
+}
+.focus3 summary {
+  cursor: pointer;
+}
+.f3-week details .f3-fields {
+  margin-top: 8px;
+}
+.f3-notes li {
+  align-items: flex-start;
+}
+.f3-notes li small {
+  margin-left: 8px;
+}
+.f3-notes li p {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.f3-shortcuts {
+  margin: 17px 0;
+}
+.f3-recess a,
+.f3-break-banner {
+  justify-content: center;
+  font-size: 13px;
+  padding: 7px;
+  background: var(--study-pale);
+  border-radius: 8px;
+  color: var(--study-ink);
+}
+.f3-recess a + a {
+  margin-top: 4px;
+}
+.f3-break-banner {
+  margin-bottom: 10px;
+}
+.f3-confirm {
+  margin: 15px auto;
+}
+.f3-confirm p {
+  margin-bottom: 9px;
+}
+.f3-expanded {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  overflow: auto;
+  padding: clamp(12px, 3vw, 42px);
+  background: var(--study-paper);
+  min-height: 100dvh;
+}
+.f3-expanded .f3-grid {
+  max-width: 1080px;
+  margin: auto;
+}
+@media (max-width: 760px) {
+  .f3-grid,
+  .f3-lower {
+    grid-template-columns: 1fr;
+  }
+  .f3-heading .button {
+    min-width: 40px;
+  }
+  .f3-heading .button span {
+    display: none;
+  }
+  .f3-friend > svg {
+    height: 130px;
+  }
+  .f3-dial {
+    width: min(210px, 78%);
+  }
+  .f3-fields {
+    grid-template-columns: 1fr 1fr;
+  }
+  .f3-shortcuts {
+    display: none;
+  }
+  .f3-actions .button {
+    min-height: 44px;
+  }
+}
+@media (max-width: 400px) {
+  .f3-fields {
+    grid-template-columns: 1fr;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .f3-fill {
+    transition: none;
+  }
+}

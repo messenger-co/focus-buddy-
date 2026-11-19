@@ -24,6 +24,15 @@ import {
   supabase,
 } from "./cloud";
 
+import {
+  elapsedMs,
+  planFor,
+  studyReward,
+  MINUTE,
+  type FocusPlan,
+  type FocusMode,
+} from "./focus3/model";
+
 export const DEMO_STORAGE_KEY = "focus-buddy-demo-v2";
 export const FOCUS_DURATION_MS = 20 * 60 * 1000;
 export type Profile = {
@@ -54,6 +63,16 @@ export type FocusSession = {
   status: "active" | "completed" | "cancelled";
   completed_at?: string | null;
   cancelled_at?: string | null;
+  mode?: FocusMode;
+  minutes?: number;
+  break_minutes?: number;
+  goal?: string;
+  task_id?: string;
+  note?: string;
+  paused_at?: string | null;
+  paused_ms?: number;
+  break_ends_at?: string;
+  break_dismissed?: boolean;
 };
 export type Achievement = {
   id: string;
@@ -91,7 +110,9 @@ export type AssessmentResult = {
 };
 export type DemoAction =
   | { type: "checkin"; mood: Mood }
-  | { type: "start"; id: string }
+  | { type: "start"; id: string; plan?: FocusPlan }
+  | { type: "pause" | "resume" | "endBreak"; id: string }
+  | { type: "note"; id: string; text: string }
   | { type: "complete"; id: string }
   | { type: "cancel"; id: string }
   | { type: "exercise"; id: string; answer: number }
@@ -101,6 +122,9 @@ function derived(progress: Progress): Progress {
   const focuses = progress.focus_sessions.filter(
     (item) => item.status === "completed",
   ).length;
+  const fullSessions = progress.focus_sessions.filter(
+    (s) => s.status === "completed" && elapsedMs(s) >= FOCUS_DURATION_MS,
+  ).length;
   const exercises = progress.completed_exercises.length;
   const checkIns = progress.check_ins.length;
   const missionData = [
@@ -109,7 +133,7 @@ function derived(progress: Progress): Progress {
       title: "Một khoảng trời tập trung",
       description: "Hoàn thành một phiên tập trung 20 phút.",
       target: 1,
-      progress: Math.min(focuses, 1),
+      progress: Math.min(fullSessions, 1),
       reward_xp: 50,
     },
     {
@@ -150,7 +174,7 @@ function derived(progress: Progress): Progress {
         id: "deep-focus",
         title: "Tập trung hết mình",
         description: "Hoàn thành một phiên tập trung 20 phút.",
-        earned: focuses >= 1,
+        earned: fullSessions >= 1,
       },
       {
         id: "curious-mind",
@@ -244,6 +268,34 @@ export function readDemoProgress(storage?: Pick<Storage, "getItem">): Progress {
         Number.isFinite(Date.parse(s.started_at)) &&
         Number.isFinite(Date.parse(s.ends_at)),
     );
+    for (const s of data.focus_sessions) {
+      const plan = planFor(
+        s.mode,
+        s.minutes,
+        s.break_minutes,
+        typeof s.goal === "string" ? s.goal : "",
+        typeof s.task_id === "string" ? s.task_id : "",
+      );
+      if (s.mode !== undefined)
+        Object.assign(s, {
+          mode: plan.mode,
+          minutes: plan.minutes,
+          goal: plan.goal,
+          task_id: plan.taskId,
+          break_minutes: plan.breakMinutes,
+        });
+      if (typeof s.note !== "string") delete s.note;
+      if (s.paused_at && !Number.isFinite(Date.parse(s.paused_at)))
+        delete s.paused_at;
+      if (s.break_ends_at && !Number.isFinite(Date.parse(s.break_ends_at)))
+        delete s.break_ends_at;
+      if (
+        typeof s.paused_ms !== "number" ||
+        !Number.isFinite(s.paused_ms) ||
+        s.paused_ms < 0
+      )
+        delete s.paused_ms;
+    }
     data.completed_exercises = [
       ...new Set(
         data.completed_exercises.filter((id) =>
@@ -300,10 +352,22 @@ export function demoReducer(
     const active = progress.focus_sessions.find((s) => s.status === "active");
     if (active) result = active;
     else {
+      const plan = planFor(
+        action.plan?.mode,
+        action.plan?.minutes,
+        action.plan?.breakMinutes,
+        action.plan?.goal,
+        action.plan?.taskId,
+      );
       const session: FocusSession = {
+        mode: plan.mode,
+        minutes: plan.minutes,
+        break_minutes: plan.breakMinutes,
+        goal: plan.goal,
+        task_id: plan.taskId,
         id: action.id,
         started_at: nowISO,
-        ends_at: new Date(now + FOCUS_DURATION_MS).toISOString(),
+        ends_at: new Date(now + plan.minutes * MINUTE).toISOString(),
         status: "active",
       };
       progress.focus_sessions.unshift(session);
@@ -315,13 +379,59 @@ export function demoReducer(
     if (session.status === "cancelled")
       throw new Error("Phiên tập trung này đã kết thúc sớm.");
     if (session.status === "active") {
-      if (now < Date.parse(session.ends_at))
+      if (
+        session.mode !== "stopwatch" &&
+        (session.paused_at || now < Date.parse(session.ends_at))
+      )
         throw new Error(
-          "Phiên tập trung chưa đủ 20 phút. Bạn cố gắng thêm một chút nhé.",
+          `Phiên tập trung chưa đủ ${session.minutes ?? 20} phút. Bạn cố gắng thêm một chút nhé.`,
         );
       session.status = "completed";
-      session.completed_at = nowISO;
-      xp = 50;
+      const duration = elapsedMs(session, now);
+      const finished =
+        session.mode === "stopwatch" ? now : Date.parse(session.ends_at);
+      if (session.paused_at)
+        session.paused_ms =
+          (session.paused_ms ?? 0) +
+          Math.max(0, now - Date.parse(session.paused_at));
+      session.paused_at = null;
+      session.completed_at = new Date(finished).toISOString();
+      if ((session.break_minutes ?? 5) > 0)
+        session.break_ends_at = new Date(
+          finished + (session.break_minutes ?? 5) * MINUTE,
+        ).toISOString();
+      xp = studyReward(duration);
+    }
+  } else if (
+    action.type === "note" ||
+    action.type === "pause" ||
+    action.type === "resume" ||
+    action.type === "endBreak"
+  ) {
+    const session = progress.focus_sessions.find((s) => s.id === action.id);
+    if (session) {
+      if (action.type === "note") session.note = action.text.slice(0, 1600);
+      if (action.type === "endBreak") session.break_dismissed = true;
+      if (
+        action.type === "pause" &&
+        session.status === "active" &&
+        !session.paused_at &&
+        (session.mode === "stopwatch" || Date.parse(session.ends_at) > now)
+      )
+        session.paused_at = nowISO;
+      if (
+        action.type === "resume" &&
+        session.status === "active" &&
+        session.paused_at
+      ) {
+        const delta = Math.max(0, now - Date.parse(session.paused_at));
+        session.paused_ms = (session.paused_ms ?? 0) + delta;
+        session.ends_at = new Date(
+          Date.parse(session.ends_at) + delta,
+        ).toISOString();
+        session.paused_at = null;
+      }
+      result = session;
     }
   } else if (action.type === "cancel") {
     const session = progress.focus_sessions.find((s) => s.id === action.id);
@@ -408,6 +518,7 @@ export function useBuddy() {
   const [loading, setLoading] = useState(Boolean(supabase));
   const [error, setError] = useState<string | null>(null);
   const mounted = useRef(true);
+  const localOnly = useRef(false);
   const mode = session ? ("online" as const) : ("demo" as const);
 
   const update = useCallback((next: Progress) => {
@@ -473,19 +584,32 @@ export function useBuddy() {
     async (action: DemoAction) => {
       setError(null);
       try {
-        const { progress: next, result } = demoReducer(
-          progressRef.current,
-          action,
-        );
-        try {
-          localStorage.setItem(DEMO_STORAGE_KEY, JSON.stringify(next));
-        } catch {
-          setError(
-            "Trình duyệt không cho lưu dữ liệu. Tiến trình chỉ được giữ trong lần mở này.",
-          );
-        }
-        update(next);
-        return result;
+        const apply = () => {
+          let current = progressRef.current;
+          if (!localOnly.current) {
+            try {
+              if (localStorage.getItem(DEMO_STORAGE_KEY) !== null)
+                current = readDemoProgress();
+            } catch {
+              /* Đã chặn lưu trữ. */
+            }
+          }
+          const { progress: next, result } = demoReducer(current, action);
+          try {
+            localStorage.setItem(DEMO_STORAGE_KEY, JSON.stringify(next));
+            localOnly.current = false;
+          } catch {
+            localOnly.current = true;
+            setError(
+              "Trình duyệt không cho lưu dữ liệu. Tiến trình chỉ được giữ trong lần mở này.",
+            );
+          }
+          update(next);
+          return result;
+        };
+        return navigator.locks
+          ? await navigator.locks.request(DEMO_STORAGE_KEY, apply)
+          : apply();
       } catch (reason) {
         const failure = friendlyError(
           reason,
@@ -503,9 +627,10 @@ export function useBuddy() {
     [mutate],
   );
   const startFocus = useCallback(
-    () =>
+    (plan?: FocusPlan) =>
       mutate({
         type: "start",
+        plan,
         id: crypto.randomUUID(),
       }) as Promise<FocusSession>,
     [mutate],
@@ -579,6 +704,10 @@ export function useBuddy() {
     startFocus,
     completeFocus,
     cancelFocus,
+    changeFocus: (id: string, type: "pause" | "resume" | "endBreak") =>
+      mutate({ id, type }),
+    saveSessionNote: (id: string, text: string) =>
+      mutate({ type: "note", id, text }),
     submitExercise,
     savePreferences,
     signIn,

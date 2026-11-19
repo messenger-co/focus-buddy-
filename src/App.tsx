@@ -5,6 +5,7 @@ import {
   useRef,
   useState,
   type ReactNode,
+  type CSSProperties,
 } from "react";
 import {
   NavLink,
@@ -14,7 +15,6 @@ import {
   useNavigate,
 } from "react-router-dom";
 import {
-  ArrowDown,
   ArrowRight,
   Award,
   BookOpen,
@@ -22,7 +22,6 @@ import {
   CheckCheck,
   ChevronRight,
   Clock3,
-  Coffee,
   Flame,
   Flower2,
   Gamepad2,
@@ -33,9 +32,7 @@ import {
   LoaderCircle,
   Menu,
   Moon,
-  Pause,
   Play,
-  Send,
   Settings,
   Sparkles,
   Sprout,
@@ -45,8 +42,10 @@ import {
   TrendingUp,
   X,
 } from "lucide-react";
+import FocusPage from "./focus3/FocusPage";
+import { clockText, elapsedMs, faceMs, latestBreak, sessionMinutes, studyReward, type FocusPlan } from "./focus3/model";
 import { useBuddy, vietnamDay } from "./state";
-import { streamChat, getChatReadiness } from "./chat";
+import Assistant from "./ai3/Assistant";
 import {
   COMPANIONS,
   EXERCISES,
@@ -54,18 +53,29 @@ import {
   type CompanionColor,
   type Mood,
 } from "./data";
+import {Palette, Box as BoxIcon} from "lucide-react";
+import {MotionConfig} from "motion/react";
+import {palette,paletteLibrary} from "./foundation/themes";
+import {useAppearance} from "./foundation/appearance";
+import {english as inEnglish} from "./foundation/language";
+import Boundary from "./foundation/Boundary";
+import StudyNook from "./foundation/StudyNook";
+const ThemeStudio=lazy(()=>import("./foundation/ThemeStudio"));
+const World=lazy(()=>import("./world3/World"));
+const Journal=lazy(()=>import("./foundation/Journal"));
 const Games = lazy(() => import("./games/Games"));
 const Discussion = lazy(() => import("./discussion/Discussion"));
 const BuddyStudio = lazy(() => import("./components/BuddyStudio"));
 const Companion = lazy(() => import("./components/Companion"));
 type Buddy = ReturnType<typeof useBuddy>;
-type Message = { role: "user" | "assistant"; content: string };
 const navItems = [
   { to: "/", icon: Home, label: "Góc của bạn" },
   { to: "/tap-trung", icon: Clock3, label: "Giờ tập trung" },
   { to: "/nhiem-vu", icon: BookOpen, label: "Nhiệm vụ học tập" },
   { to: "/ban-dong-hanh", icon: Heart, label: "Bạn đồng hành" },
   { to: "/tro-choi", icon: Gamepad2, label: "Trò chơi tập trung" },
+  { to: "/the-gioi-3d", icon: BoxIcon, label: "Phòng học 3D" },
+  { to: "/giao-dien", icon: Palette, label: "Xưởng giao diện" },
   { to: "/thao-luan", icon: MessagesSquare, label: "Phòng thảo luận" },
   { to: "/hanh-trinh", icon: TrendingUp, label: "Hành trình của bạn" },
 ];
@@ -189,6 +199,9 @@ function Modal({
 }
 function App() {
   const buddy = useBuddy();
+  const appearance = useAppearance();
+  const dark=Boolean(paletteLibrary.find(t=>t[0]===buddy.progress.profile.theme)?.[3]);
+  useEffect(()=>{document.documentElement.dataset.motion=appearance.motion; document.documentElement.dataset.palette=dark?"dark":"light";},[appearance.motion,dark]);
   const navigate = useNavigate();
   const location = useLocation();
   const now = useNow();
@@ -202,9 +215,15 @@ function App() {
   const active = buddy.progress.focus_sessions.find(
     (s) => s.status === "active",
   );
-  const remaining = active
-    ? Math.max(0, new Date(active.ends_at).getTime() - now)
-    : 1200000;
+  const remaining = active ? faceMs(active,now) : 1200000;
+  const rest = latestBreak(buddy.progress.focus_sessions);
+  const restLeft=rest ? Math.max(0,Date.parse(rest.break_ends_at!)-now):0;
+  const notifiedBreak=useRef("");
+  useEffect(()=>{
+    if(!rest || restLeft>0 || notifiedBreak.current===rest.id)return;
+    notifiedBreak.current=rest.id;
+    if(now-Date.parse(rest.break_ends_at!)<60000)setToast("Giờ nghỉ đã kết thúc. Bàn học đang chờ bạn.");
+  },[rest?.id,restLeft]);
   const act = async (fn: () => Promise<unknown>, message?: string) => {
     setBusy(true);
     try {
@@ -227,20 +246,21 @@ function App() {
     return () => clearTimeout(id);
   }, [toast]);
   useEffect(() => {
-    if (active && remaining <= 0 && completed.current !== active.id) {
+    if (active && !active.paused_at && active.mode!=="stopwatch" && remaining <= 0 && completed.current !== active.id) {
       completed.current = active.id;
       void act(
         () => buddy.completeFocus(),
-        "Bạn đã hoàn thành 20 phút! Thêm 50 điểm cho một nỗ lực nhỏ.",
+        `Đã hoàn thành phiên học · +${studyReward(elapsedMs(active,now))} điểm.`,
       );
     }
   }, [active?.id, remaining]);
-  const start = () =>
+  const startWithPlan = (plan?: FocusPlan) =>
     act(async () => {
-      await buddy.startFocus();
+      await buddy.startFocus(plan);
       setSleepy(false);
       navigate("/tap-trung");
     });
+  const start=()=>startWithPlan();
   const checkIn = (mood: Mood) =>
     act(
       () => buddy.checkIn(mood),
@@ -255,10 +275,12 @@ function App() {
         (item.to !== "/" && location.pathname.startsWith(item.to + "/")),
     )?.label || "Góc của bạn";
   return (
-    <div
-      data-theme={buddy.progress.profile.theme}
+    <MotionConfig reducedMotion={appearance.motion==="off"||appearance.motion==="minimal"?"always":"user"}><div
+      data-theme={buddy.progress.profile.theme} data-palette={dark?"dark":"light"} data-motion={appearance.motion} data-backdrop={appearance.backdrop}
+      style={palette(buddy.progress.profile.theme,appearance.accent) as CSSProperties}
       className={`app ${active ? "focus-active" : ""}`}
     >
+      <a className="skip-link" href="#main-content" onClick={e=>{e.preventDefault();document.getElementById("main-content")?.focus();}}>Bỏ qua điều hướng</a>
       {menu && (
         <button
           className="sidebar-scrim"
@@ -356,7 +378,7 @@ function App() {
             </button>
           </div>
         </header>
-        <main id="main-content">
+        <main id="main-content" tabIndex={-1}>
           {buddy.loading && (
             <div className="inline-notice">
               <LoaderCircle size={16} className="spin" /> Đang tải góc học tập
@@ -368,7 +390,7 @@ function App() {
               {buddy.error}
             </div>
           )}
-          <Routes>
+          <Boundary key={location.pathname}><Routes>
             <Route
               path="/"
               element={
@@ -390,9 +412,9 @@ function App() {
               element={
                 <FocusPage
                   buddy={buddy}
-                  remaining={remaining}
+                  now={now}
                   busy={busy}
-                  start={start}
+                  start={startWithPlan}
                   cancel={() =>
                     act(
                       () => buddy.cancelFocus(),
@@ -402,7 +424,7 @@ function App() {
                   finish={() =>
                     act(
                       () => buddy.completeFocus(),
-                      "Đã lưu phiên tập trung và cộng 50 điểm.",
+                      "Đã lưu phiên tập trung.",
                     )
                   }
                 />
@@ -439,10 +461,12 @@ function App() {
               path="/tro-choi/:slug?"
               element={
                 <Suspense fallback={<p>Đang mở trò chơi…</p>}>
+                  <>
+                  {rest && <NavLink className="f3-break-banner" to="/tap-trung"><Clock3 size={17}/>{restLeft>0?`Giờ nghỉ còn ${clockText(restLeft)}`:"Hết giờ nghỉ. Trở lại bàn học"}<ArrowRight size={16}/></NavLink>}
                   <Games
                     profile={buddy.progress.profile}
-                    countdown={active ? timerText(remaining) : null}
-                  />
+                    countdown={active ? clockText(remaining,active.mode==="stopwatch") : null}
+                  /></>
                 </Suspense>
               }
             />
@@ -458,6 +482,8 @@ function App() {
               path="/hanh-trinh"
               element={<ProgressPage buddy={buddy} />}
             />
+            <Route path="/giao-dien" element={<Suspense fallback={<p>Đang tải giao diện…</p>}><ThemeStudio theme={buddy.progress.profile.theme} onTheme={theme=>act(()=>buddy.savePreferences({...buddy.progress.profile,theme}))}/></Suspense>}/>
+            <Route path="/the-gioi-3d/*" element={<Suspense fallback={<p>Đang mở phòng học…</p>}><World profile={buddy.progress.profile}/></Suspense>}/>
             <Route
               path="*"
               element={
@@ -474,17 +500,18 @@ function App() {
                 </div>
               }
             />
-          </Routes>
+          </Routes></Boundary>
           <footer className="page-footer">
             <Sprout size={14} />
             <span>
               Không cần hoàn hảo. Chỉ cần tiến bộ hơn một chút mỗi ngày.
             </span>
-            <span className="footer-version">Bạn Đồng Hành · 2.0</span>
+            <span className="footer-version">Focus Buddy · 3.0</span>
           </footer>
         </main>
       </div>
       {!chat &&
+        !location.pathname.startsWith("/the-gioi-3d") &&
         location.pathname !== "/thao-luan" &&
         !location.pathname.startsWith("/tro-choi/") && (
           <button className="chat-launch" onClick={() => setChat(true)}>
@@ -509,7 +536,7 @@ function App() {
         <SettingsModal buddy={buddy} close={() => setSettings(false)} />
       )}
       {chat && <ChatModal buddy={buddy} close={() => setChat(false)} />}
-    </div>
+    </div></MotionConfig>
   );
 }
 function PageTitle({
@@ -556,13 +583,14 @@ function Dashboard({
   openChat: () => void;
 }) {
   const navigate = useNavigate();
-  const active = buddy.progress.focus_sessions.some(
+  const active = buddy.progress.focus_sessions.find(
     (s) => s.status === "active",
   );
   const sessions = buddy.progress.focus_sessions.filter(
     (s) => s.status === "completed",
   );
   const mood = buddy.progress.check_ins.find((c) => c.day === today());
+  const useWidgets=useAppearance().widgets.join(" ");
   const companionName =
     buddy.progress.profile.buddy_name ||
     COMPANIONS.find((c) => c.id === buddy.progress.profile.companion)?.name ||
@@ -571,7 +599,7 @@ function Dashboard({
     <>
       <PageTitle
         eyebrow="MỘT NGÀY MỚI, MỘT KHỞI ĐẦU NHỎ"
-        title={`Chào ${buddy.progress.profile.display_name},`}
+        title={`${inEnglish?"Hello":"Chào"} ${buddy.progress.profile.display_name},`}
         description="Hôm nay, mình cùng tiến bộ một chút nhé."
       >
         <div className="date-chip">
@@ -597,7 +625,7 @@ function Dashboard({
         <Stat
           icon={<Clock3 size={21} />}
           label="Thời gian đã tập trung"
-          value={number((buddy.progress.counts?.focus ?? sessions.length) * 20)}
+          value={number(sessions.reduce((sum,s)=>sum+sessionMinutes(s),0))}
           unit="phút"
           color="mint"
         />
@@ -609,7 +637,8 @@ function Dashboard({
           color="lavender"
         />
       </div>
-      <div className="dashboard-grid">
+      <div className="desk-links"><NavLink to="/the-gioi-3d"><BoxIcon size={18}/> Khám phá phòng 3D <ChevronRight size={15}/></NavLink><NavLink to="/ban-dong-hanh"><Heart size={18}/> Ghé xưởng Buddy <ChevronRight size={15}/></NavLink><NavLink to="/giao-dien"><Palette size={18}/> Đổi giao diện <ChevronRight size={15}/></NavLink></div>
+      <div className="dashboard-grid" data-widgets={useWidgets}>
         <div className="dashboard-main">
           <section className="focus-hero">
             <div className="hero-copy">
@@ -636,7 +665,7 @@ function Dashboard({
               </h2>
               <p>
                 {active
-                  ? `Còn ${timerText(remaining)} để hoàn thành mục tiêu hôm nay.`
+                  ? active.mode==="stopwatch"?`Đã học ${clockText(remaining,true)} trong phiên bấm giờ.`:`Còn ${timerText(remaining)} để hoàn thành mục tiêu hôm nay.`
                   : "Gác lại những xao nhãng. Cùng người bạn nhỏ hoàn thành điều bạn muốn làm."}
               </p>
               <button
@@ -652,24 +681,7 @@ function Dashboard({
                 <Sparkles size={13} /> Hoàn thành phiên · +50 điểm
               </span>
             </div>
-            <div className="hero-art">
-              <span className="orbit orbit-one" />
-              <span className="orbit orbit-two" />
-              <span className="floating-star star-one">✦</span>
-              <span className="floating-star star-two">✧</span>
-              <div className="hero-clock">
-                <span>THỜI GIAN CHO BẠN</span>
-                <strong>{active ? timerText(remaining) : "20:00"}</strong>
-                <div>
-                  <span />
-                  <Leaf size={18} />
-                  <span />
-                </div>
-              </div>
-              <div className="hero-leaf">
-                <Sprout size={49} strokeWidth={1.3} />
-              </div>
-            </div>
+            <StudyNook><BuddyArt buddy={buddy} sleepy={sleepy} size={190}/></StudyNook>
           </section>
           <section className="card missions-card">
             <div className="section-heading">
@@ -854,175 +866,6 @@ function MissionRows({ buddy }: { buddy: Buddy }) {
         </button>
       ))}
     </div>
-  );
-}
-function FocusPage({
-  buddy,
-  remaining,
-  busy,
-  start,
-  cancel,
-  finish,
-}: {
-  buddy: Buddy;
-  remaining: number;
-  busy: boolean;
-  start: () => void;
-  cancel: () => void;
-  finish: () => void;
-}) {
-  const [confirm, setConfirm] = useState(false);
-  const active = buddy.progress.focus_sessions.some(
-    (s) => s.status === "active",
-  );
-  return (
-    <>
-      <PageTitle
-        eyebrow="MỘT VIỆC MỖI LÚC"
-        title="Khoảng lặng để tập trung"
-        description="Chọn một việc nhỏ. Dành trọn 20 phút. Bạn làm được mà."
-      />
-      <div className="focus-layout">
-        <section className="card timer-card">
-          <span className="pill">
-            <span className="live-dot" />
-            {active
-              ? "Bạn đang trong phiên tập trung"
-              : "Sẵn sàng cho một khởi đầu mới"}
-          </span>
-          <div className="timer-ring">
-            <svg viewBox="0 0 300 300" aria-hidden="true">
-              <circle
-                cx="150"
-                cy="150"
-                r="137"
-                fill="none"
-                stroke="var(--study-pale)"
-                strokeWidth="7"
-              />
-              <circle
-                cx="150"
-                cy="150"
-                r="137"
-                fill="none"
-                stroke="var(--study-accent)"
-                strokeWidth="7"
-                strokeLinecap="round"
-                strokeDasharray="861"
-                strokeDashoffset={861 * (1 - remaining / 1200000)}
-                transform="rotate(-90 150 150)"
-              />
-            </svg>
-            <div>
-              <span
-                className="timer-number"
-                role="timer"
-                aria-label={`Thời gian còn lại ${timerText(remaining)}`}
-              >
-                {timerText(remaining)}
-              </span>
-              <p>
-                {active
-                  ? "Cứ nhẹ nhàng, từng chút một."
-                  : "20 phút dành riêng cho bạn"}
-              </p>
-              <Leaf size={20} />
-            </div>
-          </div>
-          {!active ? (
-            <button className="button primary" disabled={busy} onClick={start}>
-              <Play size={17} />
-              Bắt đầu phiên tập trung
-            </button>
-          ) : remaining <= 0 ? (
-            <button className="button primary" disabled={busy} onClick={finish}>
-              Nhận 50 điểm
-            </button>
-          ) : (
-            <button
-              className="button secondary"
-              disabled={busy}
-              onClick={() => setConfirm(true)}
-            >
-              <Pause size={17} />
-              Kết thúc sớm
-            </button>
-          )}
-          {active && remaining <= 0 && (
-            <button
-              className="friend-rest"
-              disabled={busy}
-              onClick={() => setConfirm(true)}
-            >
-              Đóng phiên này để bắt đầu lại
-            </button>
-          )}
-          <NavLink className="focus-games-link" to="/tro-choi">
-            <Gamepad2 size={17} />
-            Chơi một ván tập trung
-          </NavLink>
-          <p className="timer-note">
-            {active
-              ? "Đồng hồ vẫn tiếp tục khi bạn chuyển trang hoặc tải lại."
-              : "Hoàn thành phiên để nhận 50 điểm kinh nghiệm."}
-          </p>
-        </section>
-        <aside>
-          <section className="card focus-friend">
-            <BuddyArt buddy={buddy} size={240} />
-            <h2>Mình ở đây cùng bạn.</h2>
-            <p>
-              {active
-                ? "Các chuyển động đã tạm dừng để bạn dễ tập trung hơn."
-                : "Không cần làm mọi thứ cùng lúc. Mình bắt đầu bằng một việc thôi nhé."}
-            </p>
-          </section>
-          <div className="focus-tips">
-            <h3>
-              <Coffee size={17} />
-              Trước khi bắt đầu
-            </h3>
-            <p>
-              <Check size={15} />
-              Để điện thoại sang một bên.
-            </p>
-            <p>
-              <Check size={15} />
-              Chuẩn bị một cốc nước.
-            </p>
-            <p>
-              <Check size={15} />
-              Chọn một mục tiêu vừa sức.
-            </p>
-          </div>
-        </aside>
-      </div>
-      {confirm && (
-        <Modal title="Bạn muốn nghỉ một chút?" close={() => setConfirm(false)}>
-          <p className="modal-copy">
-            Bạn có thể kết thúc phiên bất cứ lúc nào. Phiên chưa đủ 20 phút sẽ
-            không được cộng điểm.
-          </p>
-          <div className="button-row">
-            <button
-              className="button secondary"
-              onClick={() => setConfirm(false)}
-            >
-              Tiếp tục tập trung
-            </button>
-            <button
-              className="button primary"
-              onClick={() => {
-                setConfirm(false);
-                cancel();
-              }}
-            >
-              Kết thúc phiên
-            </button>
-          </div>
-        </Modal>
-      )}
-    </>
   );
 }
 function MissionsPage({ buddy }: { buddy: Buddy; busy: boolean }) {
@@ -1265,6 +1108,7 @@ function ProgressPage({ buddy }: { buddy: Buddy }) {
           </p>
         )}
       </section>
+      <Suspense fallback={null}><Journal/></Suspense>
       <div className="section-heading standalone">
         <h2>Những dấu mốc đáng nhớ</h2>
         <Award size={22} />
@@ -1374,197 +1218,8 @@ function SettingsModal({ buddy, close }: { buddy: Buddy; close: () => void }) {
   );
 }
 function ChatModal({ buddy, close }: { buddy: Buddy; close: () => void }) {
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      role: "assistant",
-      content:
-        "Chào bạn! Mình có thể giúp bạn chia nhỏ việc học hoặc tìm một chút động lực. Hôm nay bạn đang muốn làm điều gì?",
-    },
-  ]);
-  const [input, setInput] = useState("");
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState("");
-  const abort = useRef<AbortController | null>(null);
-  const bottom = useRef<HTMLDivElement>(null);
-  const [readiness, setReadiness] = useState<{
-    ready: boolean;
-    message: string;
-    model?: string;
-  } | null>(null);
-  const [offline, setOffline] = useState(false);
-  const [retry, setRetry] = useState(0);
-  useEffect(() => {
-    let mounted = true;
-    if (!buddy.apiConfigured) return;
-    setReadiness(null);
-    getChatReadiness().then((result) => {
-      if (mounted) setReadiness(result);
-    });
-    return () => {
-      mounted = false;
-    };
-  }, [buddy.apiConfigured, retry]);
-  const wantsAI = buddy.apiConfigured && !offline;
-  const live = wantsAI && readiness?.ready === true;
-  const blocked = wantsAI && !live;
-  useEffect(() => () => abort.current?.abort(), []);
-  useEffect(() => {
-    bottom.current?.scrollIntoView?.({ behavior: "smooth" });
-  }, [messages, busy]);
-  const send = async (text: string) => {
-    if (!text.trim() || busy || blocked) return;
-    const next: Message[] = [
-      ...messages,
-      { role: "user", content: text.trim() },
-    ];
-    setInput("");
-    setError("");
-    setMessages([...next, { role: "assistant", content: "" }]);
-    setBusy(true);
-    try {
-      if (live) {
-        abort.current = new AbortController();
-        await streamChat(
-          next.slice(1).slice(-16),
-          (delta) =>
-            setMessages((prev) => {
-              const updated = [...prev];
-              updated[updated.length - 1] = {
-                role: "assistant",
-                content: updated[updated.length - 1].content + delta,
-              };
-              return updated;
-            }),
-          abort.current.signal,
-        );
-      } else {
-        const reply = /mệt|buồn|nghỉ/i.test(text)
-          ? "Mệt một chút cũng không sao. Bạn thử thả lỏng vai, uống nước và hít thở chậm vài nhịp nhé. Khi sẵn sàng, hãy chọn một việc thật nhỏ để bắt đầu."
-          : "Mình gợi ý 3 bước nhỏ nhé:\n1. Viết ra một việc bạn muốn hoàn thành.\n2. Chia việc đó thành phần có thể làm trong 20 phút.\n3. Bắt đầu phiên tập trung và để những việc khác sang một bên.\n\nVí dụ: thay vì “học cả chương”, hãy thử “đọc 2 trang và ghi lại 3 ý chính”.";
-        setMessages([...next, { role: "assistant", content: reply }]);
-      }
-    } catch (e) {
-      setError(
-        e instanceof Error ? e.message : "Chưa kết nối được. Bạn thử lại nhé.",
-      );
-      setMessages((prev) =>
-        prev.filter((m, i) => i !== prev.length - 1 || m.content),
-      );
-    } finally {
-      setBusy(false);
-    }
-  };
-  return (
-    <Modal title="Mình cùng gỡ rối nhé" close={close} wide>
-      <div className="chat-mode">
-        <span className="live-dot" />
-        {live
-          ? "GPT-OSS 120B qua Groq · Groq"
-          : blocked
-            ? "Đang kiểm tra kết nối AI"
-            : "Gợi ý ngoại tuyến · Câu trả lời được soạn sẵn"}
-      </div>
-      {blocked && (
-        <div className="chat-setup" role="status">
-          <Sparkles size={22} />
-          <div>
-            <strong>
-              {readiness ? "Trợ lý AI chưa sẵn sàng" : "Đang kiểm tra kết nối…"}
-            </strong>
-            <p>{readiness?.message || "Mình đang kiểm tra dịch vụ trả lời."}</p>
-            {readiness && (
-              <div className="button-row">
-                <button
-                  className="button secondary"
-                  onClick={() => setRetry((v) => v + 1)}
-                >
-                  Kiểm tra lại
-                </button>
-                <button
-                  className="button secondary"
-                  onClick={() => setOffline(true)}
-                >
-                  Dùng gợi ý ngoại tuyến
-                </button>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-      {!wantsAI && (
-        <div className="chat-connect">
-          <span>Gợi ý mẫu hoạt động ngay trên thiết bị.</span>
-          {buddy.apiConfigured && (
-            <button onClick={() => setOffline(false)}>
-              Kết nối lại AI <ArrowRight size={14} />
-            </button>
-          )}
-        </div>
-      )}
-      <div className="chat-messages" aria-live="polite">
-        {messages.map((m, i) => (
-          <div className={`chat-message ${m.role}`} key={i}>
-            {m.role === "assistant" && (
-              <span className="chat-avatar">
-                <Sprout size={18} />
-              </span>
-            )}
-            <div>
-              {m.content || <span className="typing">Đang suy nghĩ…</span>}
-            </div>
-          </div>
-        ))}
-        <div ref={bottom} />
-      </div>
-      {messages.length === 1 && (
-        <div className="chat-suggestions">
-          {["Giúp mình bắt đầu học", "Hôm nay mình hơi mệt"].map((s) => (
-            <button
-              key={s}
-              disabled={blocked || busy}
-              onClick={() => void send(s)}
-            >
-              {s}
-              <ArrowDown size={13} />
-            </button>
-          ))}
-        </div>
-      )}
-      {error && (
-        <p className="form-error" role="alert">
-          {error}
-        </p>
-      )}
-      <form
-        noValidate
-        className="chat-form"
-        onSubmit={(e) => {
-          e.preventDefault();
-          void send(input);
-        }}
-      >
-        <input
-          aria-label="Tin nhắn cho bạn đồng hành"
-          placeholder="Chia sẻ điều bạn đang nghĩ…"
-          value={input}
-          disabled={blocked}
-          maxLength={2000}
-          onChange={(e) => setInput(e.target.value)}
-        />
-        <button
-          className="send-button"
-          disabled={busy || blocked || !input.trim()}
-          aria-label="Gửi tin nhắn"
-        >
-          <Send size={19} />
-        </button>
-      </form>
-      <p className="chat-disclaimer">
-        {live
-          ? "Trợ lý có thể nhầm lẫn. Hãy kiểm tra lại kiến thức quan trọng."
-          : "Kết nối dịch vụ AI để nhận câu trả lời theo nội dung của bạn; không cần đăng nhập."}
-      </p>
-    </Modal>
-  );
+  return <Modal title={document.documentElement.lang.startsWith("en") ? "Study with Buddy" : "Mình cùng gỡ rối nhé"} close={close} wide>
+    <Assistant configured={buddy.apiConfigured} profile={buddy.progress.profile}/>
+  </Modal>;
 }
 export default App;

@@ -1,0 +1,101 @@
+import { describe, it, expect } from "vitest";
+import { createDemoProgress, demoReducer, readDemoProgress } from "../state";
+import {
+  planFor,
+  MINUTE,
+  faceMs,
+  elapsedMs,
+  studyWeek,
+  latestBreak,
+  focusModes,
+} from "./model";
+
+const at = Date.parse("2026-11-18T15:00:00Z");
+describe("Phiên học nâng cao", () => {
+  it("áp dụng đúng thời lượng từng chế độ và giới hạn giá trị tùy chỉnh", () => {
+    for (const m of focusModes) {
+      const p = planFor(m.id, 19, 6),
+        s = demoReducer(
+          createDemoProgress(),
+          { type: "start", id: "1", plan: p },
+          at,
+        ).progress.focus_sessions[0];
+      expect(s.mode).toBe(m.id);
+      expect((Date.parse(s.ends_at) - at) / MINUTE).toBe(
+        m.id === "custom" ? 19 : m.minutes,
+      );
+    }
+    expect(planFor("custom", -5, 1000)).toMatchObject({
+      minutes: 1,
+      breakMinutes: 60,
+    });
+  });
+  it("tạm dừng qua tải lại, giữ thời gian, lưu ghi chú và chỉ cộng đúng số điểm", () => {
+    let p = demoReducer(
+      createDemoProgress(),
+      { type: "start", id: "a", plan: planFor("quick", 20, 2, "Đọc sách") },
+      at,
+    ).progress;
+    p = demoReducer(p, { type: "pause", id: "a" }, at + 2 * MINUTE).progress;
+    p = readDemoProgress({ getItem: () => JSON.stringify(p) });
+    expect(faceMs(p.focus_sessions[0], at + 12 * MINUTE)).toBe(3 * MINUTE);
+    expect(() =>
+      demoReducer(p, { type: "complete", id: "a" }, at + 12 * MINUTE),
+    ).toThrow();
+    p = demoReducer(p, { type: "resume", id: "a" }, at + 12 * MINUTE).progress;
+    p = demoReducer(
+      p,
+      { type: "note", id: "a", text: "Đã hiểu chương 2" },
+      at + 12 * MINUTE,
+    ).progress;
+    // Mở lại tab muộn hơn một giờ vẫn dùng giờ kết thúc thật.
+    p = demoReducer(
+      p,
+      { type: "complete", id: "a" },
+      at + 80 * MINUTE,
+    ).progress;
+    expect(p.profile.total_xp).toBe(12);
+    expect(elapsedMs(p.focus_sessions[0])).toBe(5 * MINUTE);
+    expect(p.focus_sessions[0]).toMatchObject({
+      note: "Đã hiểu chương 2",
+      completed_at: new Date(at + 15 * MINUTE).toISOString(),
+    });
+    expect(Date.parse(latestBreak(p.focus_sessions)!.break_ends_at!)).toBe(
+      at + 17 * MINUTE,
+    );
+    expect(
+      demoReducer(p, { type: "complete", id: "a" }, at + 90 * MINUTE).progress
+        .profile.total_xp,
+    ).toBe(12);
+    expect(
+      latestBreak(
+        demoReducer(p, { type: "endBreak", id: "a" }, at + 80 * MINUTE).progress
+          .focus_sessions,
+      ),
+    ).toBeUndefined();
+  });
+  it("bấm giờ lưu phần đã học khi kết thúc trong lúc tạm dừng, cộng thống kê theo ngày Việt Nam", () => {
+    let p = demoReducer(
+      createDemoProgress(),
+      { type: "start", id: "1", plan: planFor("stopwatch", 0, 0) },
+      at,
+    ).progress;
+    p = demoReducer(
+      p,
+      { type: "pause", id: "1" },
+      at + 8 * MINUTE + 10,
+    ).progress;
+    p = demoReducer(
+      p,
+      { type: "complete", id: "1" },
+      at + 15 * MINUTE,
+    ).progress;
+    expect(p.profile.total_xp).toBe(20);
+    expect(elapsedMs(p.focus_sessions[0])).toBe(8 * MINUTE + 10);
+    expect(studyWeek(p.focus_sessions, at + 15 * MINUTE)).toMatchObject({
+      total: 8,
+      streak: 1,
+    });
+    expect(latestBreak(p.focus_sessions)).toBeUndefined();
+  });
+});
