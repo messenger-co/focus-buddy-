@@ -25,6 +25,30 @@ const snowMat=mat(0xe1ecf0), snowLite=mat(0xf5f8f1), coldBlue=mat(0x9bb5c6),
 const boxGeo=new THREE.BoxGeometry(1,1,1);
 const shellGeo=new THREE.SphereGeometry(1,8,6);
 const cylinderGeo=new THREE.CylinderGeometry(1,1,1,8);
+// These small objects are shared for the lifetime of the lazy-loaded module.
+// Never dispose them when closing a single 3D game: later sessions reuse them.
+const sharedGeometries=new Set<THREE.BufferGeometry>([boxGeo,shellGeo,cylinderGeo]);
+const sharedMaterials=new Set<THREE.Material>([
+  snowMat,snowLite,coldBlue,treeMat,treeBright,trunkMat,roadMat,
+  buildingMat,warmLight,allyUniform,allyHelmet,
+]);
+/** Dispose each owned resource exactly once. Kept separate from WebGLRenderer
+ * so lifecycle behavior can be tested without a GPU.
+ */
+export function disposeOwnedResources(root:THREE.Object3D):void {
+  const geometries=new Set<THREE.BufferGeometry>();
+  const materials=new Set<THREE.Material>();
+  root.traverse(object=>{
+    if(!(object instanceof THREE.Mesh))return;
+    if(!sharedGeometries.has(object.geometry))geometries.add(object.geometry);
+    const assigned=Array.isArray(object.material)?object.material:[object.material];
+    for(const material of assigned){
+      if(!sharedMaterials.has(material))materials.add(material);
+    }
+  });
+  for(const geometry of geometries)geometry.dispose();
+  for(const material of materials)material.dispose();
+}
 function addBox(group:THREE.Object3D,x:number,y:number,z:number,w:number,h:number,d:number,
   material:THREE.Material,rotY=0) {
   const mesh=new THREE.Mesh(boxGeo,material);
@@ -144,11 +168,14 @@ function makeTerrain(scene:THREE.Scene) {
     stone.rotation.y=rnd(i*11)*6.2;
   }
 }
-function createFlagMaterial() {
+function createFlagMaterial():{
+  material:THREE.MeshBasicMaterial;
+  disposeTexture:()=>void;
+} {
   const canvas=document.createElement("canvas");
   canvas.width=128;canvas.height=76;
   const ctx=canvas.getContext("2d");
-  if(ctx) {
+  if(ctx){
     ctx.fillStyle="#fff";ctx.fillRect(0,0,128,76);
     for(let i=0;i<7;i++){
       ctx.fillStyle="#ba4454";ctx.fillRect(0,i*11,128,5);
@@ -157,15 +184,28 @@ function createFlagMaterial() {
   }
   const placeholder=new THREE.CanvasTexture(canvas);
   const material=new THREE.MeshBasicMaterial({map:placeholder,side:THREE.DoubleSide});
-  // Exact repo image, reused by all enemies, not copied into each tank.
-  new THREE.TextureLoader().load(
-    USA_TANK_FLAG_URL,
-    texture => { texture.colorSpace=THREE.SRGBColorSpace;material.map=texture;material.needsUpdate=true; },
-    undefined,
-    () => { /* Keep fallback flag if network is unavailable. */ },
-  );
-  return material;
+  let active=true;
+  let current:THREE.Texture=placeholder;
+  // A late image response must not touch material from a closed game.
+  new THREE.TextureLoader().load(USA_TANK_FLAG_URL,texture=>{
+    if(!active){texture.dispose();return;}
+    texture.colorSpace=THREE.SRGBColorSpace;
+    current.dispose();
+    current=texture;
+    material.map=texture;
+    material.needsUpdate=true;
+  },undefined,()=>{/* Keep local flag placeholder on network errors. */});
+  return {
+    material,
+    disposeTexture:()=>{
+      if(!active)return;
+      active=false;
+      current.dispose();
+      material.map=null;
+    },
+  };
 }
+
 function makeBallPool(scene:THREE.Scene,max:number,radius:number,color:number) {
   const material=new THREE.MeshBasicMaterial({color});
   const geometry=new THREE.SphereGeometry(radius,7,5);
@@ -175,13 +215,21 @@ function makeBallPool(scene:THREE.Scene,max:number,radius:number,color:number) {
   });
 }
 /** Creates and owns exactly one WebGL context. Throws to allow 2D fallback. */
-export function createTank3D(mount:HTMLElement):Tank3DRenderer {
+export function createTank3D(
+  mount:HTMLElement,
+  onUnavailable?:(reason:string)=>void,
+):Tank3DRenderer {
   const renderer=new THREE.WebGLRenderer({antialias:false,alpha:false,powerPreference:"low-power"});
+  let disposed=false;
+  let sceneForCleanup:THREE.Scene|null=null;
+  let releaseFlag=()=>{};
+  try {
   renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,1.35));
   renderer.outputColorSpace=THREE.SRGBColorSpace;
   renderer.setClearColor(0xa4bece);
   renderer.shadowMap.enabled=false;
   const scene=new THREE.Scene();
+  sceneForCleanup=scene;
   scene.background=new THREE.Color(0xaac2cf);
   scene.fog=new THREE.FogExp2(0xaac2cf,.018);
   scene.add(new THREE.HemisphereLight(0xf7f9eb,0x5a7181,2.4));
@@ -191,10 +239,13 @@ export function createTank3D(mount:HTMLElement):Tank3DRenderer {
   const camera=new THREE.PerspectiveCamera(52,5/3,.1,150);
   camera.position.set(0,25,27);
   camera.lookAt(0,0,0);
-  const flagMaterial=createFlagMaterial();
+  const flag=createFlagMaterial();
+  const flagMaterial=flag.material;
+  releaseFlag=flag.disposeTexture;
   const player=makeTank(true,flagMaterial);
   scene.add(player.root);
   const enemies=new Map<number,TankVisual>();
+  const spareEnemies:TankVisual[]=[];
   const allies=new Map<number,THREE.Group>();
   const playerShots=makeBallPool(scene,26,.13,0xffe2a6);
   const allyShots=makeBallPool(scene,32,.13,0xc7fff0);
@@ -207,6 +258,11 @@ export function createTank3D(mount:HTMLElement):Tank3DRenderer {
     m.rotation.x=Math.PI/2;m.visible=false;scene.add(m);return m;
   });
   mount.appendChild(renderer.domElement);
+  const onContextLost=(event:Event)=>{
+    event.preventDefault();
+    if(!disposed)onUnavailable?.("Kết nối đồ họa 3D bị gián đoạn. Đã chuyển sang chế độ 2D.");
+  };
+  renderer.domElement.addEventListener("webglcontextlost",onContextLost);
   renderer.domElement.className="tank-webgl-canvas";
   renderer.domElement.setAttribute("aria-hidden","true");
   function resize(width:number,height:number){
@@ -223,6 +279,7 @@ export function createTank3D(mount:HTMLElement):Tank3DRenderer {
     }
   }
   function draw(state:TankState,input:TankInput,time:number){
+    if(disposed)return;
     player.root.position.set(gx(state.player.x),0,gz(state.player.y));
     const angle=Math.atan2(
       (input.aimX-state.player.x)/34,
@@ -233,13 +290,17 @@ export function createTank3D(mount:HTMLElement):Tank3DRenderer {
     player.root.visible=state.player.invulnerable<=0||Math.sin(time*24)>.25;
     const present=new Set(state.troops.map(t=>t.id));
     for(const [id,visual] of enemies) if(!present.has(id)){
-      scene.remove(visual.root);enemies.delete(id);
+      visual.root.visible=false;
+      spareEnemies.push(visual);
+      enemies.delete(id);
     }
     for(const enemy of state.troops){
       let visual=enemies.get(enemy.id);
       if(!visual){
-        visual=makeTank(false,flagMaterial);
-        scene.add(visual.root);enemies.set(enemy.id,visual);
+        visual=spareEnemies.pop()||makeTank(false,flagMaterial);
+        if(!visual.root.parent)scene.add(visual.root);
+        visual.root.visible=true;
+        enemies.set(enemy.id,visual);
       }
       const scale=enemy.type==="armored"?1.2:enemy.type==="scout"?.78:.95;
       visual.root.scale.setScalar(scale);
@@ -248,6 +309,7 @@ export function createTank3D(mount:HTMLElement):Tank3DRenderer {
     }
     const activeAllies=new Set(state.allies.map(ally=>ally.id));
     for(const [id,unit] of allies) if(!activeAllies.has(id)) {
+      disposeOwnedResources(unit);
       scene.remove(unit);allies.delete(id);
     }
     for(const ally of state.allies){
@@ -284,20 +346,26 @@ export function createTank3D(mount:HTMLElement):Tank3DRenderer {
     return {x:point.x*34+TANK_WIDTH/2,y:point.z*27+TANK_HEIGHT/2};
   }
   function dispose(){
+    if(disposed)return;
+    disposed=true;
+    renderer.domElement.removeEventListener("webglcontextlost",onContextLost);
+    releaseFlag();
+    disposeOwnedResources(scene);
+    enemies.clear();
+    spareEnemies.length=0;
+    allies.clear();
     renderer.dispose();
-    // Shared geometries/materials from scene and unique meshes released.
-    const geometries=new Set<THREE.BufferGeometry>();
-    const materials=new Set<THREE.Material>();
-    scene.traverse(object=>{
-      if(!(object instanceof THREE.Mesh))return;
-      geometries.add(object.geometry);
-      const assigned=Array.isArray(object.material)?object.material:[object.material];
-      assigned.forEach(material=>materials.add(material));
-    });
-    geometries.forEach(geometry=>geometry.dispose());
-    materials.forEach(material=>material.dispose());
-    flagMaterial.map?.dispose();
+    renderer.forceContextLoss();
     renderer.domElement.remove();
   }
   return {draw,resize,pick,dispose};
+  } catch(reason){
+    // An error after context allocation must not leak its partially built scene.
+    releaseFlag();
+    if(sceneForCleanup)disposeOwnedResources(sceneForCleanup);
+    renderer.dispose();
+    renderer.forceContextLoss();
+    renderer.domElement.remove();
+    throw reason;
+  }
 }
