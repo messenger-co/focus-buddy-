@@ -49,6 +49,7 @@ export default function TankDefense({ onExit }: { onExit:()=>void }) {
   const [view,setView]=useState<View>(()=>snapshot(state.current));
   const [effects,setEffects]=useState(true);
   const [renderMode,setRenderMode]=useState<"3d"|"2d">("3d");
+  const [rendererError,setRendererError]=useState("");
   const previousUpdate=useRef(0);
   const renderedPhase=useRef<TankPhase>("ready");
 
@@ -154,24 +155,38 @@ export default function TankDefense({ onExit }: { onExit:()=>void }) {
     let active=true,raf=0,last=0,lastFrame=0;
     try {
       if(renderMode==="3d"){
-        visual=createTank3D(mount);
+        visual=createTank3D(mount,(reason)=>{
+          if(!active)return;
+          setRendererError(reason);
+          setRenderMode("2d");
+        });
         visual3d.current=visual;
+        setRendererError("");
       } else {
         visual3d.current=null;
         drawing=surface.getContext("2d",{alpha:false});
       }
-    } catch {
+    } catch(reason){
       visual3d.current=null;
-      setRenderMode("2d");
+      setRendererError(reason instanceof Error
+        ? "Không khởi tạo được đồ họa 3D: "+reason.message+". Đã chuyển sang 2D."
+        : "Đồ họa 3D không khả dụng. Đã chuyển sang chế độ 2D.");
+      if(renderMode==="3d")setRenderMode("2d");
       return;
     }
     const scene=visual;
     const ctx=drawing;
-    if(!scene && !ctx)return;
+    if(!scene && !ctx){
+      setRendererError("Trình duyệt không hỗ trợ vẽ 2D hoặc 3D trên thiết bị này.");
+      return;
+    }
     const resize=()=>{
       const bounds=surface.getBoundingClientRect();
       const width=Math.max(320,bounds.width),height=Math.max(180,bounds.height);
-      if(scene)scene.resize(width,height);
+      try{if(scene)scene.resize(width,height);}catch(reason){
+        setRendererError(reason instanceof Error?reason.message:"Không thể thay đổi kích thước đồ họa.");
+        setRenderMode("2d");
+      }
       if(ctx){
         const dpr=Math.min(window.devicePixelRatio||1,1.4);
         const w=Math.floor(width*dpr),h=Math.floor(height*dpr);
@@ -206,10 +221,22 @@ export default function TankDefense({ onExit }: { onExit:()=>void }) {
         input.aimX=best.x;input.aimY=best.y;
       }
       stepTank(game,input,dt);
-      if(scene)scene.draw(game,input,time/1000);
-      else if(ctx){
-        ctx.setTransform(surface.width/TANK_WIDTH,0,0,surface.height/TANK_HEIGHT,0,0);
-        drawTankGame(ctx,game,input,time/1000,effects,enemyFlag.current);
+      try{
+        if(scene)scene.draw(game,input,time/1000);
+        else if(ctx){
+          ctx.setTransform(surface.width/TANK_WIDTH,0,0,surface.height/TANK_HEIGHT,0,0);
+          drawTankGame(ctx,game,input,time/1000,effects,enemyFlag.current);
+        }
+      }catch(reason){
+        if(scene){
+          setRendererError(reason instanceof Error
+            ?"Đồ họa 3D tạm ngừng: "+reason.message+". Đã chuyển sang 2D."
+            :"Đồ họa 3D tạm ngừng. Đã chuyển sang 2D.");
+          setRenderMode("2d");
+        }else{
+          setRendererError("Trình vẽ 2D gặp lỗi. Hãy thử tải lại trang.");
+        }
+        return;
       }
       if(time-previousUpdate.current>125||game.phase!==renderedPhase.current){
         renderedPhase.current=game.phase;
@@ -227,9 +254,15 @@ export default function TankDefense({ onExit }: { onExit:()=>void }) {
 
   function pointerAim(event:PointerEvent<HTMLCanvasElement>){
     const rect=event.currentTarget.getBoundingClientRect();
-    const u=(event.clientX-rect.left)/rect.width;
-    const v=(event.clientY-rect.top)/rect.height;
-    aim.current=visual3d.current?.pick(u,v) || {x:u*TANK_WIDTH,y:v*TANK_HEIGHT};
+    const u=(event.clientX-rect.left)/Math.max(1,rect.width);
+    const v=(event.clientY-rect.top)/Math.max(1,rect.height);
+    try{
+      aim.current=visual3d.current?.pick(u,v) || {
+        x:u*TANK_WIDTH,y:v*TANK_HEIGHT,
+      };
+    }catch{
+      aim.current={x:u*TANK_WIDTH,y:v*TANK_HEIGHT};
+    }
     aimedByPointer.current=true;
   }
   function pressDirection(direction:Direction){
@@ -254,7 +287,10 @@ export default function TankDefense({ onExit }: { onExit:()=>void }) {
           <p>True 3D winter battlefield · Easier waves · Missile support · Allied soldier cards</p>
         </div>
         <div className="tank-header-buttons">
-          <button type="button" onClick={()=>setRenderMode(mode=>mode==="3d"?"2d":"3d")}
+          <button type="button" onClick={()=>{
+            setRendererError("");
+            setRenderMode(mode=>mode==="3d"?"2d":"3d");
+          }}
             aria-label="Toggle 3D and 2D rendering"><Box size={16}/>
             {renderMode==="3d"?"3D ON · SWITCH 2D":"2D FALLBACK · TRY 3D"}
           </button>
@@ -269,6 +305,17 @@ export default function TankDefense({ onExit }: { onExit:()=>void }) {
           </button>
         </div>
       </div>
+      {rendererError&&(
+        <div className="tank-renderer-notice" role="status">
+          <span>{rendererError}</span>
+          {renderMode==="2d"&&(
+            <button type="button" onClick={()=>{
+              setRendererError("");
+              setRenderMode("3d");
+            }}>Thử lại 3D</button>
+          )}
+        </div>
+      )}
       <div className="tank-board">
         <div ref={webglMount} className="tank-3d-mount" aria-hidden="true"/>
         <canvas ref={canvas}
