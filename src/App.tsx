@@ -716,9 +716,9 @@ function App() {
                   element={
                     <div className="empty-state">
                       <Sprout size={40} />
-                      <h1>Về góc học tập của bạn nhé</h1>
+                      <h1>Hình như bạn đã rẽ sang trang khác</h1>
                       <p>
-                        Trang này chưa có. Những điều thú vị vẫn đang chờ bạn ở
+                        Đường dẫn này chưa có nội dung. Góc học tập của bạn vẫn sẵn sàng ở
                         trang chính.
                       </p>
                       <NavLink className="button primary" to="/">
@@ -851,9 +851,9 @@ function Dashboard({
   return (
     <>
       <PageTitle
-        eyebrow="MỘT NGÀY MỚI, MỘT KHỞI ĐẦU NHỎ"
+        eyebrow="MỖI NGÀY MỘT CHÚT TIẾN BỘ"
         title={`${inEnglish ? "Hello" : "Chào"} ${buddy.progress.profile.display_name},`}
-        description="Hôm nay, mình cùng tiến bộ một chút nhé."
+        description="Một góc học tập dành riêng cho bạn. Chọn điều muốn làm, rồi bắt đầu theo nhịp của mình."
       >
         <div className="date-chip">
           <Sun size={17} />
@@ -868,7 +868,7 @@ function Dashboard({
       <div className="stats-row">
         <Stat
           icon={<Flame size={21} />}
-          label="Ngày đã điểm danh"
+          label="Ngày học tích lũy"
           value={number(
             buddy.progress.counts?.checkin ?? buddy.progress.check_ins.length,
           )}
@@ -877,14 +877,14 @@ function Dashboard({
         />
         <Stat
           icon={<Clock3 size={21} />}
-          label="Thời gian đã tập trung"
+          label="Phút tập trung"
           value={number(minutes)}
           unit="phút"
           color="mint"
         />
         <Stat
           icon={<Sparkles size={21} />}
-          label="Điểm kinh nghiệm"
+          label="Điểm trải nghiệm"
           value={number(buddy.progress.profile.total_xp)}
           unit="điểm"
           color="lavender"
@@ -988,7 +988,7 @@ function Dashboard({
             <div className="section-heading">
               <div>
                 <span className="section-kicker">TỪNG BƯỚC NHỎ</span>
-                <h2>Nhiệm vụ khởi đầu</h2>
+                <h2>Những bước nhỏ hôm nay</h2>
               </div>
               <NavLink className="text-link" to="/nhiem-vu">
                 Xem tất cả <ArrowRight size={15} />
@@ -1000,7 +1000,7 @@ function Dashboard({
             <span className="quote-mark">“</span>
             <div>
               <span>MỘT LỜI NHẮN NHỎ</span>
-              <p>Chậm cũng được, miễn là bạn vẫn bước tiếp.</p>
+              <p>Một chút tiến bộ hôm nay cũng là điều đáng tự hào.</p>
             </div>
             <Flower2 size={32} strokeWidth={1.2} />
           </section>
@@ -1008,7 +1008,7 @@ function Dashboard({
         <div className="dashboard-side">
           <section className="card friend-card">
             <div className="section-heading">
-              <h2>Bạn nhỏ của bạn</h2>
+              <h2>Buddy luôn ở đây</h2>
               <NavLink
                 to="/ban-dong-hanh"
                 className="icon-button"
@@ -1196,13 +1196,13 @@ function MissionsPage({ buddy }: { buddy: Buddy; busy: boolean }) {
   return (
     <>
       <PageTitle
-        eyebrow="HỌC MỘT ĐIỀU MỚI"
-        title="Những nhiệm vụ nhỏ, niềm vui lớn"
-        description="Khám phá theo nhịp của bạn. Mỗi lần thử đều là một cơ hội để học."
+        eyebrow="HỌC QUA NHỮNG LẦN THỬ"
+        title="Chọn thử thách, khám phá điều mới"
+        description="Mỗi nhiệm vụ giúp bạn rèn thêm một kỹ năng. Cứ thử sức, không cần vội."
       />
       <section className="card">
         <div className="section-heading">
-          <h2>Mục tiêu đầu tiên</h2>
+          <h2>Bắt đầu từ một việc nhỏ</h2>
           <Target size={20} />
         </div>
         <MissionRows buddy={buddy} />
@@ -1210,9 +1210,9 @@ function MissionsPage({ buddy }: { buddy: Buddy; busy: boolean }) {
       <div className="section-heading standalone">
         <div>
           <span className="section-kicker">VỪA HỌC, VỪA KHÁM PHÁ</span>
-          <h2>Thử thách dành cho bạn</h2>
+          <h2>Khám phá qua bài tập</h2>
         </div>
-        <span className="muted">3 bài tập ngắn</span>
+        <span className="muted">3 bài tập · chọn theo sở thích</span>
       </div>
       <div className="exercise-grid">
         {EXERCISES.map((ex, i) => (
