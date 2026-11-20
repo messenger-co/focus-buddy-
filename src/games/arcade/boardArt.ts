@@ -128,8 +128,10 @@ export function paintBoard(
   still: boolean,
   poster = false,
 ) {
-  const { w, h } = view,
-    river = b.mode === "river",
+  const { w, h } = view;
+  // ResizeObserver có thể báo kích thước bằng 0 khi chuyển trang hoặc xoay máy.
+  if (w <= 12 || h <= 12) return;
+  const river = b.mode === "river",
     level = boards[b.mode].indexOf(b),
     t = still ? 0 : r.time;
   const dusk = river && level >= 3,

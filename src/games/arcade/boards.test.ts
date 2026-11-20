@@ -1,4 +1,5 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
+import { paintBoard } from "./boardArt";
 import {
   boards,
   bitCount,
@@ -86,4 +87,17 @@ describe("Hai chuyến đi mới", () => {
     tickBoard(b, r, 0.1);
     expect(r).toMatchObject({ x: 3, y: 3, mask: 1, falls: 1 });
   });
+});
+
+it("chờ khung đủ rộng để vẽ lại khi đổi trang hoặc xoay màn hình", () => {
+  const board = boards.river[0];
+  const canvas = document.createElement("canvas");
+  const sprite = document.createElement("div");
+  const setTransform = vi.fn();
+  const brush = { setTransform } as unknown as CanvasRenderingContext2D;
+  for (const view of [{ w: 1, h: 1 }, { w: 10, h: 320 }, { w: 390, h: 12 }]) {
+    paintBoard(canvas, brush, sprite, view, board, startBoard(board), true);
+    paintBoard(canvas, brush, sprite, view, board, startBoard(board), true, true);
+  }
+  expect(setTransform).not.toHaveBeenCalled();
 });
