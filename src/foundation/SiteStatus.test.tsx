@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import SiteStatus from "./SiteStatus";
 
 const originalWorker=Object.getOwnPropertyDescriptor(navigator,"serviceWorker");
@@ -36,7 +36,7 @@ describe("service-worker update and offline status",()=>{
     await waitFor(()=>expect(container.getRegistration).toHaveBeenCalledTimes(1));
     expect(screen.queryByText(/Focus Buddy có bản mới/)).toBeNull();
     container.controller={id:"new"};
-    fireEvent(container,new Event("controllerchange"));
+    act(()=>{container.dispatchEvent(new Event("controllerchange"));});
     await waitFor(()=>expect(screen.getByText(/Focus Buddy có bản mới/)).toBeTruthy());
     expect(screen.getByRole("button",{name:"Tải phiên bản mới"})).toBeTruthy();
     fireEvent.click(screen.getByRole("button",{name:"Để cập nhật sau"}));
@@ -48,9 +48,9 @@ describe("service-worker update and offline status",()=>{
     await waitFor(()=>expect(registration).toBeTruthy());
     const next=Object.assign(new EventTarget(),{state:"installing"});
     registration.installing=next;
-    fireEvent(registration,new Event("updatefound"));
+    act(()=>{registration.dispatchEvent(new Event("updatefound"));});
     next.state="installed";
-    fireEvent(next,new Event("statechange"));
+    act(()=>{next.dispatchEvent(new Event("statechange"));});
     await waitFor(()=>expect(screen.getByText(/Focus Buddy có bản mới/)).toBeTruthy());
   });
   it("shows the offline notice without reloading or requiring a service worker",()=>{
