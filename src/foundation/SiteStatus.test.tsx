@@ -54,7 +54,7 @@ describe("service-worker update and offline status",()=>{
     await waitFor(()=>expect(screen.getByText(/Focus Buddy có bản mới/)).toBeTruthy());
   });
   it("shows the offline notice without reloading or requiring a service worker",()=>{
-    Object.defineProperty(navigator,"serviceWorker",{configurable:true,value:undefined});
+    Reflect.deleteProperty(navigator,"serviceWorker");
     render(<SiteStatus/>);
     fireEvent(window,new Event("offline"));
     expect(screen.getByText(/Thiết bị đang ngoại tuyến/)).toBeTruthy();
