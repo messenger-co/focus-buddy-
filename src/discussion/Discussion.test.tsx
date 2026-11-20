@@ -110,7 +110,7 @@ describe("discussion room entry", () => {
     )).mockResolvedValue(disabled);
     render(<Discussion openAccount={vi.fn()} />);
     await waitFor(() => expect(screen.getByText(/Máy chủ chưa cài đặt đầy đủ/)).toBeTruthy());
-    fireEvent.click(screen.getByRole("button", { name: /Vào chủ đề/ }));
+    fireEvent.click(screen.getAllByRole("button", { name: /Vào chủ đề/ })[0]);
     expect(screen.getByRole("heading", { name: "Bàn tự học" })).toBeTruthy();
     fireEvent.click(screen.getByRole("button", { name: "Thử kết nối lại" }));
     await waitFor(() => expect(stubs.rpc).toHaveBeenCalledTimes(2));
