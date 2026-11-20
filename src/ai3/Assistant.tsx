@@ -343,7 +343,7 @@ export default function Assistant({
                   ? t("AI chưa sẵn sàng", "AI unavailable")
                   : t("Đang kiểm tra kết nối…", "Checking connection…")
                 : t(
-                    "Gợi ý học tập có sẵn · Không cần kết nối",
+                    "Ngoại tuyến · Câu trả lời được soạn sẵn, không phải AI trực tiếp",
                     "Ready-to-use study prompts · Works offline",
                   )}
           </p>
