@@ -207,16 +207,16 @@ function SelfStudyRoom({
           <p className="discussion-practice-tag">
             <BookOpen size={16} /> Tự học trên thiết bị · Chưa phải trò chuyện trực tuyến
           </p>
-          <h2>Hoạt động gợi ý</h2>
+          <h2>Thử sức với một ý tưởng nhỏ</h2>
           <p className="discussion-practice-exercise">{activity}</p>
-          <label htmlFor="room-practice-answer">Thử viết câu trả lời của bạn</label>
+          <label htmlFor="room-practice-answer">Ghi lại cách nghĩ của bạn</label>
           <textarea
             id="room-practice-answer"
             value={answer}
             onChange={(event) => setAnswer(event.target.value)}
             maxLength={1600}
             rows={5}
-            placeholder="Bạn có thể ghi ý tưởng, cách làm hoặc câu hỏi muốn hỏi khi phòng trực tuyến mở…"
+            placeholder="Bắt đầu bằng một điều bạn đã biết, một ý tưởng hoặc câu hỏi muốn tìm hiểu…"
           />
           <div className="discussion-practice-actions">
             <small>Nháp này chỉ ở trang hiện tại, không được đăng, gửi hay lưu vào máy chủ.</small>
@@ -236,7 +236,7 @@ function SelfStudyRoom({
               </>
             ) : !status.enabled ? (
               <>
-                <strong>Phòng thảo luận trực tuyến chưa mở</strong>
+                <strong>Chủ đề tự học đã sẵn sàng</strong>
                 <p>Quản trị viên cần triển khai, kiểm thử và bật dịch vụ có kiểm duyệt trên Supabase.
                   Bạn vẫn có thể dùng bài tự học tại đây.</p>
                 <button type="button" className="button secondary" onClick={refresh}>
@@ -257,7 +257,7 @@ function SelfStudyRoom({
               </>
             ) : (
               <>
-                <strong>Phòng trực tuyến đã sẵn sàng</strong>
+                <strong>Sẵn sàng trao đổi cùng mọi người</strong>
                 <p>Những tin nhắn bạn gửi sẽ chờ người điều hành duyệt.</p>
                 <button type="button" className="button primary" onClick={onGoLive}>
                   Vào phòng thảo luận trực tuyến <ArrowRight size={15} />
@@ -761,8 +761,8 @@ export default function Discussion({
       <header className="discussion-heading">
         <div>
           <Users size={23} />
-          <h1>Phòng thảo luận</h1>
-          <p>Chọn chủ đề để tự học, hoặc trao đổi trực tuyến khi phòng có người duyệt.</p>
+          <h1>Học cùng nhau, mỗi ngày một ý tưởng</h1>
+          <p>Chọn một chủ đề bạn quan tâm. Tự học theo gợi ý hoặc tham gia trò chuyện khi phòng trực tuyến đã mở.</p>
         </div>
         <div className="talk-emblem" aria-hidden="true">
           <BookOpen />
@@ -818,7 +818,7 @@ export default function Discussion({
             </div>
             <button type="button" className="topic-join"
               onClick={() => enterRoom(topic)}>
-              {roomEntryMode(status) === "live" ? "Vào phòng" : "Vào chủ đề"}{" "}
+              {roomEntryMode(status) === "live" ? "Vào phòng" : "Khám phá chủ đề"}{" "}
               <ArrowRight size={15} />
             </button>
             <small className="room-topic-status">
