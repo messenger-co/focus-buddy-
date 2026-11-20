@@ -23,12 +23,16 @@ try{
  create schema realtime;
  create function realtime.topic() returns text language sql stable as $$select nullif(current_setting('realtime.topic',true),'')$$;
  create table realtime.messages(topic text not null,extension text not null,payload jsonb);
+ create function realtime.send(p_payload jsonb,p_event text,p_topic text,p_private boolean) returns void language sql as $$
+   insert into realtime.messages(topic,extension,payload) values (p_topic,'broadcast',p_payload||jsonb_build_object('_test_event',p_event,'_test_private',p_private))
+ $$;
  alter table realtime.messages enable row level security;
  grant usage on schema realtime to authenticated,anon;
  grant select,insert,update,delete on realtime.messages to authenticated,anon;
  create policy another_app on realtime.messages for all to authenticated,anon using(true) with check(true);`);
  await db.exec(await readFile(new URL("../migrations/202611190001_moderated_rooms.sql",import.meta.url),"utf8"));
  await db.exec(await readFile(new URL("../migrations/202611200001_private_room_channels.sql",import.meta.url),"utf8"));
+ await db.exec(await readFile(new URL("../migrations/202611200002_room_revisions.sql",import.meta.url),"utf8"));
  await q("insert into realtime.messages(topic,extension) values ('focus-buddy-room:toan','broadcast'),('focus-buddy-room:tu-hoc','broadcast'),('focus-buddy-room:toan','presence'),('another-app','broadcast')");
  const revisions = ()=>q("select topic from realtime.messages where starts_with(topic,'focus-buddy-room:')");
  await q("select set_config('realtime.topic','focus-buddy-room:toan',false)");
@@ -88,5 +92,8 @@ try{
  await q("select buddy_community.prune()");eq(await one("select count(*)::int from buddy_community.messages"),0);
  await q("update buddy_community.settings set enabled=false");await as(bob);await deny("select public.fb_room_feed('toan')");eq((await q("select * from public.fb_room_updates")).rows.length,0);
  eq((await revisions()).rows,[]);
+ await root();
+ const signal=await one("select payload from realtime.messages where topic='focus-buddy-room:toan' and payload ? '_test_event' limit 1");
+ eq(signal._test_event,"revision");eq(signal._test_private,true);eq(Object.keys(signal).sort(),["_test_event","_test_private","revision"]);
  console.log(`Đạt ${checks} kiểm tra cộng đồng trên PostgreSQL cục bộ.`);
 }finally{await db.close();}

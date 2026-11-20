@@ -233,17 +233,10 @@ function StudyRoom({
         const client = supabase!;
         const c = client
           .channel("focus-buddy-room:" + room.id, { config: { private: true } })
-          .on(
-            "postgres_changes",
-            {
-              event: "UPDATE",
-              schema: "public",
-              table: "fb_room_updates",
-              filter: `room=eq.${room.id}`,
-            },
-            () => bump.current(),
-          )
-          .subscribe();
+          .on("broadcast", { event: "revision" }, () => bump.current())
+          .subscribe((status) => {
+            if (!canceled && status === "SUBSCRIBED") bump.current();
+          });
         const poll = window.setInterval(() => {
           if (!document.hidden) bump.current();
         }, 15000);

@@ -148,19 +148,12 @@ try {
   await call(reader.client, "fb_room_join", room);
 
   let revision = 0;
-  const channel = reader.client.channel(topic, options).on(
-    "postgres_changes",
-    {
-      event: "UPDATE",
-      schema: "public",
-      table: "fb_room_updates",
-      filter: "room=eq.toan",
-    },
-    ({ new: next }) => {
-      assert.deepEqual(Object.keys(next).sort(), ["revision", "room"]);
-      revision = next.revision;
-    },
-  );
+  const channel = reader.client
+    .channel(topic, options)
+    .on("broadcast", { event: "revision" }, ({ payload }) => {
+      assert.deepEqual(Object.keys(payload), ["revision"]);
+      revision = payload.revision;
+    });
   const joined = await subscribe(channel);
   assert.equal(joined.state, "SUBSCRIBED", joined.reason);
   const id = await call(author.client, "fb_room_send", {

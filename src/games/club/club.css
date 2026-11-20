@@ -5,22 +5,47 @@
   margin: 12px 0 28px;
 }
 .club-shelf a {
+  min-width: 0;
+  overflow: hidden;
   border: 1px solid var(--line);
   border-radius: 15px;
-  padding: 14px;
-  background: linear-gradient(145deg, var(--panel), var(--study-pale));
+  background: var(--panel);
   display: grid;
-  gap: 5px;
+  grid-template-rows: auto 1fr auto;
+  gap: 4px;
+  padding-bottom: 10px;
 }
-.club-shelf i,
+.club-shelf strong, .club-shelf small { margin-inline: 12px; }
+.club-shelf strong { margin-top: 4px; line-height: 1.4; }
+.club-shelf small { color: var(--quiet); }
+.club-postcard {
+  --card-color: #82b576;
+  --card-ink: #345839;
+  width: 100%;
+  height: clamp(60px, 7vw, 78px);
+  display: block;
+  color: var(--card-ink);
+  background-color: #e6efd9;
+  border-bottom: 1px solid color-mix(in srgb, var(--card-ink) 18%, transparent);
+}
+.club-postcard[data-tone="orange"] { --card-color: #e79465; --card-ink: #78452c; background-color: #fbe5c9; }
+.club-postcard[data-tone="blue"] { --card-color: #7daec8; --card-ink: #355776; background-color: #deeff8; }
+.club-postcard[data-tone="lavender"] { --card-color: #af94d1; --card-ink: #5c4776; background-color: #ebe3f3; }
+.club-postcard[data-tone="sea"] { --card-color: #75b6ad; --card-ink: #315e5b; background-color: #def0eb; }
+.club-postcard[data-tone="coral"] { --card-color: #e99796; --card-ink: #78464a; background-color: #f9e4de; }
+.app[data-palette="dark"] .club-postcard { filter: brightness(.85) saturate(.85); }
+@media (prefers-reduced-motion: no-preference) {
+  .app:is([data-motion="normal"], [data-motion="enhanced"]) .club-shelf a:is(:hover, :focus-visible) .card-actor {
+    animation: postcard-lift .65s ease-in-out;
+  }
+}
+@keyframes postcard-lift { 50% { translate: 0 -3px; } }
+@media (max-width: 480px) {
+  .club-shelf { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+}
 .club-start > span {
-  font:
-    34px Georgia,
-    serif;
+  font: 34px Georgia, serif;
   color: var(--highlight);
-}
-.club-shelf small {
-  color: var(--quiet);
 }
 .club-stage h1 {
   font-size: clamp(25px, 4vw, 40px);

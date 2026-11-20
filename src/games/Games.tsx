@@ -53,6 +53,7 @@ import { adventures } from "./arcade/courses";
 import { AdventureShelf } from "./arcade/Gallery";
 const Expedition = lazy(() => import("./arcade/Expedition"));
 import { clubGames } from "./club/catalog";
+import Postcard from "./club/Postcard";
 import "./club/club.css";
 const Club = lazy(() => import("./club/Club"));
 const Adventure = lazy(() => import("./arcade/Adventure"));
@@ -808,7 +809,7 @@ export default function Games({
               <div className="club-shelf">
                 {clubMatches.map((g) => (
                   <Link key={g.slug} to={`/tro-choi/${g.slug}`}>
-                    <i aria-hidden="true">{g.mark}</i>
+                    <Postcard game={g} />
                     <strong>{g.title}</strong>
                     <small>{g.group}</small>
                   </Link>
