@@ -9,7 +9,7 @@ export const MAX_BACKUP_ITEMS = 150;
 const MAX_VALUE_BYTES = 650_000;
 const CHAT_KEY = "focus-buddy-assistant-history-v1";
 const CHAT_PREFERENCE = "focus-buddy-assistant-history-enabled-v1";
-const SAFE_KEY = /^focus-buddy-[a-zA-Z0-9_:-]{1,115}$/;
+const SAFE_KEY = /^focus-buddy-[a-zA-Z0-9_:\-]{1,115}$/;
 const FORBIDDEN = /(^|[-_:])(auth|token|secret|password|credential|keychain|private|supabase|apikey|api_key|api-key|session-token)([-_:]|$)/i;
 
 export type LocalBackup = {
