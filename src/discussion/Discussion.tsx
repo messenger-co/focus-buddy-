@@ -20,6 +20,9 @@ import {
 } from "./catalog";
 import {
   rpc,
+  decodeCommunityStatus,
+  roomEntryMode,
+  type RoomEntryMode,
   type Room,
   type Status,
   type Profile,
@@ -167,6 +170,107 @@ function Moderation({ refresh }: { refresh: () => void }) {
   );
 }
 
+/** Available even while live chat is disabled; never pretends to post publicly. */
+function SelfStudyRoom({
+  room,
+  status,
+  connectionError,
+  refresh,
+  onExit,
+  openAccount,
+  onGoLive,
+}: {
+  room: Room;
+  status: Status;
+  connectionError: string;
+  refresh: () => void;
+  onExit: () => void;
+  openAccount: () => void;
+  onGoLive: () => void;
+}) {
+  const [answer, setAnswer] = useState("");
+  const activity = rooms.find((item) => item[0] === room.id)?.[3] ??
+    "Chọn một câu hỏi về chủ đề này, viết điều bạn đã biết và một bước có thể thử.";
+  return (
+    <section className="discussion-page">
+      <button type="button" className="room-back" onClick={onExit}>
+        <ArrowLeft size={16} /> Tất cả chủ đề
+      </button>
+      <div className="discussion-room discussion-practice">
+        <header className="discussion-room-head">
+          <div>
+            <h1>{room.name}</h1>
+            <p>{room.description}</p>
+          </div>
+        </header>
+        <div className="discussion-practice-content">
+          <p className="discussion-practice-tag">
+            <BookOpen size={16} /> Tự học trên thiết bị · Chưa phải trò chuyện trực tuyến
+          </p>
+          <h2>Hoạt động gợi ý</h2>
+          <p className="discussion-practice-exercise">{activity}</p>
+          <label htmlFor="room-practice-answer">Thử viết câu trả lời của bạn</label>
+          <textarea
+            id="room-practice-answer"
+            value={answer}
+            onChange={(event) => setAnswer(event.target.value)}
+            maxLength={1600}
+            rows={5}
+            placeholder="Bạn có thể ghi ý tưởng, cách làm hoặc câu hỏi muốn hỏi khi phòng trực tuyến mở…"
+          />
+          <div className="discussion-practice-actions">
+            <small>Nháp này chỉ ở trang hiện tại, không được đăng, gửi hay lưu vào máy chủ.</small>
+            <button type="button" className="button secondary"
+              disabled={!answer} onClick={() => setAnswer("")}>
+              Xóa nháp
+            </button>
+          </div>
+          <div className="discussion-access-info" role="status">
+            {connectionError ? (
+              <>
+                <strong>Chưa kết nối được phòng trực tuyến</strong>
+                <p>{connectionError}</p>
+                <button type="button" className="button secondary" onClick={refresh}>
+                  Thử kết nối lại
+                </button>
+              </>
+            ) : !status.enabled ? (
+              <>
+                <strong>Phòng thảo luận trực tuyến chưa mở</strong>
+                <p>Quản trị viên cần triển khai, kiểm thử và bật dịch vụ có kiểm duyệt trên Supabase.
+                  Bạn vẫn có thể dùng bài tự học tại đây.</p>
+                <button type="button" className="button secondary" onClick={refresh}>
+                  Kiểm tra trạng thái phòng
+                </button>
+              </>
+            ) : !status.verified ? (
+              <>
+                <strong>Cần xác minh email để thảo luận trực tuyến</strong>
+                <p>Để bảo vệ học sinh, bài đăng được duyệt trước khi hiển thị. Bạn có thể
+                  đăng nhập bằng email đã xác minh trong Cài đặt.</p>
+                <button type="button" className="button primary" onClick={openAccount}>
+                  Đăng nhập để thảo luận
+                </button>
+                <button type="button" className="button secondary" onClick={refresh}>
+                  Tôi đã xác minh · Kiểm tra lại
+                </button>
+              </>
+            ) : (
+              <>
+                <strong>Phòng trực tuyến đã sẵn sàng</strong>
+                <p>Những tin nhắn bạn gửi sẽ chờ người điều hành duyệt.</p>
+                <button type="button" className="button primary" onClick={onGoLive}>
+                  Vào phòng thảo luận trực tuyến <ArrowRight size={15} />
+                </button>
+              </>
+            )}
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
 function StudyRoom({
   room,
   status,
@@ -187,7 +291,8 @@ function StudyRoom({
   const [error, setError] = useState(""),
     [notice, setNotice] = useState(""),
     [busy, setBusy] = useState(false),
-    [ready, setReady] = useState(false);
+    [ready, setReady] = useState(false),
+    [joining, setJoining] = useState(true);
   const seq = useRef(0),
     live = useRef(false),
     busyRef = useRef(false),
@@ -223,12 +328,16 @@ function StudyRoom({
     let canceled = false;
     live.current = true;
     setReady(false);
+    setJoining(true);
+    setProfile(null);
+    setFeed({ online: 0, messages: [] });
     setError("");
     let stop: () => void = () => {};
     void rpc<Profile>("fb_room_join", { p_room: room.id })
       .then((p) => {
         if (canceled) return;
         setProfile(p);
+        setJoining(false);
         bump.current();
         const client = supabase!;
         const c = client
@@ -246,7 +355,10 @@ function StudyRoom({
         };
       })
       .catch((e) => {
-        if (!canceled) setError(messageOf(e));
+        if (!canceled) {
+          setJoining(false);
+          setError(messageOf(e));
+        }
       });
     return () => {
       canceled = true;
@@ -475,12 +587,16 @@ function StudyRoom({
           ))}
         </div>
         {!ready && (
-          <button
-            className="button secondary"
-            onClick={() => setAttempt((a) => a + 1)}
-          >
-            Kết nối lại
-          </button>
+          <div className="room-reconnect">
+            {joining ? (
+              <p role="status">Đang kiểm tra quyền và kết nối phòng…</p>
+            ) : (
+              <button type="button" className="button secondary"
+                onClick={() => setAttempt((a) => a + 1)}>
+                Kết nối lại
+              </button>
+            )}
+          </div>
         )}
         <form
           className="public-composer"
@@ -560,55 +676,93 @@ export default function Discussion({
 }: {
   openAccount: () => void;
 }) {
-  const [status, setStatus] = useState<Status>(closed),
-    [room, setRoom] = useState<Room | null>(null),
-    [preview, setPreview] = useState<string | null>(null);
+  const [status, setStatus] = useState<Status>(closed);
+  const [room, setRoom] = useState<Room | null>(null);
+  const [entryMode, setEntryMode] = useState<RoomEntryMode>("self-study");
+  const [refreshCount, setRefreshCount] = useState(0);
+  const [connection, setConnection] = useState<"loading" | "ready" | "error">("loading");
+  const [connectionError, setConnectionError] = useState("");
+
   useEffect(() => {
     let disposed = false;
     let call = 0;
     async function update() {
       const n = ++call;
       try {
-        const data = await rpc<Status>("fb_community_status");
-        if (!disposed && n === call) setStatus(data);
-      } catch {
-        if (!disposed && n === call) setStatus(closed);
+        const result = await rpc<unknown>("fb_community_status");
+        const next = decodeCommunityStatus(result);
+        if (!disposed && n === call) {
+          setStatus(next);
+          setConnection("ready");
+          setConnectionError("");
+        }
+      } catch (error) {
+        if (!disposed && n === call) {
+          setStatus(closed);
+          setConnection("error");
+          setConnectionError(messageOf(error));
+        }
       }
     }
+    setConnection("loading");
     void update();
-    const { data } =
-      supabase?.auth.onAuthStateChange((event) => {
-        if (event === "SIGNED_OUT" || event === "SIGNED_IN") {
-          setRoom(null);
-          setStatus(closed);
-          setTimeout(() => {
-            if (!disposed) void update();
-          }, 0);
-        }
-      }) ?? {};
+    const { data } = supabase?.auth.onAuthStateChange((event) => {
+      if (event === "SIGNED_OUT" || event === "SIGNED_IN") {
+        setRoom(null);
+        setStatus(closed);
+        setConnection("loading");
+        // Defer the RPC outside the auth callback to avoid auth-token lock contention.
+        window.setTimeout(() => {
+          if (!disposed) void update();
+        }, 0);
+      }
+    }) ?? {};
     return () => {
       disposed = true;
+      ++call;
       data?.subscription.unsubscribe();
     };
-  }, []);
-  if (room && status.enabled && status.verified)
+  }, [refreshCount]);
+
+  const refresh = () => setRefreshCount((count) => count + 1);
+  const availableRooms = status.rooms.length ? status.rooms : closed.rooms;
+  function enterRoom(topic: Room) {
+    setEntryMode(roomEntryMode(status));
+    setRoom(topic);
+  }
+
+  if (room) {
+    if (entryMode === "live" && status.enabled && status.verified) {
+      return (
+        <StudyRoom
+          key={room.id}
+          room={room}
+          status={status}
+          leave={() => setRoom(null)}
+        />
+      );
+    }
     return (
-      <StudyRoom
+      <SelfStudyRoom
         key={room.id}
         room={room}
         status={status}
-        leave={() => setRoom(null)}
+        connectionError={connection === "error" ? connectionError : ""}
+        refresh={refresh}
+        onExit={() => setRoom(null)}
+        openAccount={openAccount}
+        onGoLive={() => setEntryMode("live")}
       />
     );
+  }
+
   return (
     <div className="discussion-page">
       <header className="discussion-heading">
         <div>
           <Users size={23} />
           <h1>Phòng thảo luận</h1>
-          <p>
-            Chọn một chủ đề để tự học hoặc trao đổi trong phòng có người duyệt.
-          </p>
+          <p>Chọn chủ đề để tự học, hoặc trao đổi trực tuyến khi phòng có người duyệt.</p>
         </div>
         <div className="talk-emblem" aria-hidden="true">
           <BookOpen />
@@ -619,20 +773,31 @@ export default function Discussion({
         <Shield size={22} />
         <div>
           <strong>
-            {status.enabled ? "Nội quy phòng học" : "Góc học theo chủ đề"}
+            {connection === "loading" ? "Đang kiểm tra phòng học" :
+              connection === "error" ? "Chưa kết nối được phòng trực tuyến" :
+                status.enabled ? "Nội quy phòng học" : "Góc học theo chủ đề"}
           </strong>
           <p>
-            {!status.enabled
-              ? "Phòng đang ở chế độ tự học. Mỗi chủ đề có một hoạt động để bắt đầu."
-              : !status.verified
-                ? "Đăng nhập bằng email đã xác minh trong Cài đặt để gửi bài cho người điều hành."
-                : "Nội dung được người điều hành duyệt trước khi hiện cho bạn học."}{" "}
-            Giữ riêng họ tên thật, trường lớp, địa chỉ và thông tin liên hệ. Tôn
-            trọng người khác và dùng nút báo cáo khi cần.
+            {connection === "loading"
+              ? "Các chủ đề tự học vẫn mở được trong lúc kiểm tra kết nối."
+              : connection === "error"
+                ? connectionError
+                : !status.enabled
+                  ? "Phòng trực tuyến chưa được quản trị viên mở. Bạn vẫn có thể vào từng chủ đề để tự học."
+                  : !status.verified
+                    ? "Đăng nhập bằng email đã xác minh để gửi bài cho người điều hành."
+                    : "Nội dung được người điều hành duyệt trước khi hiện cho bạn học."}{" "}
+            Giữ riêng họ tên thật, trường lớp, địa chỉ và thông tin liên hệ.
+            Tôn trọng người khác và dùng nút báo cáo khi cần.
           </p>
+          {(connection === "error" || connection === "ready" && !status.enabled) && (
+            <button type="button" className="room-status-retry" onClick={refresh}>
+              Kiểm tra lại kết nối phòng
+            </button>
+          )}
         </div>
       </aside>
-      {status.enabled && !status.verified && (
+      {connection === "ready" && status.enabled && !status.verified && (
         <button
           type="button"
           className="button secondary room-sign-in"
@@ -642,7 +807,7 @@ export default function Discussion({
         </button>
       )}
       <div className="discussion-topics">
-        {status.rooms.map((topic) => (
+        {availableRooms.map((topic) => (
           <article key={topic.id} className="topic-card">
             <span className="topic-icon">
               <BookOpen size={23} />
@@ -651,34 +816,22 @@ export default function Discussion({
               <h2>{topic.name}</h2>
               <p>{topic.description}</p>
             </div>
-            {status.enabled && status.verified ? (
-              <button className="topic-join" onClick={() => setRoom(topic)}>
-                Vào phòng <ArrowRight size={15} />
-              </button>
-            ) : (
-              <button
-                className="topic-join"
-                aria-expanded={preview === topic.id}
-                onClick={() =>
-                  setPreview(preview === topic.id ? null : topic.id)
-                }
-              >
-                {preview === topic.id ? "Thu gọn" : "Mở bài tự học"}{" "}
-                <ArrowRight size={15} />
-              </button>
-            )}
-            {preview === topic.id && (
-              <p className="topic-exercise">
-                {rooms.find((x) => x[0] === topic.id)?.[3] ??
-                  "Chọn một câu hỏi muốn giải đáp và ghi lại những gì bạn đã biết."}
-              </p>
-            )}
+            <button type="button" className="topic-join"
+              onClick={() => enterRoom(topic)}>
+              {roomEntryMode(status) === "live" ? "Vào phòng" : "Vào chủ đề"}{" "}
+              <ArrowRight size={15} />
+            </button>
+            <small className="room-topic-status">
+              {roomEntryMode(status) === "live" ? "Thảo luận có kiểm duyệt" :
+                "Tự học trên thiết bị"}
+            </small>
           </article>
         ))}
       </div>
       <p className="room-policy">
-        <Flag size={16} /> Bài đăng được kiểm duyệt; phòng học chỉ hỗ trợ văn
-        bản và cảm xúc có sẵn.
+        <Flag size={16} /> Chỉ tài khoản email đã xác minh mới đăng bài lên
+        phòng trực tuyến đang mở; mọi bài đăng phải qua kiểm duyệt.
+        Chủ đề tự học không gửi dữ liệu lên mạng.
       </p>
     </div>
   );
