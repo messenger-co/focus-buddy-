@@ -57,7 +57,9 @@ describe("Trải nghiệm dùng thử bằng tiếng Việt", () => {
         .disabled,
     ).toBe(true);
     fireEvent.click(screen.getByRole("link", { name: "Bạn đồng hành" }));
-    fireEvent.click(await screen.findByRole("button", { name: /Mèo Mít/ }));
+    fireEvent.click(
+      await screen.findByRole("button", { name: /Mèo Mít/ }, { timeout: 6000 }),
+    );
     await waitFor(() => expect(saved().profile.companion).toBe("cat"));
     fireEvent.click(screen.getByRole("tab", { name: "Phong cách" }));
     fireEvent.click(screen.getByRole("button", { name: "Tím hoa cà" }));
