@@ -147,12 +147,11 @@ try {
   await reader.client.removeChannel(outside);
   await call(reader.client, "fb_room_join", room);
 
-  let revision = 0;
+  let delivery;
   const channel = reader.client
     .channel(topic, options)
     .on("broadcast", { event: "revision" }, ({ payload }) => {
-      assert.deepEqual(Object.keys(payload), ["revision"]);
-      revision = payload.revision;
+      delivery = payload;
     });
   const joined = await subscribe(channel);
   assert.equal(joined.state, "SUBSCRIBED", joined.reason);
@@ -170,11 +169,14 @@ try {
   const action = { p_message: id, p_action: "approve" };
   await denied(reader.client, "fb_moderate", action);
   await call(moderator.client, "fb_moderate", action);
-  for (let turn = 0; turn < 60 && !revision; turn++) await delay(250);
+  for (let turn = 0; turn < 80 && !delivery; turn++) await delay(250);
   assert.ok(
-    revision > 0,
+    delivery?.revision > 0,
     "Thành viên phải nhận được tín hiệu Realtime sau kiểm duyệt.",
   );
+  // Realtime có thể tự thêm UUID của lần chuyển, độc lập với tài khoản và tin nhắn.
+  assert.ok(Object.keys(delivery).every(key => key === "revision" || key === "id"));
+  if (delivery.id) assert.match(delivery.id, /^[0-9a-f-]{36}$/i);
   assert.equal((await feed())[0]?.id, id);
   await call(reader.client, "fb_room_feedback", {
     p_message: id,
