@@ -8,6 +8,7 @@ import "@fontsource/be-vietnam-pro/700.css";
 import "./styles.css";
 import "./delight.css";
 import "./study-themes.css";
+import "./typography-polish.css";
 import "./foundation/foundation.css";
 import Boundary from "./foundation/Boundary";
 import App from "./App";
