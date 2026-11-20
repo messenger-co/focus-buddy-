@@ -252,3 +252,29 @@
   .tank-recruit-card{transition:none!important}
   .tank-recruit-card.available:hover{transform:none!important}
 }
+
+
+/* Non-blocking renderer recovery; matches the existing winter arcade palette. */
+.tank-renderer-notice{
+  display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;
+  padding:12px 15px;margin:0;
+  color:#fff4d9;background:#5a4252;border:2px solid #edcc87;
+  border-bottom:0;font-size:12px;line-height:1.55;
+}
+.tank-renderer-notice span{flex:1;min-width:170px}
+.tank-renderer-notice button{
+  display:inline-flex;align-items:center;justify-content:center;
+  min-height:38px;padding:8px 12px;border:2px solid #fff1c3;
+  border-radius:10px;background:#ecd19c;color:#4c343e;
+  font-weight:900;font-size:11px;cursor:pointer;
+}
+.tank-renderer-notice button:focus-visible{
+  outline:3px solid #fff;outline-offset:3px;
+}
+@media(max-width:480px){
+  .tank-renderer-notice{font-size:11px;padding:11px}
+  .tank-renderer-notice button{width:100%}
+}
+@media(prefers-reduced-motion:reduce){
+  .tank-renderer-notice *{animation:none!important;transition:none!important}
+}
