@@ -268,7 +268,7 @@ export default function FocusPage({
           <p>
             {active?.goal ||
               rest?.goal ||
-              "Chọn một việc vừa sức và dành thời gian cho nó."}
+              "Chọn một mục tiêu nhỏ, bật đồng hồ và tận hưởng khoảng thời gian của riêng bạn."}
           </p>
         </div>
         <button
@@ -445,10 +445,10 @@ export default function FocusPage({
           </Suspense>
           <h2>
             {rest
-              ? "Giãn vai cùng mình nhé"
+              ? "Đến lúc nghỉ ngơi một chút rồi"
               : active
                 ? "Mình đang học cùng bạn"
-                : "Bàn học đã sẵn sàng"}
+                 : "Góc tập trung đang chờ bạn"}
           </h2>
           <p>
             {active && elapsedMs(active, now) >= 45 * MINUTE

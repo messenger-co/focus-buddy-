@@ -207,7 +207,7 @@ function SelfStudyRoom({
           <p className="discussion-practice-tag">
             <BookOpen size={16} /> Tự học trên thiết bị · Chưa phải trò chuyện trực tuyến
           </p>
-          <h2>Hoạt động gợi ý</h2>
+          <h2>Thử sức với một ý tưởng nhỏ</h2>
           <p className="discussion-practice-exercise">{activity}</p>
           <label htmlFor="room-practice-answer">Thử viết câu trả lời của bạn</label>
           <textarea
@@ -216,7 +216,7 @@ function SelfStudyRoom({
             onChange={(event) => setAnswer(event.target.value)}
             maxLength={1600}
             rows={5}
-            placeholder="Bạn có thể ghi ý tưởng, cách làm hoặc câu hỏi muốn hỏi khi phòng trực tuyến mở…"
+            placeholder="Bắt đầu bằng một điều bạn đã biết, một ý tưởng hoặc câu hỏi muốn tìm hiểu…"
           />
           <div className="discussion-practice-actions">
             <small>Nháp này chỉ ở trang hiện tại, không được đăng, gửi hay lưu vào máy chủ.</small>
@@ -257,7 +257,7 @@ function SelfStudyRoom({
               </>
             ) : (
               <>
-                <strong>Phòng trực tuyến đã sẵn sàng</strong>
+                <strong>Sẵn sàng trao đổi cùng mọi người</strong>
                 <p>Những tin nhắn bạn gửi sẽ chờ người điều hành duyệt.</p>
                 <button type="button" className="button primary" onClick={onGoLive}>
                   Vào phòng thảo luận trực tuyến <ArrowRight size={15} />
@@ -762,7 +762,7 @@ export default function Discussion({
         <div>
           <Users size={23} />
           <h1>Phòng thảo luận</h1>
-          <p>Chọn chủ đề để tự học, hoặc trao đổi trực tuyến khi phòng có người duyệt.</p>
+          <p>Chọn một chủ đề bạn quan tâm. Tự học theo gợi ý hoặc tham gia trò chuyện khi phòng trực tuyến đã mở.</p>
         </div>
         <div className="talk-emblem" aria-hidden="true">
           <BookOpen />

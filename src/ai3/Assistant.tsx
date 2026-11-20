@@ -343,8 +343,8 @@ export default function Assistant({
                   ? t("AI chưa sẵn sàng", "AI unavailable")
                   : t("Đang kiểm tra kết nối…", "Checking connection…")
                 : t(
-                    "Gợi ý ngoại tuyến · Câu trả lời được soạn sẵn",
-                    "Offline study examples · Prepared responses",
+                    "Ngoại tuyến · Câu trả lời được soạn sẵn, không phải AI trực tiếp",
+                    "Ready-to-use study prompts · Works offline",
                   )}
           </p>
         </div>
@@ -387,8 +387,8 @@ export default function Assistant({
                 ? readiness.message
                 : "The chat service is unavailable. You can use the offline examples."
               : t(
-                  "Mình đang kiểm tra dịch vụ trả lời.",
-                  "Checking the chat service.",
+                  "Đang kết nối với trợ lý AI. Bạn có thể chọn gợi ý học tập trong lúc này.",
+                  "Connecting to the AI assistant. Study prompts are available in the meantime.",
                 )}
           </p>
           {readiness && (
@@ -442,8 +442,8 @@ export default function Assistant({
             <BookOpen size={22} />
             <p>
               {t(
-                "Bạn muốn học gì cùng mình?",
-                "What would you like to work on?",
+                "Hôm nay mình cùng khám phá điều gì?",
+                "What shall we explore together today?",
               )}
             </p>
             <button
@@ -592,8 +592,8 @@ export default function Assistant({
         <small>
           {live
             ? t(
-                "Hãy đối chiếu những kiến thức quan trọng.",
-                "Double-check important facts.",
+                "Kiểm tra lại thông tin quan trọng trước khi sử dụng nhé.",
+                "Check important facts before relying on an answer.",
               )
             : t(
                 "Gợi ý mẫu hoạt động ngay trên thiết bị.",

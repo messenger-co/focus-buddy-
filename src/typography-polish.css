@@ -1,0 +1,192 @@
+/* Focus Buddy typography refresh: use the existing Be Vietnam Pro family.
+   Preserve per-theme colors, layouts and all functional/status controls. */
+:root {
+  --fb-type-body: clamp(13px, 0.82rem + 0.17vw, 15px);
+  --fb-type-caption: clamp(12px, 0.75rem + 0.1vw, 13px);
+  --fb-type-title: clamp(28px, 2.15vw + 14px, 39px);
+  --fb-type-section: clamp(17px, 0.98rem + 0.25vw, 21px);
+}
+.app {
+  font-family: "Be Vietnam Pro", sans-serif;
+  font-size: var(--fb-type-body);
+  font-feature-settings: "kern" 1;
+  text-rendering: optimizeLegibility;
+}
+.app :is(h1,h2,h3) {
+  font-family: inherit;
+  font-weight: 700;
+  text-wrap: balance;
+  letter-spacing: -0.035em;
+}
+.app :is(p,small,li,blockquote) {
+  overflow-wrap: break-word;
+}
+.app :is(p,blockquote) {
+  line-height: 1.72;
+  text-wrap: pretty;
+}
+.app .page-heading h1 {
+  font-size: var(--fb-type-title);
+  line-height: 1.22;
+  letter-spacing: -0.045em;
+  max-width: 25ch;
+}
+.app .page-heading p {
+  font-size: var(--fb-type-body);
+  line-height: 1.75;
+  max-width: 62ch;
+  margin-top: 11px;
+}
+.app .eyebrow,
+.app .section-kicker {
+  font-size: var(--fb-type-caption);
+  font-weight: 700;
+  letter-spacing: 0.075em;
+  line-height: 1.5;
+}
+.app .hero-copy h2 {
+  font-size: clamp(27px, 2.4vw + 11px, 37px);
+  line-height: 1.31;
+  letter-spacing: -0.045em;
+  font-weight: 700;
+  margin: 13px 0;
+  max-width: 18ch;
+}
+.app .hero-label,
+.app .hero-reward {
+  font-size: var(--fb-type-caption);
+  font-weight: 700;
+  letter-spacing: 0.025em;
+  line-height: 1.5;
+}
+.app .hero-copy p {
+  max-width: 42ch;
+  font-size: var(--fb-type-body);
+  line-height: 1.72;
+}
+.app .section-heading h2,
+.app .card > h2 {
+  font-size: var(--fb-type-section);
+  line-height: 1.4;
+  letter-spacing: -0.025em;
+  font-weight: 700;
+}
+.app .text-link {
+  font-size: var(--fb-type-caption);
+  font-weight: 650;
+  line-height: 1.5;
+  text-underline-offset: 3px;
+}
+.app .button,
+.app .hero-copy .button {
+  font-size: var(--fb-type-caption);
+  font-weight: 700;
+  line-height: 1.5;
+  min-height: 44px;
+  letter-spacing: -0.01em;
+}
+.app .button {
+  white-space: normal;
+  text-align: center;
+}
+.app .nav-item {
+  font-size: 13px;
+  font-weight: 650;
+  line-height: 1.55;
+}
+.app .sidebar-label,
+.app .brand small {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.095em;
+}
+.app :is(.mission-row strong,.exercise-card h3,.friend-card strong) {
+  font-weight: 700;
+}
+.app .mission-row > div > span,
+.app .friend-card > p,
+.app .mood-card > p,
+.app .exercise-card > p,
+.app .page-footer,
+.app .sidebar-profile small,
+.app .stat-label {
+  font-size: var(--fb-type-caption);
+  line-height: 1.65;
+}
+.app .stat-value {
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+.app .daily-thought p {
+  font-size: clamp(14px, 0.86rem + 0.22vw, 17px);
+  font-weight: 600;
+  line-height: 1.7;
+}
+.app :is(.ai-desk,.discussion-page,.focus3) :is(button,input,textarea,select) {
+  font-family: inherit;
+}
+.app .ai-desk :is(.ai-buddy-line p,.ai-history,.ai-notice,.ai-attachment-help,.ai-footer small) {
+  font-size: var(--fb-type-caption);
+  line-height: 1.6;
+}
+.app .ai-desk .ai-buddy-line strong {
+  font-size: clamp(16px, 1.05rem + 0.18vw, 19px);
+  font-weight: 700;
+  line-height: 1.4;
+}
+.app .discussion-page .discussion-heading h1,
+.app .focus3 .f3-heading h1 {
+  font-weight: 700;
+  line-height: 1.18;
+  letter-spacing: -0.04em;
+}
+.app .discussion-page :is(.discussion-heading p,.topic-card p,.discussion-practice-exercise,.discussion-access-info p) {
+  font-size: var(--fb-type-body);
+  line-height: 1.7;
+}
+.app .discussion-page :is(.topic-card h2,.discussion-practice-content h2) {
+  font-weight: 700;
+  letter-spacing: -0.03em;
+}
+.app .discussion-page :is(.topic-join,.room-status-retry,.room-sign-in,.discussion-practice-content > label) {
+  font-size: var(--fb-type-caption);
+  font-weight: 700;
+}
+.app .focus3 .f3-heading p {
+  max-width: 60ch;
+  line-height: 1.68;
+}
+.app .focus3 h2 {
+  font-weight: 700;
+}
+.app :is(input,textarea,select)::placeholder {
+  opacity: 1;
+}
+.app :is(button,a,input,textarea,select):focus-visible {
+  outline: 3px solid var(--study-accent, #557a61);
+  outline-offset: 3px;
+}
+@media (max-width: 700px) {
+  .app .page-heading h1 {
+    font-size: clamp(26px, 6.2vw, 34px);
+    max-width: unset;
+  }
+  .app .hero-copy h2 {
+    font-size: clamp(25px, 6vw, 32px);
+    max-width: 22ch;
+  }
+  .app .hero-copy p {
+    max-width: 48ch;
+  }
+  .app :is(.page-heading,.section-heading) {
+    row-gap: 11px;
+  }
+  .app .button {
+    min-height: 44px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .app :is(.button,.text-link,.nav-item) {
+    transition: none;
+  }
+}
