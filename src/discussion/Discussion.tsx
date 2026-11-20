@@ -209,7 +209,7 @@ function SelfStudyRoom({
           </p>
           <h2>Thử sức với một ý tưởng nhỏ</h2>
           <p className="discussion-practice-exercise">{activity}</p>
-          <label htmlFor="room-practice-answer">Ghi lại cách nghĩ của bạn</label>
+          <label htmlFor="room-practice-answer">Thử viết câu trả lời của bạn</label>
           <textarea
             id="room-practice-answer"
             value={answer}
@@ -236,7 +236,7 @@ function SelfStudyRoom({
               </>
             ) : !status.enabled ? (
               <>
-                <strong>Chủ đề tự học đã sẵn sàng</strong>
+                <strong>Phòng thảo luận trực tuyến chưa mở</strong>
                 <p>Quản trị viên cần triển khai, kiểm thử và bật dịch vụ có kiểm duyệt trên Supabase.
                   Bạn vẫn có thể dùng bài tự học tại đây.</p>
                 <button type="button" className="button secondary" onClick={refresh}>
@@ -761,7 +761,7 @@ export default function Discussion({
       <header className="discussion-heading">
         <div>
           <Users size={23} />
-          <h1>Học cùng nhau, mỗi ngày một ý tưởng</h1>
+          <h1>Phòng thảo luận</h1>
           <p>Chọn một chủ đề bạn quan tâm. Tự học theo gợi ý hoặc tham gia trò chuyện khi phòng trực tuyến đã mở.</p>
         </div>
         <div className="talk-emblem" aria-hidden="true">
@@ -818,7 +818,7 @@ export default function Discussion({
             </div>
             <button type="button" className="topic-join"
               onClick={() => enterRoom(topic)}>
-              {roomEntryMode(status) === "live" ? "Vào phòng" : "Khám phá chủ đề"}{" "}
+              {roomEntryMode(status) === "live" ? "Vào phòng" : "Vào chủ đề"}{" "}
               <ArrowRight size={15} />
             </button>
             <small className="room-topic-status">
