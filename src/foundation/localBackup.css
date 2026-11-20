@@ -1,0 +1,50 @@
+.local-backup{
+  display:grid;gap:13px;
+  padding-top:22px!important;margin-top:12px;
+  border-top:1px solid var(--line,#e7e6df);
+}
+.local-backup-heading{display:flex;gap:13px;align-items:flex-start}
+.local-backup-heading>div{min-width:0}
+.local-backup-heading h3{margin:3px 0 7px}
+.local-backup-heading p{font-size:12px;line-height:1.7}
+.local-backup-icon{
+  width:45px;height:45px;flex:none;display:grid;place-items:center;
+  color:#2b725e;background:#e7f4e8;border:1px solid #c5e1cd;
+  border-radius:14px;
+}
+.local-backup-privacy{
+  display:flex;align-items:flex-start;gap:9px;
+  padding:11px 12px;border:1px solid #bcdac8;border-radius:11px;
+  background:#edf7ef;color:#2c6854;font-size:11px;line-height:1.65;
+}
+.local-backup-privacy svg{flex:none;margin-top:1px}
+.local-backup-chat-toggle{
+  display:flex;align-items:center;gap:10px;cursor:pointer;
+  font-size:12px;font-weight:700;
+}
+.local-backup-chat-toggle input{accent-color:#428667;width:17px;height:17px}
+.local-backup-warning{
+  margin:0;font-size:11px;line-height:1.6;color:var(--ink-soft,#64736b);
+}
+.local-backup-actions{display:flex;flex-wrap:wrap;gap:9px}
+.local-backup-actions .button{display:inline-flex;align-items:center;gap:8px}
+.local-backup-file{position:absolute!important;width:1px!important;height:1px!important;
+  clip-path:inset(50%);opacity:0;pointer-events:none}
+.local-backup-preview{
+  display:flex;align-items:center;gap:10px;flex-wrap:wrap;
+  padding:13px;border:1px solid #cbdcbf;border-radius:12px;
+  background:linear-gradient(130deg,#f5fbef,#eef6ed);
+  color:#345c4b;
+}
+.local-backup-preview>svg{color:#42896b;flex:none}
+.local-backup-preview>div{display:grid;gap:5px;flex:1;min-width:155px}
+.local-backup-preview strong{font-size:12px}
+.local-backup-preview small{font-size:11px;line-height:1.5}
+.local-backup-preview .button{flex:none}
+[data-palette="dark"] .local-backup-privacy,
+[data-palette="dark"] .local-backup-preview{background:#263e3a;color:#d6f3e4;border-color:#537568}
+@media(max-width:550px){
+  .local-backup-heading{gap:10px}
+  .local-backup-preview .button{width:100%}
+  .local-backup-actions .button{flex:1;min-width:170px;justify-content:center}
+}
