@@ -404,3 +404,63 @@
   padding: 9px;
   border-left: 3px solid var(--study-accent);
 }
+
+
+/* Every topic is accessible for self-study; only verified members use live chat. */
+.room-topic-status{
+  display:block;margin-top:4px;
+  color:var(--study-ink,#45584a);font-weight:600;
+}
+.room-status-retry{
+  display:inline-flex;align-items:center;margin-top:10px;padding:7px 10px;
+  border-radius:9px;border:1px solid var(--study-line,#cedcd0);
+  background:var(--study-card,#fff);color:var(--study-accent,#487b65);
+  font-size:12px;font-weight:700;cursor:pointer;
+}
+.discussion-practice{max-width:860px}
+.discussion-practice-content{display:grid;gap:15px;padding:22px}
+.discussion-practice-tag{
+  display:inline-flex;align-items:center;gap:8px;justify-self:start;
+  color:#466e57;background:#e8f5e9;border:1px solid #b8d4c0;
+  border-radius:999px;padding:7px 12px;font-size:12px;font-weight:800;
+}
+.discussion-practice-content h2{font-size:19px;color:var(--study-ink,#3b5946)}
+.discussion-practice-exercise{
+  padding:16px;border-radius:13px;background:var(--study-pale,#f0f5ec);
+  border-left:4px solid var(--study-accent,#4e8b68);
+  font-size:14px;line-height:1.75;color:var(--study-ink,#395044);
+}
+.discussion-practice-content>label{
+  font-weight:700;font-size:13px;color:var(--study-ink,#395044);
+}
+.discussion-practice-content textarea{
+  display:block;width:100%;min-height:125px;resize:vertical;
+  border:1px solid var(--study-line,#cedbcb);border-radius:12px;
+  padding:12px 14px;background:var(--study-card,#fff);
+  color:var(--study-ink,#314437);font:inherit;font-size:13px;line-height:1.75;
+}
+.discussion-practice-actions{
+  display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap;
+}
+.discussion-practice-actions small{flex:1;min-width:190px;line-height:1.6}
+.discussion-access-info{
+  display:grid;gap:10px;
+  padding:18px;background:var(--study-pale,#f0f7ee);
+  border:1px solid var(--study-line,#c8dbcc);border-radius:14px;
+}
+.discussion-access-info strong{font-size:14px}
+.discussion-access-info p{font-size:12px;line-height:1.7}
+.discussion-access-info .button{justify-self:start;display:inline-flex;align-items:center;gap:8px}
+.room-reconnect{padding:11px 16px;color:var(--study-ink,#49614b)}
+.room-reconnect p{font-size:12px}
+.discussion-page :is(.topic-join,.room-back,.room-status-retry,.room-sign-in,.discussion-access-info button):focus-visible{
+  outline:3px solid var(--study-accent,#4d8b66);outline-offset:3px;
+}
+@media(max-width:690px){
+  .discussion-practice-content{padding:15px}
+  .discussion-practice-actions .button,.discussion-access-info .button{width:100%;justify-content:center}
+  .discussion-practice-tag{font-size:11px}
+}
+@media(prefers-reduced-motion:reduce){
+  .discussion-practice *, .discussion-topics *{animation:none!important;transition:none!important}
+}
