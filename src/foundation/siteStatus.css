@@ -1,5 +1,5 @@
 .site-status-banner{
-  position:fixed;z-index:8500;left:50%;bottom:21px;
+  position:fixed;z-index:70;left:50%;bottom:21px;
   transform:translateX(-50%);
   width:min(650px,calc(100% - 30px));
   display:flex;align-items:center;gap:11px;
