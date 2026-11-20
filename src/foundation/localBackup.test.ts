@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   BACKUP_FORMAT, BACKUP_VERSION, exportLocalBackup,
-  MAX_BACKUP_BYTES, parseLocalBackup, restoreLocalBackup,
+  MAX_BACKUP_BYTES, parseLocalBackup, restoreLocalBackup, backupOverwriteCount,
 } from "./localBackup";
 
 function memory(initial:Record<string,string>={}) {
@@ -74,6 +74,51 @@ describe("local-only Focus Buddy backup",()=>{
     expect(()=>parseLocalBackup(JSON.stringify(unsafe))).toThrow("không hợp lệ");
     const noValid={...unsafe,items:{"sb-project-auth-token":"secret"}};
     expect(()=>parseLocalBackup(JSON.stringify(noValid))).toThrow("Không có dữ liệu");
+  });
+  it("preserves actual slash-delimited game scores, creative rooms and the 3D study room",()=>{
+    const device=memory({
+      "focus-buddy-level-v1/hang-bang/2":'{"count":5,"seconds":29}',
+      "focus-buddy-arcade-v1/jump/grove":'{"count":1,"seconds":15}',
+      "focus-buddy-creative/xuong-ve":'[{"x":3,"y":4,"ink":"#487b65"}]',
+      "focus-buddy-creative/phong-nho":'["🪴"]',
+      "fb3-study-room":'{"wood":"walnut","lamp":true}',
+      "focus-buddy-unknown-fake":"not-app-data",
+      "focus-buddy-session-token":"never-export",
+    });
+    const backup=exportLocalBackup(device);
+    expect(Object.keys(backup.items)).toHaveLength(5);
+    expect(backup.items["focus-buddy-level-v1/hang-bang/2"]).toBeDefined();
+    expect(backup.items["fb3-study-room"]).toBeDefined();
+    expect(backup.items["focus-buddy-unknown-fake"]).toBeUndefined();
+    expect(backup.items["focus-buddy-session-token"]).toBeUndefined();
+    const preview=parseLocalBackup(JSON.stringify(backup));
+    expect(preview.categories).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({category:"games",count:4}),
+        expect.objectContaining({category:"world",count:1}),
+      ]),
+    );
+    const restored=memory();
+    expect(restoreLocalBackup(restored,preview.backup)).toBe(5);
+    expect(restored.getItem("fb3-study-room")).toBe(device.getItem("fb3-study-room"));
+    expect(restored.getItem("focus-buddy-level-v1/hang-bang/2")).toBe(device.getItem("focus-buddy-level-v1/hang-bang/2"));
+  });
+  it("accepts old version-one backups and ignores unknown or dangerous keys",()=>{
+    const legacy={
+      format:BACKUP_FORMAT,version:1,createdAt:"2026-11-20T00:00:00.000Z",
+      items:{
+        "focus-buddy-demo-v2":"old-version",
+        "focus-buddy-level-v1/dao-may/3":'{"count":1,"seconds":18}',
+        "focus-buddy-evil-storage":"ignored",
+        "__proto__":"ignored",
+        "sb-supabase-auth-token":"secret",
+      },
+    };
+    const preview=parseLocalBackup(JSON.stringify(legacy));
+    expect(preview.itemCount).toBe(2);
+    expect(preview.backup.items["focus-buddy-evil-storage"]).toBeUndefined();
+    const destination=memory({"focus-buddy-demo-v2":"current"});
+    expect(backupOverwriteCount(destination,preview.backup)).toBe(1);
   });
   it("rolls back when storage runs out of space mid-restore",()=>{
     const storage=memory({"focus-buddy-demo-v2":"old"});

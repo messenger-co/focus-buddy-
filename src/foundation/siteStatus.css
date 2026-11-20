@@ -33,3 +33,33 @@
 @media(prefers-reduced-motion:reduce){
   .site-status-banner{transition:none;animation:none}
 }
+
+.site-status-banner.warning{
+  background:#fff3e1f5;border-color:#e9c594;color:#73532d;
+}
+.site-status-refresh:focus-visible,
+.site-status-close:focus-visible{
+  outline:3px solid var(--study-accent,#487b65);
+  outline-offset:3px;
+}
+.site-status-banner .site-status-close{
+  background:transparent;border:1px solid transparent;
+}
+.site-status-banner .site-status-close:hover{
+  border-color:currentColor;background:#ffffff66;
+}
+@media(prefers-color-scheme:dark){
+  .site-status-banner.update{
+    color:#e4f3e5;background:#203e35f0;border-color:#5b9475;
+  }
+  .site-status-banner.offline,
+  .site-status-banner.warning{
+    color:#ffe7c0;background:#3e342bed;border-color:#ab895f;
+  }
+}
+@media(max-width:480px){
+  .site-status-refresh{
+    flex:1;min-width:145px;min-height:41px;
+  }
+  .site-status-close{margin-left:auto}
+}
