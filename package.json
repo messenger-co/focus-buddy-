@@ -12,7 +12,8 @@
     "preview": "vite preview --host 0.0.0.0",
     "test": "vitest run",
     "test:edge": "node --experimental-strip-types --test supabase/functions/tests/*.test.ts",
-    "test:community": "node supabase/tests/community-local.mjs"
+    "test:community": "node supabase/tests/community-local.mjs",
+    "test:community:network": "node supabase/tests/community-network.mjs"
   },
   "dependencies": {
     "@fontsource/be-vietnam-pro": "^5.2.6",

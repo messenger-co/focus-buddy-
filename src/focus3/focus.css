@@ -389,3 +389,13 @@
     transition: none;
   }
 }
+
+.f3-study-tool, .f3-friend .f3-sound, .f3-volume {
+  width: min(100%, 17rem);
+  text-align: start;
+}
+.f3-study-tool { margin-top: 12px; }
+.f3-sound .f3-field { flex: 1; }
+.f3-volume { margin-top: 12px; display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 3px 8px; font-size: 13px; font-weight: 600; }
+.f3-volume output { font-variant-numeric: tabular-nums; }
+.focus3 .f3-volume input[type="range"] { grid-column: 1/-1; padding: 0; border: 0; accent-color: var(--face); height: 28px; cursor: pointer; }

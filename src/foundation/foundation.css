@@ -475,3 +475,21 @@ html[data-palette="dark"] {
     margin-bottom: 16px;
   }
 }
+
+.app .drawer-close { display: none; }
+.app .sidebar { overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; }
+.session-return { display:inline-flex; align-items:center; gap:6px; height:34px; padding:0 10px; border-radius:10px; color:var(--study-ink); background:var(--study-pale); border:1px solid var(--study-line); font-size:13px; font-weight:650; font-variant-numeric:tabular-nums; text-decoration:none; }
+.room-sign-in { margin-bottom: 1rem; }
+.room-account input { min-width:0; width:100%; padding:10px 12px; border:1px solid var(--line); border-radius:10px; background:var(--raised); color:var(--text); font:inherit; }
+.room-account form p, .room-account form label { margin:0; }
+@media (max-width:760px) {
+  body:has(.sidebar-open) { overflow:hidden; }
+  .app .sidebar:not(.sidebar-open) { visibility:hidden; }
+  .app .sidebar-open { visibility:visible; z-index:44; padding-bottom:max(12px, env(safe-area-inset-bottom)); }
+  .app .sidebar-scrim { z-index:43; }
+  .app .drawer-close { display:grid; position:absolute; top:12px; right:8px; }
+  .app .sidebar .brand { margin-right:36px; }
+  .app .sidebar-bottom { padding-top:18px; }
+  .app .topbar-right:has(.session-return) .mode-tag { display:none; }
+}
+@media (max-height:780px) { .app .sidebar .gentle-note { display:none; } .app .sidebar-bottom { padding-top:16px; } }

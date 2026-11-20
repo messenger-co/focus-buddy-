@@ -1,6 +1,15 @@
 import { useEffect, useState } from "react";
 import { planFor, type FocusMode } from "./model";
-export type Soundscape = "off" | "rain" | "brook" | "waves";
+export const soundscapes = {
+  off: "Yên lặng",
+  rain: "Mưa hiên nhà",
+  brook: "Suối trong rừng",
+  waves: "Sóng biển",
+  fire: "Lửa tí tách",
+  chimes: "Chuông gió tre",
+  fan: "Quạt bàn",
+} as const;
+export type Soundscape = keyof typeof soundscapes;
 export interface FocusSettings {
   mode: FocusMode;
   custom: number;
@@ -12,6 +21,7 @@ export interface FocusSettings {
   weekGoal: number;
   look: "leaf" | "ocean" | "dusk";
   sound: Soundscape;
+  volume: number;
 }
 const key = "focus-buddy-focus-studio-v1";
 const defaults: FocusSettings = {
@@ -25,6 +35,7 @@ const defaults: FocusSettings = {
   weekGoal: 200,
   look: "leaf",
   sound: "off",
+  volume: 50,
 };
 function read(): FocusSettings {
   try {
@@ -61,11 +72,27 @@ function read(): FocusSettings {
       dayGoal: n(d.dayGoal, 1, 480, 40),
       weekGoal: n(d.weekGoal, 1, 3360, 200),
       look: ["leaf", "ocean", "dusk"].includes(d.look) ? d.look : "leaf",
-      sound: ["rain", "brook", "waves"].includes(d.sound) ? d.sound : "off",
+      sound:
+        typeof d.sound === "string" && Object.hasOwn(soundscapes, d.sound)
+          ? d.sound
+          : "off",
+      volume: n(d.volume, 0, 100, defaults.volume),
     };
   } catch {
     return defaults;
   }
+}
+export function selectedPlan(settings: FocusSettings) {
+  const task = settings.tasks.find(
+    (item) => item.id === settings.task && !item.done,
+  );
+  return planFor(
+    settings.mode,
+    settings.custom,
+    settings.breakMinutes,
+    settings.goal || task?.title || "",
+    task?.id ?? "",
+  );
 }
 export function useFocusSettings() {
   const [s, set] = useState(read);

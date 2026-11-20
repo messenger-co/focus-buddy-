@@ -1,6 +1,7 @@
 import { useState } from "react";
 import {
   Bookmark,
+  BookOpen,
   Check,
   Dices,
   LockKeyhole,
@@ -26,6 +27,7 @@ import {
   randomOutfit,
   removeOutfit,
   saveOutfit,
+  studyTools,
   textures,
   useWardrobe,
   type BaseLook,
@@ -38,6 +40,8 @@ type PanelProps = {
   busy: boolean;
   positioning: boolean;
   togglePosition: () => void;
+  previewStudy: boolean;
+  setPreviewStudy: (show: boolean) => void;
   restoreBase: (base: BaseLook) => Promise<boolean>;
 };
 export default function WardrobePanel({
@@ -47,11 +51,14 @@ export default function WardrobePanel({
   positioning,
   togglePosition,
   restoreBase,
+  previewStudy,
+  setPreviewStudy,
 }: PanelProps) {
   const { look, outfits } = useWardrobe();
   const [name, setName] = useState(""),
     [status, setStatus] = useState("");
   function choose(patch: Partial<Wardrobe>) {
+    if (patch.studyTool) setPreviewStudy(true);
     if (!dress(patch))
       setStatus(
         "Đang thử đồ trong phiên này. Trình duyệt chưa lưu được lựa chọn.",
@@ -91,9 +98,9 @@ export default function WardrobePanel({
         <p>Chọn một bộ rồi chỉnh từng lớp ngay trên bạn nhỏ.</p>
       </div>
       <div className="wardrobe-presets">
-        {Object.entries(presets).map(([label, p]) => (
+        {presets.map(({ label, look: p }) => (
           <button key={label} onClick={() => choose({ ...initialLook, ...p })}>
-            <i style={{ background: dyes[p.dye!][0] }} />
+            <i style={{ background: dyes[p.dye][0] }} />
             {label}
           </button>
         ))}
@@ -120,6 +127,7 @@ export default function WardrobePanel({
         </div>
       </div>
       <div className="wardrobe-fields">
+        {field("studyTool", "Dụng cụ khi học", studyTools)}
         {field("garment", "Kiểu trang phục", clothes)}
         {field("hat", "Mũ và đồ cài tóc", hats)}
         {field("bag", "Túi và ba lô", bags)}
@@ -148,6 +156,12 @@ export default function WardrobePanel({
         </div>
       </div>
       <div className="wardrobe-actions">
+        <button
+          aria-pressed={previewStudy}
+          onClick={() => setPreviewStudy(!previewStudy)}
+        >
+          <BookOpen size={15} /> Xem tư thế học
+        </button>
         <button aria-pressed={positioning} onClick={togglePosition}>
           <Move size={15} />
           Chỉnh vị trí phụ kiện

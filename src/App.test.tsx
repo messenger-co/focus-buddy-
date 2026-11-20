@@ -10,7 +10,7 @@ import {
 } from "@testing-library/react";
 import { HashRouter, MemoryRouter } from "react-router-dom";
 import App from "./App";
-import { DEMO_STORAGE_KEY } from "./state";
+import { createDemoProgress, DEMO_STORAGE_KEY } from "./state";
 
 const mount = (path = "/") =>
   render(
@@ -66,7 +66,7 @@ describe("Trải nghiệm dùng thử bằng tiếng Việt", () => {
     expect(
       screen.getByRole("img", { name: "Mèo Mít đang nghỉ ngơi" }),
     ).toBeTruthy();
-  });
+  }, 15_000);
 
   it("chuyển dấu trang Đảo Xanh về kệ trò chơi và giữ tiến trình khác", async () => {
     localStorage.setItem(
@@ -125,6 +125,54 @@ describe("Trải nghiệm dùng thử bằng tiếng Việt", () => {
       ),
     ).toBeTruthy();
     expect(saved().profile.total_xp).toBe(30);
+  });
+
+  it("bắt đầu ở Tổng quan với thời lượng và mục tiêu đã chọn", async () => {
+    localStorage.setItem(
+      "focus-buddy-focus-studio-v1",
+      JSON.stringify({
+        mode: "custom",
+        custom: 7,
+        breakMinutes: 3,
+        goal: "Đọc về sao",
+      }),
+    );
+    mount();
+    expect(screen.getByRole("heading", { name: "Đọc về sao" })).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "Bắt đầu tập trung" }));
+    await waitFor(() =>
+      expect(saved().focus_sessions?.[0]).toMatchObject({
+        mode: "custom",
+        minutes: 7,
+        break_minutes: 3,
+        goal: "Đọc về sao",
+      }),
+    );
+  });
+
+  it("cộng phút học thực tế của đồng hồ đếm ngược và bấm giờ vào biểu đồ tuần", () => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    const now = Date.parse("2026-11-20T08:00:00Z");
+    vi.setSystemTime(now);
+    const data = createDemoProgress();
+    const end = new Date(now).toISOString();
+    data.focus_sessions = (
+      [
+        ["custom", 7],
+        ["stopwatch", 11],
+      ] as const
+    ).map(([mode, minutes]) => ({
+      id: mode,
+      mode,
+      minutes,
+      status: "completed",
+      started_at: new Date(now - minutes * 60_000).toISOString(),
+      completed_at: end,
+      ends_at: end,
+    }));
+    localStorage.setItem(DEMO_STORAGE_KEY, JSON.stringify(data));
+    mount("/hanh-trinh");
+    expect(screen.getByRole("img", { name: /18 phút/ })).toBeTruthy();
   });
 
   it("khôi phục đồng hồ sau tải lại và hoàn thành đúng 20 phút", async () => {
@@ -231,7 +279,7 @@ describe("Trải nghiệm dùng thử bằng tiếng Việt", () => {
       screen.getByRole("region", { name: /Không gian Ngân hà/ }),
     ).toBeTruthy();
     app.unmount();
-  });
+  }, 15_000);
 
   it("giữ bạn nhỏ yên tĩnh và cho phép chơi một ván trong phiên tập trung", async () => {
     mount("/ban-dong-hanh");

@@ -2,11 +2,11 @@
 
 Học cùng một bạn nhỏ biết đọc sách, nhảy và ăn mừng khi bạn hoàn thành phiên tập trung. Mở [ứng dụng tiếng Việt](https://messenger-co.github.io/focus-buddy-/) trên máy tính hoặc điện thoại. Tiến trình, trang phục và kỷ lục trò chơi được lưu trong trình duyệt đang dùng.
 
-- **Đồng hồ** có chín chế độ, mục tiêu, ghi chú và giờ nghỉ. Khi tải lại trang, đồng hồ tính tiếp theo mốc thời gian đã lưu. Trong giờ nghỉ, bạn có thể chủ động mở trò chơi rồi quay lại học.
-- **Bạn đồng hành** có phòng thử đồ, các lớp phụ kiện, vị trí tùy chỉnh, bộ đồ lưu sẵn và phản ứng cục bộ. Trang **Giao diện** cho đổi chủ đề, màu nhấn, nền và mức chuyển động.
-- **Trò chơi** có thử thách nhảy đảo, lượn qua vòng, vượt suối, giải đố hang băng, nhảy theo nhạc, luyện gõ, săn kho báu và nhiều hoạt động khác. Các trò theo chặng lưu kỷ lục riêng. Phòng 3D có năm trò, camera xoay và chế độ bản đồ 2D.
+- **Đồng hồ** có phiên mặc định 20 phút và chín chế độ khác, gồm bấm giờ và hẹn giờ tự chọn. Trang Tổng quan dùng đúng chế độ và mục tiêu của bạn. Biểu đồ tuần cộng số phút đã học. Khi tải lại trang, đồng hồ tính tiếp theo mốc thời gian đã lưu. Bạn có thể chọn âm nền và chỉnh âm lượng ngay trong phiên. Trong giờ nghỉ, mở mục **Trò chơi đã ghim** để tìm lại trò của mình.
+- **Bạn đồng hành** có phòng thử đồ, các lớp phụ kiện, vị trí tùy chỉnh, bộ đồ lưu sẵn và phản ứng cục bộ. Ba bộ Nhà thực vật, Họa sĩ màu nước và Hoa tiêu nhí có dụng cụ riêng. Trong **Tủ đồ**, bật **Xem tư thế học** để thử. Bạn cũng có thể đổi dụng cụ ngay bên đồng hồ. Trang **Giao diện** cho đổi chủ đề, màu nhấn, nền và mức chuyển động.
+- **Trò chơi** có thử thách nhảy đảo, lượn qua vòng, vượt suối, giải đố hang băng, nhảy theo nhạc, luyện gõ, săn kho báu và nhiều hoạt động khác. Trong **[Đường ray đom đóm](https://messenger-co.github.io/focus-buddy-/#/tro-choi/duong-ray)**, xoay các mảnh ray để đưa tàu Buddy qua đủ đèn rồi về ga qua sáu chặng. Kệ trò chơi hỗ trợ tìm không dấu và lọc theo nhóm. Mở một trò và chọn **Ghim trò này** để lưu vào danh sách riêng trên thiết bị. Các trò theo chặng lưu kỷ lục riêng. Phòng 3D có năm trò, camera xoay và chế độ bản đồ 2D.
 - **Trợ lý** có 11 chế độ học, hỗ trợ trả lời bằng tiếng Việt hoặc tiếng Anh, dừng tạo câu trả lời và tùy chọn lưu lịch sử trên thiết bị. Groq chạy mô hình `openai/gpt-oss-120b` sau Supabase Edge Function. Phần điều hướng có tùy chọn tiếng Anh. Một số học liệu và trò chơi dùng tiếng Việt.
-- **Phòng học sinh** mở sẵn các đề tự học. Để tổ chức thảo luận trực tuyến, quản trị viên triển khai migration, phân công kiểm duyệt và mở dịch vụ theo hướng dẫn Supabase.
+- **Phòng học sinh** mở sẵn các đề tự học. Khi phòng mở, vào **Cài đặt & tài khoản** để nhận liên kết đăng nhập qua email. Bạn học chỉ thấy biệt danh. Để tổ chức thảo luận trực tuyến, quản trị viên triển khai migration, phân công kiểm duyệt và mở dịch vụ theo hướng dẫn Supabase.
 
 ## Chạy tại máy
 

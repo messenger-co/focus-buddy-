@@ -1,3 +1,4 @@
+import Railway from "../railway/Railway";
 import { useEffect, useRef, useState } from "react";
 import type { ClubId } from "./catalog";
 import type { PlayProps } from "./props";
@@ -585,6 +586,7 @@ export function Treasure({ level, active, finish, tone }: PlayProps) {
 export const challenges: Partial<
   Record<ClubId, React.ComponentType<PlayProps>>
 > = {
+  "duong-ray": Railway,
   "go-phim": Typing,
   "chop-sang": Reaction,
   "thu-vien-do": Quiz,

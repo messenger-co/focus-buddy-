@@ -1,3 +1,5 @@
+import { RailwayPostcard } from "../railway/Railway";
+import { routes as railwayRoutes } from "../railway/railway";
 import { useEffect, useRef, useState, useCallback } from "react";
 import { Link } from "react-router-dom";
 import { LevelPicker, levelKey, readScore, recordScore } from "../levels";
@@ -12,7 +14,9 @@ function Round({
   entry,
   level,
   profile,
+  onNext,
 }: {
+  onNext?: () => void;
   entry: ClubEntry;
   level: number;
   profile: Profile;
@@ -129,7 +133,11 @@ function Round({
         <>
           {phase === "ready" ? (
             <div className="club-start">
-              <span aria-hidden="true">{entry.mark}</span>
+              {entry.slug === "duong-ray" ? (
+                <RailwayPostcard />
+              ) : (
+                <span aria-hidden="true">{entry.mark}</span>
+              )}
               <button
                 className="button primary"
                 onClick={() => setPhase("active")}
@@ -160,12 +168,8 @@ function Round({
                   Tiếp tục chơi
                 </button>
               )}
-              {(phase === "won" || phase === "lost") && (
-                <h2 role="status">
-                  {phase === "won" ? "Hoàn thành rồi!" : "Hết lượt"} · {points}{" "}
-                  điểm
-                </h2>
-              )}
+              {(phase==="won" || phase==="lost") && <div role="status"><h2>{phase==="won"?"Hoàn thành rồi!":"Hết lượt"} · {points} điểm</h2></div>}
+              {phase==="won" && onNext && <button className="button primary" onClick={onNext}>Chặng tiếp theo</button>}
               <button
                 className="button secondary"
                 onClick={() => {
@@ -201,12 +205,22 @@ export default function Club({
       {!creativeIds.has(entry.slug) && (
         <LevelPicker
           slug={entry.slug}
-          titles={difficulty}
+          titles={
+            entry.slug === "duong-ray"
+              ? railwayRoutes.map((r) => r.name)
+              : difficulty
+          }
           index={level}
           onSelect={L}
         />
       )}
-      <Round key={level} entry={entry} profile={profile} level={level} />
+      <Round
+        key={level}
+        entry={entry}
+        profile={profile}
+        level={level}
+        onNext={level < difficulty.length - 1 ? () => L(level + 1) : undefined}
+      />
       <Link className="back-to-shelf" to="/tro-choi">
         Về bàn trò chơi
       </Link>

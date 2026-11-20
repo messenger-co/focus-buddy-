@@ -17,3 +17,5 @@ test-results/
 *.tsbuildinfo
 
 !supabase/.env.edge.example
+
+/supabase/.temp/

@@ -1,3 +1,4 @@
+import { locale } from "../foundation/language";
 import {
   lazy,
   Suspense,
@@ -12,6 +13,7 @@ import { NavLink } from "react-router-dom";
 import {
   ArrowRight,
   BookOpen,
+  Bookmark,
   Check,
   CheckCircle2,
   Coffee,
@@ -43,12 +45,23 @@ import {
   MINUTE,
   type FocusPlan,
 } from "./model";
-import { useFocusSettings, type Soundscape } from "./settings";
+import {
+  dress,
+  studyTools,
+  useWardrobe,
+  type Wardrobe,
+} from "../buddy3/wardrobe";
+import {
+  useFocusSettings,
+  soundscapes,
+  selectedPlan,
+  type Soundscape,
+} from "./settings";
 import { useAmbience } from "./useAmbience";
 import "./focus.css";
 const Companion = lazy(() => import("../components/Companion"));
 const formatDay = (d: string) =>
-  new Intl.DateTimeFormat("vi-VN", {
+  new Intl.DateTimeFormat(locale, {
     day: "2-digit",
     month: "2-digit",
     timeZone: "UTC",
@@ -130,7 +143,8 @@ export default function FocusPage({
   finish: () => Promise<void>;
 }) {
   const [settings, write] = useFocusSettings(),
-    audio = useAmbience();
+    audio = useAmbience(settings.volume);
+  const { look } = useWardrobe();
   const [taskName, setTaskName] = useState(""),
     [confirm, setConfirm] = useState(false),
     [expanded, setExpanded] = useState(false),
@@ -140,14 +154,7 @@ export default function FocusPage({
     p = buddy.progress.profile;
   const active = rows.find((s) => s.status === "active"),
     rest = latestBreak(rows);
-  const task = settings.tasks.find((t) => t.id === settings.task);
-  const plan = planFor(
-    settings.mode,
-    settings.custom,
-    settings.breakMinutes,
-    settings.goal || task?.title || "",
-    settings.task,
-  );
+  const plan = selectedPlan(settings);
   const phase = active ? "study" : rest ? "rest" : "ready";
   const mode = active?.mode ?? plan.mode,
     watch = mode === "stopwatch",
@@ -381,6 +388,10 @@ export default function FocusPage({
                   ? "Bạn có thể đứng dậy, nhìn ra xa hoặc chơi một ván ngắn."
                   : "Đã tới giờ học tiếp. Bạn có thể bắt đầu khi sẵn sàng."}
               </p>
+              <NavLink to="/tro-choi?ghim=1">
+                <Bookmark size={15} />
+                Trò chơi đã ghim
+              </NavLink>
               {breakLeft > 0 && (
                 <div>
                   <NavLink to="/tro-choi/noi-so">
@@ -427,9 +438,7 @@ export default function FocusPage({
                   ? breakLeft > 0 && now - Date.parse(rest.completed_at!) < 6500
                     ? "celebrate"
                     : "stretch"
-                  : active
-                    ? "study"
-                    : "idle"
+                  : "study"
               }
               night={night}
             />
@@ -448,10 +457,27 @@ export default function FocusPage({
                 ? "Uống một ngụm nước và nghỉ mắt trước khi bắt đầu việc tiếp theo."
                 : active?.goal || "Mỗi phiên chỉ cần một mục tiêu nhỏ."}
           </p>
+          <label className="f3-field f3-study-tool">
+            Dụng cụ khi học
+            <select
+              aria-label="Dụng cụ khi học"
+              value={look.studyTool}
+              onChange={(e) =>
+                dress({ studyTool: e.target.value as Wardrobe["studyTool"] })
+              }
+            >
+              {Object.entries(studyTools).map(([id, label]) => (
+                <option key={id} value={id}>
+                  {label}
+                </option>
+              ))}
+            </select>
+          </label>
           <div className="f3-sound">
             <label className="f3-field">
               Âm thanh nền
               <select
+                aria-label="Âm thanh nền"
                 value={settings.sound}
                 onChange={(e) => {
                   const sound = e.target.value as Soundscape;
@@ -459,10 +485,11 @@ export default function FocusPage({
                   void audio.play(sound);
                 }}
               >
-                <option value="off">Yên lặng</option>
-                <option value="rain">Mưa hiên nhà</option>
-                <option value="brook">Suối trong rừng</option>
-                <option value="waves">Sóng biển</option>
+                {Object.entries(soundscapes).map(([id, label]) => (
+                  <option key={id} value={id}>
+                    {label}
+                  </option>
+                ))}
               </select>
             </label>
             {settings.sound !== "off" && (
@@ -483,6 +510,22 @@ export default function FocusPage({
               </button>
             )}
           </div>
+          {settings.sound !== "off" && (
+            <label className="f3-volume">
+              <span>Âm lượng</span>
+              <output aria-hidden="true">{settings.volume}%</output>
+              <input
+                type="range"
+                min="0"
+                max="100"
+                step="1"
+                value={settings.volume}
+                aria-label="Âm lượng nền"
+                aria-valuetext={settings.volume + "%"}
+                onChange={(e) => write({ volume: Number(e.target.value) })}
+              />
+            </label>
+          )}
           {audio.error && <p role="status">{audio.error}</p>}
         </aside>
       </div>
@@ -548,7 +591,7 @@ export default function FocusPage({
                     maxLength={180}
                     value={settings.goal}
                     placeholder={
-                      task?.title ?? "Ví dụ: đọc chương 2 và ghi ba ý chính"
+                      plan.goal || "Ví dụ: đọc chương 2 và ghi ba ý chính"
                     }
                     onChange={(e) => write({ goal: e.target.value })}
                   />

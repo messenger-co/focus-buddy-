@@ -1,6 +1,7 @@
 import { useGameSound } from "./useGameSound";
 import { lazy, Suspense, useEffect, useRef, useState } from "react";
-import { Link, Navigate, useParams } from "react-router-dom";
+import { findGames, sections, usePinnedGames, type Section } from "./library";
+import { Link, Navigate, useParams, useSearchParams } from "react-router-dom";
 import {
   ArrowLeft,
   ArrowRight,
@@ -15,6 +16,8 @@ import {
   Moon,
   RotateCcw,
   ScanEye,
+  Search,
+  Bookmark,
   Sprout,
   Star,
   Sun,
@@ -564,6 +567,26 @@ export default function Games({
   countdown: string | null;
 }) {
   const { slug } = useParams();
+  const [params, setParams] = useSearchParams();
+  const { pins, togglePin } = usePinnedGames();
+  const query = params.get("q") ?? "";
+  const requestedGroup = params.get("nhom") ?? "";
+  const group = Object.hasOwn(sections, requestedGroup)
+    ? (requestedGroup as Section)
+    : "all";
+  const onlyPins = params.get("ghim") === "1";
+  const visible = findGames(query, group, onlyPins ? pins : null);
+  const clubMatches = clubGames.filter((g) => visible.has(g.slug));
+  const quickMatches = gameShelf.filter((g) => visible.has(g.id));
+  const hasAdventure = [...expeditions, ...adventures].some((g) =>
+    visible.has(g.slug),
+  );
+  function filterBy(key: string, value: string) {
+    const next = new URLSearchParams(params);
+    if (value) next.set(key, value);
+    else next.delete(key);
+    setParams(next, { replace: true, preventScrollReset: true });
+  }
   const [richEffects, setRichEffects] = useState(() => {
     try {
       return localStorage.getItem("focus-buddy-rich-effects-v1") !== "off";
@@ -617,10 +640,25 @@ export default function Games({
       buddyRunner ||
       club ? (
         <>
-          <Link className="back-to-shelf" to="/tro-choi">
-            <ArrowLeft size={16} />
-            Tất cả trò chơi
-          </Link>
+          <div className="shelf-game-actions">
+            <Link className="back-to-shelf" to="/tro-choi">
+              <ArrowLeft size={16} />
+              Tất cả trò chơi
+            </Link>
+            {slug && (
+              <button
+                className="shelf-pin"
+                aria-pressed={pins.includes(slug)}
+                onClick={() => togglePin(slug)}
+              >
+                <Bookmark
+                  size={16}
+                  fill={pins.includes(slug) ? "currentColor" : "none"}
+                />{" "}
+                {pins.includes(slug) ? "Bỏ ghim trò" : "Ghim trò này"}
+              </button>
+            )}
+          </div>
           {club ? (
             <Suspense fallback={<p>Đang mở trò chơi…</p>}>
               <Club key={club.slug} entry={club} profile={profile} />
@@ -666,74 +704,144 @@ export default function Games({
               {profile.buddy_name || "bạn nhỏ của bạn"}.
             </p>
           </header>
-          <Link className="garden-promo" to="/tro-choi/vuon-buddy">
-            <span className="garden-promo-icon">
-              <Flower2 size={31} />
-            </span>
-            <span>
-              <small>TRÒ CHƠI CÙNG BUDDY · 1 PHÚT</small>
-              <strong>Vườn hoa lấp lánh</strong>
-              <em>
-                Tìm 10 bông hoa phát sáng. Một cuộc phiêu lưu nhỏ trong giờ
-                nghỉ!
-              </em>
-            </span>
-            <ArrowRight size={21} />
-          </Link>
-          <div className="buddy-big-games">
-            <Link
-              to="/tro-choi/buddy-run"
-              className="buddy-feature-game runner-feature"
+          <div className="shelf-filters">
+            <label className="shelf-query">
+              <Search size={18} aria-hidden="true" />
+              <input
+                type="search"
+                aria-label="Tìm trò chơi"
+                placeholder="Tìm trò chơi…"
+                value={query}
+                maxLength={80}
+                onChange={(e) => filterBy("q", e.target.value)}
+              />
+            </label>
+            <select
+              aria-label="Nhóm trò chơi"
+              value={group}
+              onChange={(e) =>
+                filterBy("nhom", e.target.value === "all" ? "" : e.target.value)
+              }
             >
-              <span className="buddy-feature-emoji" aria-hidden="true">
-                🏃
-              </span>
-              <div>
-                <small>NHẢY · THỬ PHẢN XẠ · CẤP ĐỘ TĂNG DẦN</small>
-                <h2>Buddy Runner</h2>
+              {Object.entries(sections).map(([id, label]) => (
+                <option key={id} value={id}>
+                  {label}
+                </option>
+              ))}
+            </select>
+            <button
+              className="shelf-pin"
+              aria-pressed={onlyPins}
+              onClick={() => filterBy("ghim", onlyPins ? "" : "1")}
+            >
+              <Bookmark size={16} fill={onlyPins ? "currentColor" : "none"} />{" "}
+              Đã ghim <span>{pins.length}</span>
+            </button>
+          </div>
+          {!visible.size && (
+            <div className="shelf-empty" role="status">
+              <strong>
+                {onlyPins && !pins.length
+                  ? "Bạn chưa ghim trò nào."
+                  : "Chưa tìm thấy trò phù hợp."}
+              </strong>
+              {onlyPins && !pins.length && (
                 <p>
-                  Trò chơi giống khủng long offline, nhưng chính Buddy của bạn
-                  chạy và nhảy. Có kỷ lục lưu cục bộ.
+                  Mở một trò và chọn “Ghim trò này” để dễ tìm lại vào giờ nghỉ.
                 </p>
-                <span>
-                  Chơi ngay <ArrowRight size={15} />
-                </span>
-              </div>
-            </Link>
-          </div>
-          <AdventureShelf profile={profile} />
-          <h2 className="shelf-caption">Câu lạc bộ Buddy</h2>
-          <div className="club-shelf">
-            {clubGames.map((g) => (
-              <Link key={g.slug} to={`/tro-choi/${g.slug}`}>
-                <i aria-hidden="true">{g.mark}</i>
-                <strong>{g.title}</strong>
-                <small>{g.group}</small>
-              </Link>
-            ))}
-          </div>
-          <h2 className="shelf-caption">Thử thách nhanh</h2>
-          <div className="game-shelf">
-            {gameShelf.map((game) => (
-              <Link
-                to={`/tro-choi/${game.id}`}
-                className={`game-card activity-${game.id}`}
-                key={game.id}
+              )}
+              <button
+                className="button secondary"
+                onClick={() =>
+                  setParams({}, { replace: true, preventScrollReset: true })
+                }
               >
-                <Cover id={game.id} />
-                <div className="game-card-copy">
-                  <small>
-                    {game.skill} · <LevelCount slug={game.id} />
-                  </small>
-                  <h2>{game.name}</h2>
-                  <p>{game.detail}</p>
-                  <span className="game-play">
-                    Vào chơi <ArrowRight size={14} />
+                Xem tất cả trò chơi
+              </button>
+            </div>
+          )}
+          {visible.has("vuon-buddy") && (
+            <Link className="garden-promo" to="/tro-choi/vuon-buddy">
+              <span className="garden-promo-icon">
+                <Flower2 size={31} />
+              </span>
+              <span>
+                <small>TRÒ CHƠI CÙNG BUDDY · 1 PHÚT</small>
+                <strong>Vườn hoa lấp lánh</strong>
+                <em>
+                  Tìm 10 bông hoa phát sáng. Một cuộc phiêu lưu nhỏ trong giờ
+                  nghỉ!
+                </em>
+              </span>
+              <ArrowRight size={21} />
+            </Link>
+          )}
+          {visible.has("buddy-run") && (
+            <div className="buddy-big-games">
+              <Link
+                to="/tro-choi/buddy-run"
+                className="buddy-feature-game runner-feature"
+              >
+                <span className="buddy-feature-emoji" aria-hidden="true">
+                  🏃
+                </span>
+                <div>
+                  <small>NHẢY · THỬ PHẢN XẠ · CẤP ĐỘ TĂNG DẦN</small>
+                  <h2>Buddy Runner</h2>
+                  <p>
+                    Trò chơi giống khủng long offline, nhưng chính Buddy của bạn
+                    chạy và nhảy. Có kỷ lục lưu cục bộ.
+                  </p>
+                  <span>
+                    Chơi ngay <ArrowRight size={15} />
                   </span>
                 </div>
               </Link>
-            ))}
-          </div>
+            </div>
+          )}
+          {hasAdventure && (
+            <AdventureShelf profile={profile} visible={visible} />
+          )}
+          {clubMatches.length > 0 && (
+            <>
+              <h2 className="shelf-caption">Câu lạc bộ Buddy</h2>
+              <div className="club-shelf">
+                {clubMatches.map((g) => (
+                  <Link key={g.slug} to={`/tro-choi/${g.slug}`}>
+                    <i aria-hidden="true">{g.mark}</i>
+                    <strong>{g.title}</strong>
+                    <small>{g.group}</small>
+                  </Link>
+                ))}
+              </div>
+            </>
+          )}
+          {quickMatches.length > 0 && (
+            <>
+              <h2 className="shelf-caption">Thử thách nhanh</h2>
+              <div className="game-shelf">
+                {quickMatches.map((game) => (
+                  <Link
+                    to={`/tro-choi/${game.id}`}
+                    className={`game-card activity-${game.id}`}
+                    key={game.id}
+                  >
+                    <Cover id={game.id} />
+                    <div className="game-card-copy">
+                      <small>
+                        {game.skill} · <LevelCount slug={game.id} />
+                      </small>
+                      <h2>{game.name}</h2>
+                      <p>{game.detail}</p>
+                      <span className="game-play">
+                        Vào chơi <ArrowRight size={14} />
+                      </span>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            </>
+          )}
         </>
       )}
     </div>

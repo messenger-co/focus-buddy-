@@ -1,0 +1,159 @@
+.rail-game {
+  width: min(100%, 38rem);
+  margin: 12px auto;
+}
+.rail-readout,
+.rail-readout span,
+.rail-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.rail-readout {
+  justify-content: space-between;
+  color: var(--subtext);
+  font-size: 0.82rem;
+  font-weight: 650;
+  padding: 5px 2px;
+}
+.rail-board {
+  display: grid;
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+  grid-template-columns: repeat(var(--cols), minmax(0, 1fr));
+  grid-template-rows: repeat(var(--rows), 1fr);
+  aspect-ratio: var(--cols) / var(--rows);
+  border: 4px solid #506b5e;
+  border-radius: 18px;
+  background: #8faf91;
+  box-shadow: 0 3px 0 #3e5a51;
+}
+.rail-board .rail-tile {
+  appearance: none;
+  display: block;
+  position: relative;
+  min-width: 0;
+  min-height: 0;
+  padding: 0;
+  margin: 0;
+  overflow: hidden;
+  border: 1px solid #91a584;
+  border-radius: 0;
+  background: #d6dbab;
+  line-height: 1;
+  cursor: pointer;
+}
+.rail-board .rail-tile:nth-child(2n) {
+  background: #c7d3a6;
+}
+.rail-board .rail-scenery {
+  background: #b5c79c;
+  cursor: default;
+}
+.rail-board .rail-tile > svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+.rail-board .rail-tile:focus-visible {
+  outline: 3px solid #173f77;
+  outline-offset: -5px;
+  z-index: 2;
+}
+.rail-board .rail-tile:disabled {
+  opacity: 1;
+  cursor: default;
+}
+.rail-board .rail-passed {
+  background: #e4d99e;
+}
+.rail-board .rail-fault::after {
+  content: "";
+  position: absolute;
+  inset: 3px;
+  border: 3px dashed #9d422e;
+  border-radius: 5px;
+  background: repeating-linear-gradient(
+    135deg,
+    transparent 0 7px,
+    #b9635029 7px 12px
+  );
+}
+.rail-in,
+.rail-out,
+.rail-lamp {
+  position: absolute;
+  display: grid;
+  place-items: center;
+  line-height: 1;
+  border-radius: 40%;
+  background: #3e6660;
+  color: #fff3cc;
+  font-style: normal;
+  padding: 2px 3px;
+  font-weight: 700;
+  font-size: clamp(13px, 2.7vw, 21px);
+}
+.rail-in {
+  bottom: 4%;
+  left: 3%;
+}
+.rail-out {
+  top: 3%;
+  right: 3%;
+  background: #8b5141;
+}
+.rail-lamp {
+  top: 4%;
+  left: 3%;
+  color: #553e27;
+  background: #e3ad5c;
+  box-shadow: 0 1px 0 #957540;
+}
+.rail-lamp.lit {
+  background: #ffe7a3;
+  box-shadow: 0 0 9px #f3c864;
+}
+.rail-train {
+  position: absolute;
+  z-index: 3;
+  width: calc(75% / var(--cols));
+  pointer-events: none;
+  transform: translate(-50%, -66%);
+  display: grid;
+  justify-items: center;
+}
+.rail-train .companion-art {
+  width: 67%;
+  height: auto;
+  display: block;
+  margin-bottom: -18%;
+  z-index: 1;
+}
+.rail-train > svg:last-child {
+  width: 88%;
+  z-index: 2;
+}
+.rail-actions {
+  justify-content: center;
+  flex-wrap: wrap;
+  margin: 16px 0 8px;
+}
+.rail-status {
+  min-height: 1.5em;
+  text-align: center;
+  color: var(--text);
+}
+.club-start .rail-postcard {
+  width: min(100%, 440px);
+  height: auto;
+  display: block;
+}
+@media (prefers-reduced-motion: no-preference) {
+  html:not([data-motion="off"]):not([data-motion="minimal"]) .rail-train {
+    transition:
+      left 0.2s ease-in-out,
+      top 0.2s ease-in-out;
+  }
+}

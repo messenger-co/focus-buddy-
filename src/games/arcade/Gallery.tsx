@@ -114,43 +114,51 @@ function BoardPoster({ mode, profile }: { mode: BoardMode; profile: Profile }) {
   );
 }
 const gameIcons = { river: Waves, ice: Snowflake, jump: Gamepad2, glide: Wind };
-export function AdventureShelf({ profile }: { profile: Profile }) {
+export function AdventureShelf({
+  profile,
+  visible,
+}: {
+  profile: Profile;
+  visible: ReadonlySet<string>;
+}) {
   return (
     <div className="adventure-shelf">
-      {[...expeditions, ...adventures].map((game) => {
-        const Icon = gameIcons[game.mode];
-        return (
-          <Link
-            key={game.slug}
-            to={`/tro-choi/${game.slug}`}
-            className={`adventure-card card-${game.mode}`}
-          >
-            {game.mode === "river" || game.mode === "ice" ? (
-              <BoardPoster mode={game.mode} profile={profile} />
-            ) : (
-              <Poster mode={game.mode} profile={profile} />
-            )}
-            <div className="adventure-card-copy">
-              <div>
-                <span className="adventure-type">
-                  <Icon size={15} />
-                  {"genre" in game
-                    ? game.genre
-                    : game.mode === "jump"
-                      ? "Đi cảnh"
-                      : "Bay lượn"}{" "}
-                  · <LevelCount slug={game.slug} />
+      {[...expeditions, ...adventures]
+        .filter((game) => visible.has(game.slug))
+        .map((game) => {
+          const Icon = gameIcons[game.mode];
+          return (
+            <Link
+              key={game.slug}
+              to={`/tro-choi/${game.slug}`}
+              className={`adventure-card card-${game.mode}`}
+            >
+              {game.mode === "river" || game.mode === "ice" ? (
+                <BoardPoster mode={game.mode} profile={profile} />
+              ) : (
+                <Poster mode={game.mode} profile={profile} />
+              )}
+              <div className="adventure-card-copy">
+                <div>
+                  <span className="adventure-type">
+                    <Icon size={15} />
+                    {"genre" in game
+                      ? game.genre
+                      : game.mode === "jump"
+                        ? "Đi cảnh"
+                        : "Bay lượn"}{" "}
+                    · <LevelCount slug={game.slug} />
+                  </span>
+                  <h2>{game.title}</h2>
+                  <p>{game.blurb}</p>
+                </div>
+                <span className="adventure-card-arrow" aria-hidden="true">
+                  <ArrowUpRight size={23} />
                 </span>
-                <h2>{game.title}</h2>
-                <p>{game.blurb}</p>
               </div>
-              <span className="adventure-card-arrow" aria-hidden="true">
-                <ArrowUpRight size={23} />
-              </span>
-            </div>
-          </Link>
-        );
-      })}
+            </Link>
+          );
+        })}
     </div>
   );
 }

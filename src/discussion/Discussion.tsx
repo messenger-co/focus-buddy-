@@ -232,7 +232,7 @@ function StudyRoom({
         bump.current();
         const client = supabase!;
         const c = client
-          .channel("moderated-" + room.id + "-" + crypto.randomUUID())
+          .channel("focus-buddy-room:" + room.id, { config: { private: true } })
           .on(
             "postgres_changes",
             {
@@ -562,7 +562,11 @@ function StudyRoom({
   );
 }
 
-export default function Discussion() {
+export default function Discussion({
+  openAccount,
+}: {
+  openAccount: () => void;
+}) {
   const [status, setStatus] = useState<Status>(closed),
     [room, setRoom] = useState<Room | null>(null),
     [preview, setPreview] = useState<string | null>(null);
@@ -635,6 +639,15 @@ export default function Discussion() {
           </p>
         </div>
       </aside>
+      {status.enabled && !status.verified && (
+        <button
+          type="button"
+          className="button secondary room-sign-in"
+          onClick={openAccount}
+        >
+          Đăng nhập để thảo luận
+        </button>
+      )}
       <div className="discussion-topics">
         {status.rooms.map((topic) => (
           <article key={topic.id} className="topic-card">

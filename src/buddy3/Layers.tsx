@@ -96,6 +96,61 @@ export function Garment({ look }: { look: Wardrobe }) {
           <path d="m148 215 9-2v21h-5v-15l-4 1Zm15-1h14v4l-8 16h-5l8-16h-9Z" />
         </g>
       )}
+      {garment === "overalls" && (
+        <g>
+          <path
+            d="m129 187 10 2 4 20h33l5-20 9-2-6 25 7 33q-32 11-64-1l6-31Z"
+            fill={seam}
+          />
+          <rect x="147" y="216" width="25" height="18" rx="5" fill={color} />
+          <path d="M157 228q-7-13 6-14 2 9-6 14" fill="#eff4bd" />
+          <g fill="#ffdc89">
+            <circle cx="139" cy="208" r="2.8" />
+            <circle cx="181" cy="208" r="2.8" />
+          </g>
+        </g>
+      )}
+      {garment === "smock" && (
+        <g>
+          <path
+            d="M134 190q26 20 51 0l-3 15 12 38q-33 12-65 0l10-39Z"
+            fill="#f4e0b8"
+            stroke={seam}
+            strokeWidth="2"
+          />
+          <path d="m149 219 3-13m6 14 5-18" stroke="#7e6751" strokeWidth="3" />
+          <path d="m151 208 1-7 3 5m5-2 5-7 1 7" fill="#476e79" />
+          <path d="M139 218h32l-2 14q-12 9-28-1Z" fill={color} />
+          <g fill="#cb7459">
+            <circle cx="177" cy="211" r="3" />
+            <circle cx="182" cy="215" r="1.5" />
+          </g>
+          <circle cx="175" cy="237" r="3" fill="#77a79a" />
+        </g>
+      )}
+      {garment === "sailor" && (
+        <g>
+          <path
+            d="M130 187q29 11 60 0l-13 20-17 8-17-8Z"
+            fill="#ffefd6"
+            stroke={seam}
+            strokeWidth="2"
+          />
+          <path
+            d="m136 191 13 12 11 5 13-5 12-12"
+            fill="none"
+            stroke={seam}
+            strokeWidth="2"
+          />
+          <path d="m160 208 5 5-4 5 7 13-8-2-7 3 5-15-4-4Z" fill="#c76e5e" />
+          <path
+            d="m121 237 14 3m51 1 12-3"
+            fill="none"
+            stroke="#f7e7cf"
+            strokeWidth="3"
+          />
+        </g>
+      )}
       {garment === "astronaut" && (
         <g>
           <path
@@ -117,6 +172,72 @@ export function Headwear({ look }: { look: Wardrobe }) {
   const [color, seam] = dyes[look.dye];
   return (
     <g data-hat={look.hat} strokeLinecap="round" strokeLinejoin="round">
+      {look.hat === "straw" && (
+        <g transform="rotate(-6 159 86)">
+          <path
+            d="M113 86q5-36 35-37l22 1q26 2 35 36"
+            fill="#e5b871"
+            stroke="#9c7548"
+            strokeWidth="2"
+          />
+          <path d="M115 76q48-7 86 1l3 9q-49-8-92 2Z" fill={seam} />
+          <ellipse
+            cx="159"
+            cy="90"
+            rx="64"
+            ry="10"
+            fill="#f0cc87"
+            stroke="#a48050"
+            strokeWidth="2"
+          />
+          <path
+            d="M107 91q46-9 104 0m-78-27q13-8 26-8"
+            fill="none"
+            stroke="#c5995a"
+            strokeWidth="2"
+            strokeDasharray="3 4"
+          />
+        </g>
+      )}
+      {look.hat === "painter" && (
+        <g transform="rotate(-12 157 79)">
+          <path
+            d="M106 87q-13-19 19-32 26-8 48-3 36 3 43 21 7 14-19 17Z"
+            fill={color}
+            stroke={seam}
+            strokeWidth="2.5"
+          />
+          <path d="M113 84q43-11 86 2l-4 8q-37-8-79-1Z" fill={seam} />
+          <path
+            d="M155 53q-3-9 3-13"
+            fill="none"
+            stroke={seam}
+            strokeWidth="5"
+          />
+          <path
+            d="M120 70q9-9 21-10"
+            stroke="#fff1d7"
+            fill="none"
+            strokeWidth="3"
+          />
+        </g>
+      )}
+      {look.hat === "mariner" && (
+        <g transform="rotate(6 159 82)">
+          <path
+            d="M109 79q-7-15 14-18 37-25 73-1 23 2 14 19l-9 8h-78Z"
+            fill="#fff1d7"
+            stroke={seam}
+            strokeWidth="2.5"
+          />
+          <path d="M117 78q40-8 87 0l-3 12q-43-5-80 1Z" fill={seam} />
+          <path d="M131 88q30-6 60-1-7 12-30 12-18 1-30-11Z" fill="#4b647c" />
+          <g stroke="#e7bc6a" fill="none" strokeWidth="2">
+            <circle cx="159" cy="75" r="6" />
+            <path d="M159 71v8m-4-3q4 5 8 0" />
+          </g>
+        </g>
+      )}
       {look.hat === "cap" && (
         <g transform="rotate(-7 159 86)">
           <path
@@ -257,27 +378,113 @@ export function Finishing({ look }: { look: Wardrobe }) {
     </g>
   );
 }
-export function StudyBook({ night }: { night: boolean }) {
+export function StudyDeskItem({
+  night,
+  tool,
+}: {
+  night: boolean;
+  tool: Wardrobe["studyTool"];
+}) {
   return (
-    <g className="buddy-book">
+    <g className="buddy-book" data-study-tool={tool}>
       <ellipse cx="161" cy="245" rx="53" ry="6" fill="#584f5026" />
-      <path
-        d="M111 210q23-3 48 9 27-14 52-10l-2 30q-26 0-49 13-24-12-46-10Z"
-        fill="#497e79"
-        stroke="#456568"
-        strokeWidth="2"
-      />
-      <path
-        d="M117 206q21-2 43 10 22-13 45-12l-2 29q-19 0-43 12-21-10-42-9Z"
-        fill="#fff0ce"
-      />
-      <path
-        d="m159 218 1 25m-36-28 22 6m-21 2 22 6m28-7 21-7m-22 15 20-7"
-        fill="none"
-        stroke="#c6ad8c"
-        strokeWidth="2.3"
-        strokeLinecap="round"
-      />
+      {tool === "book" && (
+        <g>
+          <path
+            d="M111 210q23-3 48 9 27-14 52-10l-2 30q-26 0-49 13-24-12-46-10Z"
+            fill="#497e79"
+            stroke="#456568"
+            strokeWidth="2"
+          />
+          <path
+            d="M117 206q21-2 43 10 22-13 45-12l-2 29q-19 0-43 12-21-10-42-9Z"
+            fill="#fff0ce"
+          />
+          <path
+            d="m159 218 1 25m-36-28 22 6m-21 2 22 6m28-7 21-7m-22 15 20-7"
+            fill="none"
+            stroke="#c6ad8c"
+            strokeWidth="2.3"
+            strokeLinecap="round"
+          />
+        </g>
+      )}
+      {tool === "journal" && (
+        <g transform="rotate(-8 160 226)" strokeLinejoin="round">
+          <rect
+            x="126"
+            y="200"
+            width="64"
+            height="47"
+            rx="4"
+            fill="#527d6c"
+            stroke="#46665b"
+            strokeWidth="2"
+          />
+          <rect x="131" y="199" width="55" height="43" rx="3" fill="#ffedcb" />
+          <path
+            d="M147 232q6-18 24-24m-13 12q-13 0-11-11 12 0 11 11m2-2q0-13 12-13 2 10-12 13m-7 10q8-10 17-5-3 9-17 5"
+            stroke="#73895b"
+            fill="#a6bf79"
+            strokeWidth="1.5"
+          />
+          <path d="M132 203v34" stroke="#b9a282" strokeDasharray="2 3" />
+        </g>
+      )}
+      {tool === "sketchpad" && (
+        <g transform="rotate(-7 160 227)" strokeLinecap="round">
+          <rect
+            x="124"
+            y="200"
+            width="71"
+            height="47"
+            rx="4"
+            fill="#f4d8ad"
+            stroke="#907a65"
+            strokeWidth="2"
+          />
+          <rect x="128" y="202" width="63" height="39" rx="2" fill="#fff4da" />
+          <path d="m133 235 14-13 9 8 11-15 17 20Z" fill="#a8c7b3" />
+          <circle cx="143" cy="214" r="4" fill="#efae73" />
+          <path
+            d="m134 201 1 4m7-5 1 4m7-5 1 4m7-5 1 4m7-5 1 4m7-5 1 4"
+            stroke="#816f68"
+            strokeWidth="2"
+          />
+          <path
+            d="m171 232 22-24 4 4-23 23-6 2Z"
+            fill="#e7a658"
+            stroke="#8c7059"
+            strokeWidth="1.25"
+          />
+        </g>
+      )}
+      {tool === "chart" && (
+        <g strokeLinejoin="round">
+          <path
+            d="m115 210 30-5 28 6 31-7 3 33-30 8-29-6-30 5Z"
+            fill="#435b79"
+            stroke="#354660"
+            strokeWidth="2"
+          />
+          <path d="m145 206 3 32m25-26 4 32" fill="none" stroke="#768aa0" />
+          <path
+            d="m126 229 11-11 17 6 12-8 18 8 11-10"
+            stroke="#f6d89a"
+            fill="none"
+          />
+          {[
+            [126, 229],
+            [137, 218],
+            [154, 224],
+            [166, 216],
+            [184, 224],
+            [195, 214],
+          ].map(([x, y]) => (
+            <circle key={x} cx={x} cy={y} r="2.4" fill="#fff0bb" />
+          ))}
+        </g>
+      )}
       {night && (
         <g>
           <path

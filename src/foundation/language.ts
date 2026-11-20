@@ -8,6 +8,7 @@ function read() {
 }
 export const language = read();
 export const english = language === "en";
+export const locale = english ? "en-GB" : "vi-VN";
 document.documentElement.lang = language;
 export function switchLanguage(next: "vi" | "en") {
   try {

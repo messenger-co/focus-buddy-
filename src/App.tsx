@@ -22,6 +22,7 @@ import {
   CheckCheck,
   ChevronRight,
   Clock3,
+  Coffee,
   Flame,
   Flower2,
   Gamepad2,
@@ -44,13 +45,16 @@ import {
   TrendingUp,
   X,
 } from "lucide-react";
+import { selectedPlan, useFocusSettings } from "./focus3/settings";
 import FocusPage from "./focus3/FocusPage";
 import {
   clockText,
   elapsedMs,
   faceMs,
   latestBreak,
-  sessionMinutes,
+  MINUTE,
+  plannedMs,
+  studyWeek,
   studyReward,
   type FocusPlan,
 } from "./focus3/model";
@@ -67,7 +71,7 @@ import { Palette, Box as BoxIcon } from "lucide-react";
 import { MotionConfig } from "motion/react";
 import { palette, paletteLibrary } from "./foundation/themes";
 import { useAppearance } from "./foundation/appearance";
-import { english as inEnglish } from "./foundation/language";
+import { english as inEnglish, locale } from "./foundation/language";
 import Boundary from "./foundation/Boundary";
 import StudyNook from "./foundation/StudyNook";
 import { russianShortcut } from "./easterEgg/russianShortcut";
@@ -95,7 +99,7 @@ const navItems = [
   { to: "/thao-luan", icon: MessagesSquare, label: "Phòng thảo luận" },
   { to: "/hanh-trinh", icon: TrendingUp, label: "Hành trình của bạn" },
 ];
-const number = (n: number) => n.toLocaleString("vi-VN");
+const number = (n: number) => n.toLocaleString(locale);
 const today = () => vietnamDay();
 function useNow(ticking: boolean) {
   const [now, setNow] = useState(Date.now);
@@ -110,10 +114,6 @@ function useNow(ticking: boolean) {
     };
   }, [ticking]);
   return now;
-}
-function timerText(ms: number) {
-  const seconds = Math.max(0, Math.ceil(ms / 1000));
-  return `${String(Math.floor(seconds / 60)).padStart(2, "0")}:${String(seconds % 60).padStart(2, "0")}`;
 }
 function BuddyArt({
   buddy,
@@ -166,7 +166,7 @@ function Modal({
       if (e.key === "Escape") closeRef.current();
       if (e.key === "Tab") {
         const nodes = ref.current?.querySelectorAll<HTMLElement>(
-          'button:not(:disabled), input, textarea, a[href], [tabindex="0"]',
+          'button:not(:disabled), input:not(:disabled), select:not(:disabled), textarea:not(:disabled), summary, a[href], [tabindex="0"]',
         );
         if (!nodes?.length) return;
         const first = nodes[0],
@@ -232,6 +232,9 @@ function App() {
   const navigate = useNavigate();
   const location = useLocation();
   const [menu, setMenu] = useState(false);
+  const menuTrigger = useRef<HTMLButtonElement>(null);
+  const menuPanel = useRef<HTMLElement>(null);
+  const lastPath = useRef(location.pathname);
   const [settings, setSettings] = useState(false);
   const [chat, setChat] = useState(false);
   const [russianEgg, setRussianEgg] = useState(false);
@@ -285,8 +288,59 @@ function App() {
     }
   };
   useEffect(() => {
+    if (lastPath.current === location.pathname) return;
+    lastPath.current = location.pathname;
     setMenu(false);
+    document.getElementById("main-content")?.focus({ preventScroll: true });
+    document.documentElement.scrollTop = 0;
   }, [location.pathname]);
+  function dismissMenu() {
+    setMenu(false);
+    requestAnimationFrame(() =>
+      menuTrigger.current?.focus({ preventScroll: true }),
+    );
+  }
+  function openSettings() {
+    setMenu(false);
+    setSettings(true);
+  }
+  useEffect(() => {
+    if (!menu) return;
+    const close =
+      menuPanel.current?.querySelector<HTMLButtonElement>(".drawer-close");
+    close?.focus({ preventScroll: true });
+    const layout = window.matchMedia("(min-width: 761px)");
+    const resize = () => {
+      if (layout.matches) setMenu(false);
+    };
+    const keys = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        e.preventDefault();
+        dismissMenu();
+        return;
+      }
+      if (e.key !== "Tab") return;
+      const items = menuPanel.current?.querySelectorAll<HTMLElement>(
+        "a[href], button:not(:disabled)",
+      );
+      if (!items?.length) return;
+      const first = items[0],
+        last = items[items.length - 1];
+      if (e.shiftKey && document.activeElement === first) {
+        e.preventDefault();
+        last.focus();
+      } else if (!e.shiftKey && document.activeElement === last) {
+        e.preventDefault();
+        first.focus();
+      }
+    };
+    layout.addEventListener("change", resize);
+    document.addEventListener("keydown", keys);
+    return () => {
+      layout.removeEventListener("change", resize);
+      document.removeEventListener("keydown", keys);
+    };
+  }, [menu]);
   useEffect(() => {
     if (!toast) return;
     const id = setTimeout(() => setToast(""), 6500);
@@ -313,7 +367,6 @@ function App() {
       setSleepy(false);
       navigate("/tap-trung");
     });
-  const start = () => startWithPlan();
   const checkIn = (mood: Mood) =>
     act(
       () => buddy.checkIn(mood),
@@ -327,6 +380,9 @@ function App() {
         item.to === location.pathname ||
         (item.to !== "/" && location.pathname.startsWith(item.to + "/")),
     )?.label || "Góc của bạn";
+  useEffect(() => {
+    document.title = page + " · Focus Buddy";
+  }, [page]);
   return (
     <MotionConfig
       reducedMotion={
@@ -363,11 +419,27 @@ function App() {
           <button
             className="sidebar-scrim"
             aria-label="Đóng trình đơn"
-            onClick={() => setMenu(false)}
+            tabIndex={-1}
+            aria-hidden="true"
+            onClick={dismissMenu}
           />
         )}
-        <aside className={`sidebar ${menu ? "sidebar-open" : ""}`}>
-          <NavLink to="/" className="brand">
+        <aside
+          ref={menuPanel}
+          id="main-sidebar"
+          className={`sidebar ${menu ? "sidebar-open" : ""}`}
+          role={menu ? "dialog" : undefined}
+          aria-modal={menu || undefined}
+          aria-label={menu ? "Trình đơn học tập" : undefined}
+        >
+          <button
+            className="drawer-close icon-button"
+            aria-label="Đóng trình đơn"
+            onClick={dismissMenu}
+          >
+            <X size={20} />
+          </button>
+          <NavLink to="/" className="brand" onClick={() => setMenu(false)}>
             <span className="brand-mark">
               <Sprout size={25} />
             </span>
@@ -381,6 +453,7 @@ function App() {
               <NavLink
                 key={to}
                 to={to}
+                onClick={() => setMenu(false)}
                 end={to === "/"}
                 className={({ isActive }) =>
                   `nav-item ${isActive ? "selected" : ""}`
@@ -402,7 +475,7 @@ function App() {
               </p>
               <span>Bạn đang làm rất tốt rồi.</span>
             </div>
-            <button className="nav-item" onClick={() => setSettings(true)}>
+            <button className="nav-item" onClick={openSettings}>
               <Settings size={19} />
               <span>Cài đặt & tài khoản</span>
             </button>
@@ -419,18 +492,21 @@ function App() {
               <button
                 className="icon-button"
                 aria-label="Mở tài khoản"
-                onClick={() => setSettings(true)}
+                onClick={openSettings}
               >
                 <ChevronRight size={16} />
               </button>
             </div>
           </div>
         </aside>
-        <div className="workspace">
+        <div className="workspace" inert={menu}>
           <header className="topbar">
             <div className="breadcrumb">
               <button
                 className="icon-button mobile-menu"
+                ref={menuTrigger}
+                aria-expanded={menu}
+                aria-controls="main-sidebar"
                 aria-label="Mở trình đơn"
                 onClick={() => setMenu(true)}
               >
@@ -441,6 +517,20 @@ function App() {
               <strong>{page}</strong>
             </div>
             <div className="topbar-right">
+              {(active || rest) && location.pathname !== "/tap-trung" && (
+                <NavLink
+                  to="/tap-trung"
+                  className="session-return"
+                  aria-label={active ? "Quay về phiên học" : "Quay về giờ nghỉ"}
+                >
+                  {active ? <Clock3 size={15} /> : <Coffee size={15} />}
+                  <span>
+                    {active
+                      ? clockText(remaining, active.mode === "stopwatch")
+                      : clockText(restLeft)}
+                  </span>
+                </NavLink>
+              )}
               <span
                 className={`mode-tag ${buddy.mode === "online" ? "online" : ""}`}
               >
@@ -449,7 +539,7 @@ function App() {
               </span>
               <button
                 className="avatar small"
-                onClick={() => setSettings(true)}
+                onClick={openSettings}
                 aria-label="Tài khoản của bạn"
               >
                 <Leaf size={17} />
@@ -479,7 +569,7 @@ function App() {
                       sleepy={sleepy}
                       setSleepy={setSleepy}
                       busy={busy}
-                      start={start}
+                      start={startWithPlan}
                       checkIn={checkIn}
                       remaining={remaining}
                       openChat={() => setChat(true)}
@@ -585,13 +675,13 @@ function App() {
                   path="/thao-luan"
                   element={
                     <Suspense fallback={<p>Đang mở phòng thảo luận…</p>}>
-                      <Discussion />
+                      <Discussion openAccount={() => setSettings(true)} />
                     </Suspense>
                   }
                 />
                 <Route
                   path="/hanh-trinh"
-                  element={<ProgressPage buddy={buddy} />}
+                  element={<ProgressPage buddy={buddy} now={now} />}
                 />
                 <Route
                   path="/giao-dien"
@@ -647,6 +737,7 @@ function App() {
           </main>
         </div>
         {!chat &&
+          !menu &&
           !location.pathname.startsWith("/the-gioi-3d") &&
           location.pathname !== "/thao-luan" &&
           !location.pathname.startsWith("/tro-choi/") && (
@@ -673,7 +764,13 @@ function App() {
         )}
         {chat && <ChatModal buddy={buddy} close={() => setChat(false)} />}
         {russianEgg && (
-          <Suspense fallback={<div className="russian-egg-loading" role="status">Открываем секретный режим…</div>}>
+          <Suspense
+            fallback={
+              <div className="russian-egg-loading" role="status">
+                Открываем секретный режим…
+              </div>
+            }
+          >
             <RussianEgg close={() => setRussianEgg(false)} />
           </Suspense>
         )}
@@ -719,7 +816,7 @@ function Dashboard({
   sleepy: boolean;
   setSleepy: (v: boolean) => void;
   busy: boolean;
-  start: () => void;
+  start: (plan: FocusPlan) => void;
   checkIn: (m: Mood) => void;
   remaining: number;
   openChat: () => void;
@@ -733,6 +830,17 @@ function Dashboard({
   );
   const mood = buddy.progress.check_ins.find((c) => c.day === today());
   const visibleWidgets = useAppearance().widgets.join(" ");
+  const [settings] = useFocusSettings();
+  const plan = selectedPlan(settings);
+  const stopwatch = (active?.mode ?? plan.mode) === "stopwatch";
+  const plannedReward = studyReward(
+    active ? plannedMs(active) : plan.minutes * MINUTE,
+  );
+  const rest = active ? undefined : latestBreak(buddy.progress.focus_sessions);
+  const restMs = rest ? Math.max(0, Date.parse(rest.break_ends_at!) - now) : 0;
+  const minutes = Math.floor(
+    sessions.reduce((sum, s) => sum + elapsedMs(s), 0) / MINUTE,
+  );
   const companionName =
     buddy.progress.profile.buddy_name ||
     COMPANIONS.find((c) => c.id === buddy.progress.profile.companion)?.name ||
@@ -746,7 +854,7 @@ function Dashboard({
       >
         <div className="date-chip">
           <Sun size={17} />
-          {new Intl.DateTimeFormat("vi-VN", {
+          {new Intl.DateTimeFormat(locale, {
             weekday: "long",
             day: "numeric",
             month: "numeric",
@@ -767,9 +875,7 @@ function Dashboard({
         <Stat
           icon={<Clock3 size={21} />}
           label="Thời gian đã tập trung"
-          value={number(
-            sessions.reduce((sum, s) => sum + sessionMinutes(s), 0),
-          )}
+          value={number(minutes)}
           unit="phút"
           color="mint"
         />
@@ -799,43 +905,77 @@ function Dashboard({
               <span className="hero-label">
                 <span className="live-dot" />
                 {active
-                  ? "PHIÊN TẬP TRUNG ĐANG DIỄN RA"
-                  : "DÀNH MỘT KHOẢNG NHỎ CHO BẠN"}
+                  ? active.paused_at
+                    ? "PHIÊN HỌC TẠM DỪNG"
+                    : "ĐANG TẬP TRUNG"
+                  : rest
+                    ? "GIỜ NGHỈ"
+                    : "PHIÊN HỌC TIẾP THEO"}
               </span>
               <h2>
-                {active ? (
-                  <>
-                    Bạn đang làm tốt lắm.
-                    <br />
-                    Cứ tiếp tục nhé.
-                  </>
-                ) : (
-                  <>
-                    Chỉ 20 phút,
-                    <br />
-                    một bước tiến mới.
-                  </>
-                )}
+                {active
+                  ? active.goal || "Học cùng Buddy"
+                  : rest
+                    ? restMs
+                      ? "Đến giờ nghỉ rồi"
+                      : "Sẵn sàng học tiếp?"
+                    : plan.goal ||
+                      (stopwatch
+                        ? "Bấm giờ cùng Buddy"
+                        : inEnglish
+                          ? `Focus for ${plan.minutes} minutes`
+                          : `Tập trung ${plan.minutes} phút`)}
               </h2>
               <p>
                 {active
-                  ? active.mode === "stopwatch"
-                    ? `Đã học ${clockText(remaining, true)} trong phiên bấm giờ.`
-                    : `Còn ${timerText(remaining)} để hoàn thành mục tiêu hôm nay.`
-                  : "Gác lại những xao nhãng. Cùng người bạn nhỏ hoàn thành điều bạn muốn làm."}
+                  ? stopwatch
+                    ? "Thời gian đã học"
+                    : "Thời gian còn lại"
+                  : rest
+                    ? restMs
+                      ? "Thời gian nghỉ còn lại"
+                      : "Bắt đầu khi bạn sẵn sàng."
+                    : "Đồng hồ sẽ dùng chế độ và mục tiêu bạn đã chọn."}
+                {(active || (rest && restMs > 0)) && (
+                  <>
+                    {" "}
+                    ·{" "}
+                    <strong>
+                      {clockText(
+                        active ? remaining : restMs,
+                        !!active && stopwatch,
+                      )}
+                    </strong>
+                  </>
+                )}
               </p>
               <button
                 disabled={busy}
                 className="button primary"
-                onClick={active ? () => navigate("/tap-trung") : start}
+                onClick={
+                  active || rest
+                    ? () => navigate("/tap-trung")
+                    : () => start(plan)
+                }
               >
                 <Play size={16} fill="currentColor" />
-                {active ? "Trở lại phiên tập trung" : "Bắt đầu tập trung"}
+                {active
+                  ? "Trở lại phiên tập trung"
+                  : rest
+                    ? "Về đồng hồ"
+                    : "Bắt đầu tập trung"}
                 <ArrowRight size={17} />
               </button>
-              <span className="hero-reward">
-                <Sparkles size={13} /> Hoàn thành phiên · +50 điểm
-              </span>
+              {!rest && (
+                <span className="hero-reward">
+                  <Sparkles size={13} />
+                  {stopwatch
+                    ? "Tính điểm theo thời gian đã học"
+                    : inEnglish
+                      ? `Complete this session · +${plannedReward} XP`
+                      : `Hoàn thành phiên · +${plannedReward} điểm`}
+                </span>
+              )}
             </div>
             <StudyNook>
               <BuddyArt buddy={buddy} sleepy={sleepy} size={190} />
@@ -1179,26 +1319,17 @@ function MissionsPage({ buddy }: { buddy: Buddy; busy: boolean }) {
     </>
   );
 }
-function ProgressPage({ buddy }: { buddy: Buddy }) {
+function ProgressPage({ buddy, now }: { buddy: Buddy; now: number }) {
   const sessions = buddy.progress.focus_sessions.filter(
     (s) => s.status === "completed",
   );
-  const days = Array.from({ length: 7 }, (_, i) => {
-    const date = new Date();
-    date.setUTCDate(date.getUTCDate() - 6 + i);
-    const key = vietnamDay(date);
-    return {
-      key,
-      label: new Intl.DateTimeFormat("vi-VN", {
-        weekday: "short",
-        timeZone: "Asia/Ho_Chi_Minh",
-      }).format(date),
-      minutes:
-        sessions.filter(
-          (s) => s.completed_at && vietnamDay(new Date(s.completed_at)) === key,
-        ).length * 20,
-    };
+  const { days, total } = studyWeek(sessions, now);
+  const weekday = new Intl.DateTimeFormat(locale, {
+    weekday: "short",
+    timeZone: "Asia/Ho_Chi_Minh",
   });
+  const dayLabel = (date: string) =>
+    weekday.format(new Date(date + "T12:00:00Z"));
   const max = Math.max(20, ...days.map((d) => d.minutes));
   return (
     <>
@@ -1239,24 +1370,30 @@ function ProgressPage({ buddy }: { buddy: Buddy }) {
             <span className="section-kicker">ĐỀU ĐẶN TỪNG NGÀY</span>
             <h2>7 ngày vừa qua</h2>
           </div>
-          <span className="muted">Phút tập trung · Giờ Việt Nam</span>
+          <span className="muted">
+            {total}{" "}
+            {inEnglish
+              ? "minutes · Vietnam time"
+              : "phút tập trung · Giờ Việt Nam"}
+          </span>
         </div>
         <div
           className="bar-chart"
           role="img"
           aria-label={days
-            .map((d) => `${d.label}: ${d.minutes} phút`)
+            .map(
+              (d) =>
+                `${dayLabel(d.day)}: ${d.minutes} ${inEnglish ? "min" : "phút"}`,
+            )
             .join(", ")}
         >
           {days.map((d) => (
-            <div className="bar-column" key={d.key}>
+            <div className="bar-column" key={d.day}>
               <strong>{d.minutes}</strong>
               <div className="bar-track">
-                <span
-                  style={{ height: `${Math.max(2, (d.minutes / max) * 100)}%` }}
-                />
+                <span style={{ height: `${(d.minutes / max) * 100}%` }} />
               </div>
-              <span>{d.label}</span>
+              <span>{dayLabel(d.day)}</span>
             </div>
           ))}
         </div>
@@ -1299,6 +1436,7 @@ function ProgressPage({ buddy }: { buddy: Buddy }) {
 }
 function SettingsModal({ buddy, close }: { buddy: Buddy; close: () => void }) {
   const [name, setName] = useState(buddy.progress.profile.display_name);
+  const [email, setEmail] = useState("");
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
   const [failed, setFailed] = useState(false);
@@ -1362,6 +1500,63 @@ function SettingsModal({ buddy, close }: { buddy: Buddy; close: () => void }) {
             : "AI trực tuyến chưa được cấu hình. Các gợi ý ngoại tuyến vẫn dùng được mà không cần tài khoản."}
         </p>
       </section>
+      {buddy.cloudConfigured && (
+        <section className="settings-section room-account">
+          <h3>Tài khoản phòng học</h3>
+          {buddy.userEmail ? (
+            <>
+              <p>
+                <strong>{buddy.userEmail}</strong>
+              </p>
+              <button
+                type="button"
+                className="button secondary"
+                disabled={busy}
+                onClick={() =>
+                  void run(buddy.signOut, "Đã đăng xuất trên thiết bị này.")
+                }
+              >
+                Đăng xuất trên thiết bị này
+              </button>
+            </>
+          ) : (
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                if (!email.trim() || busy) return;
+                void run(
+                  () => buddy.signIn(email),
+                  "Kiểm tra hộp thư và mở liên kết trên trình duyệt này để xác minh.",
+                );
+              }}
+            >
+              <label htmlFor="room-email">Email đăng nhập phòng học</label>
+              <p id="room-email-info" className="muted">
+                Khi phòng mở, thành viên dùng liên kết qua email để đăng nhập.
+                Bạn học chỉ thấy biệt danh.
+              </p>
+              <input
+                id="room-email"
+                type="email"
+                autoComplete="email"
+                required
+                maxLength={254}
+                value={email}
+                aria-describedby="room-email-info"
+                placeholder="ban@example.com"
+                onChange={(e) => setEmail(e.target.value)}
+              />
+              <button
+                type="submit"
+                className="button secondary"
+                disabled={busy || !email.trim()}
+              >
+                Gửi liên kết đăng nhập
+              </button>
+            </form>
+          )}
+        </section>
+      )}
       <section className="settings-section">
         <h3>Nhẹ nhàng với bạn</h3>
         <p className="muted">

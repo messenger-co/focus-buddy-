@@ -1,5 +1,13 @@
 export const clubGames = [
   {
+    slug: "duong-ray",
+    title: "Đường ray đom đóm",
+    group: "Giải đố",
+    mark: "🚂",
+    tone: "moss",
+    help: "Chạm một ô để xoay ray. Đón đủ đèn lồng rồi đưa Buddy về ga cờ. Dùng phím mũi tên để chọn ô, Enter hoặc Cách để xoay.",
+  },
+  {
     slug: "duong-chay",
     title: "Đường chạy hoàng hôn",
     group: "Vận động",

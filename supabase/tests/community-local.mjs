@@ -19,8 +19,22 @@ try{
  await db.exec(`create role anon; create role authenticated; create schema auth;
  create table auth.users(id uuid primary key,is_anonymous boolean,email_confirmed_at timestamptz);
  create function auth.uid() returns uuid language sql stable as $$select nullif(current_setting('request.jwt.claim.sub',true),'')::uuid$$;
- grant usage on schema auth to authenticated,anon;`);
+ grant usage on schema auth to authenticated,anon;
+ create schema realtime;
+ create function realtime.topic() returns text language sql stable as $$select nullif(current_setting('realtime.topic',true),'')$$;
+ create table realtime.messages(topic text not null,extension text not null,payload jsonb);
+ alter table realtime.messages enable row level security;
+ grant usage on schema realtime to authenticated,anon;
+ grant select,insert,update,delete on realtime.messages to authenticated,anon;
+ create policy another_app on realtime.messages for all to authenticated,anon using(true) with check(true);`);
  await db.exec(await readFile(new URL("../migrations/202611190001_moderated_rooms.sql",import.meta.url),"utf8"));
+ await db.exec(await readFile(new URL("../migrations/202611200001_private_room_channels.sql",import.meta.url),"utf8"));
+ await q("insert into realtime.messages(topic,extension) values ('focus-buddy-room:toan','broadcast'),('focus-buddy-room:tu-hoc','broadcast'),('focus-buddy-room:toan','presence'),('another-app','broadcast')");
+ const revisions = ()=>q("select topic from realtime.messages where starts_with(topic,'focus-buddy-room:')");
+ await q("select set_config('realtime.topic','focus-buddy-room:toan',false)");
+ await as(null);eq((await revisions()).rows,[]);
+ await deny("insert into realtime.messages values ('focus-buddy-room:toan','broadcast','{}')");
+ await root();
  for(const id of ids)await q("insert into auth.users values($1,$2,$3)",[id,id===guest,id===guest?null:new Date()]);
  await q("insert into buddy_community.moderators values($1)",[mod]);
  await as(null);eq((await one("select public.fb_community_status()")).enabled,false);
@@ -34,6 +48,12 @@ try{
  await deny("insert into buddy_community.moderators values(auth.uid())");await deny("update public.fb_room_updates set revision=88");
  eq((await q("select * from public.fb_room_updates")).rows.length,0);
  await q("select public.fb_room_join('toan')");eq((await q("select room from public.fb_room_updates")).rows,[{room:"toan"}]);
+ eq((await revisions()).rows,[{topic:"focus-buddy-room:toan"}]);
+ eq((await q("select topic from realtime.messages where topic='another-app'")).rows.length,1);
+ await deny("insert into realtime.messages values ('focus-buddy-room:toan','broadcast','{}')");
+ eq((await q("delete from realtime.messages where topic='focus-buddy-room:toan' returning topic")).rows.length,0);
+ await q("select set_config('realtime.topic','focus-buddy-room:tu-hoc',false)");eq((await revisions()).rows,[]);
+ await q("select set_config('realtime.topic','focus-buddy-room:toan',false)");
  await deny("select public.fb_room_profile('Số 123','fox','forest','Toán')");
  await q("select public.fb_room_profile('Trúc Nhỏ','owl','forest','Toán')");
  for(const body of [" ","x".repeat(321),"Đọc https://example.org","Nhắn test@example.org","Số 0912 345 678","Xem example.com", "Chào\u202eđảo"])await deny("select public.fb_room_send('toan',$1)",[body]);
@@ -67,5 +87,6 @@ try{
  await root();await q("insert into buddy_community.messages(room,author,body,state,created) values('toan',$1,'Tin cũ','approved',now()-interval '31 days')",[bob]);
  await q("select buddy_community.prune()");eq(await one("select count(*)::int from buddy_community.messages"),0);
  await q("update buddy_community.settings set enabled=false");await as(bob);await deny("select public.fb_room_feed('toan')");eq((await q("select * from public.fb_room_updates")).rows.length,0);
+ eq((await revisions()).rows,[]);
  console.log(`Đạt ${checks} kiểm tra cộng đồng trên PostgreSQL cục bộ.`);
 }finally{await db.close();}

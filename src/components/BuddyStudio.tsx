@@ -54,6 +54,7 @@ export default function BuddyStudio({
   const [reaction, setReaction] = useState<Reaction>("idle");
   const [sleepy, setSleepy] = useState(false);
   const [name, setName] = useState(profile.buddy_name || "");
+  const [previewStudy, setPreviewStudy] = useState(false);
   const [tab, setTab] = useState<"friends" | "style" | "closet" | "world">("friends");
   const {look}=useWardrobe();
   const [pose,setPose]=useState<BuddyActivity>("idle"),[playMenu,setPlayMenu]=useState(false);
@@ -134,7 +135,7 @@ export default function BuddyStudio({
     return ()=>clearTimeout(reset);
   },[pose,reaction]);
   const greeting={calm:"Mình ngồi đây với bạn. Bắt đầu bằng một việc nhỏ nhé.",playful:"Chạm vào mình nhé, mình đang đợi bạn đó!",sunny:"Thấy bạn rồi! Hôm nay mình cùng khám phá nhé.",curious:"Hôm nay bạn muốn tìm hiểu điều gì?",coach:"Chọn một mục tiêu vừa sức. Mình sẽ đi cùng bạn."}[look.personality];
-  const poseLine=({dancing:"Một, hai, ba… cùng nhún chân nào!",walking:"Đi vài bước cho giãn chân nhé.",studying:"Mình tìm thấy một đoạn sách rất hay.",surprised:"Ồ, bạn ở đây từ lúc nào thế?",curious:"Bạn mang theo điều gì thú vị vậy?",celebrating:"Hoan hô! Vỗ tay cùng mình nào.",waking:"Chào bạn, mình tỉnh rồi đây!"} as Partial<Record<BuddyActivity,string>>)[pose];
+  const poseLine=({dancing:"Một, hai, ba… cùng nhún chân nào!",walking:"Đi vài bước cho giãn chân nhé.",studying:look.studyTool==="book"?"Mình tìm thấy một đoạn sách rất hay.":"Cùng xem lại những gì mình vừa học nhé.",surprised:"Ồ, bạn ở đây từ lúc nào thế?",curious:"Bạn mang theo điều gì thú vị vậy?",celebrating:"Hoan hô! Vỗ tay cùng mình nào.",waking:"Chào bạn, mình tỉnh rồi đây!"} as Partial<Record<BuddyActivity,string>>)[pose];
   const bubble = paused
     ? "Mình sẽ ngồi yên ở đây cùng bạn tập trung."
     : sleepy
@@ -249,9 +250,9 @@ export default function BuddyStudio({
               color={profile.color}
               accessory={accessory}
               reaction={reaction}
-              activity={paused?"studying":sleepy?"sleeping":pose} night={scene==="space"} offset={dragDraft??undefined}
+              activity={paused || (tab==="closet" && previewStudy)?"studying":sleepy?"sleeping":pose} night={scene==="space"} offset={dragDraft??undefined}
               paused={paused}
-              sleepy={sleepy}
+              sleepy={sleepy && !(tab==="closet" && previewStudy)}
               size={340}
             />
           </button>
@@ -279,7 +280,7 @@ export default function BuddyStudio({
           </div>
           {playMenu&&!paused&&<div className="buddy-play-choices" id="buddy-play-choices">
             <h3>Chơi với {displayName}</h3>
-            <div className="buddy-pose-choices"><button onClick={()=>interact("idle","dancing")}><Music2 size={15}/>Nhảy múa</button><button onClick={()=>interact("idle","walking")}><Footprints size={15}/>Đi dạo</button><button onClick={()=>interact("idle","studying")}><BookOpen size={15}/>Đọc sách</button></div>
+            <div className="buddy-pose-choices"><button onClick={()=>interact("idle","dancing")}><Music2 size={15}/>Nhảy múa</button><button onClick={()=>interact("idle","walking")}><Footprints size={15}/>Đi dạo</button><button onClick={()=>interact("idle","studying")}><BookOpen size={15}/>{look.studyTool==="book"?"Đọc sách":"Cùng học"}</button></div>
             <div className="buddy-activity-links">{buddyActivities.map(g=><Link key={g.slug} to={`/tro-choi/${g.slug}`}>{g.title}</Link>)}</div>
           </div>}
           {paused && (
@@ -438,7 +439,7 @@ export default function BuddyStudio({
                 </div>
               </>
             )}
-            {tab==="closet"&&<WardrobePanel base={{companion:profile.companion,color:profile.color,accessory}} xp={profile.total_xp??0} busy={saving} restoreBase={base=>save({...base})} positioning={positioning} togglePosition={()=>setPositioning(v=>!v)}/>}
+            {tab==="closet"&&<WardrobePanel previewStudy={previewStudy} setPreviewStudy={show=>{setPreviewStudy(show);if(show)setSleepy(false);}} base={{companion:profile.companion,color:profile.color,accessory}} xp={profile.total_xp??0} busy={saving} restoreBase={base=>save({...base})} positioning={positioning} togglePosition={()=>setPositioning(v=>!v)}/>}
             {tab === "world" && (
               <>
                 <div className="studio-panel-title">

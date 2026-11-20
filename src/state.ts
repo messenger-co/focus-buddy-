@@ -685,7 +685,7 @@ export function useBuddy() {
   }, []);
   const signOut = useCallback(async () => {
     if (!supabase) return;
-    const { error: authError } = await supabase.auth.signOut();
+    const { error: authError } = await supabase.auth.signOut({ scope: "local" });
     if (authError)
       throw friendlyError(authError, "Chưa đăng xuất được. Bạn thử lại nhé.");
     setSession(null);

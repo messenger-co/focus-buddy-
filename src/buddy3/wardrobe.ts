@@ -25,6 +25,9 @@ export const clothes = {
   pajamas: "Đồ ngủ",
   sport: "Áo thể thao",
   astronaut: "Đồ phi hành",
+  overalls: "Yếm làm vườn",
+  smock: "Tạp dề họa sĩ",
+  sailor: "Áo thủy thủ",
 } as const;
 export const hats = {
   none: "Không thêm mũ",
@@ -34,6 +37,15 @@ export const hats = {
   blossom: "Hoa anh đào",
   winter: "Mũ mùa đông",
   laurels: "Vòng nguyệt quế",
+  straw: "Nón rơm",
+  painter: "Mũ nồi họa sĩ",
+  mariner: "Mũ thủy thủ",
+} as const;
+export const studyTools = {
+  book: "Sách mở",
+  journal: "Sổ ép lá",
+  sketchpad: "Sổ ký họa",
+  chart: "Bản đồ sao",
 } as const;
 export const eyewear = {
   none: "Để trống",
@@ -102,6 +114,7 @@ export type Wardrobe = {
   garment: keyof typeof clothes;
   hat: keyof typeof hats;
   eyes: keyof typeof eyes;
+  studyTool: keyof typeof studyTools;
   face: keyof typeof faces;
   dye: keyof typeof dyes;
   glasses: keyof typeof eyewear;
@@ -122,6 +135,7 @@ export type SavedLook = { name: string; look: Wardrobe; base: BaseLook };
 type Store = { look: Wardrobe; outfits: SavedLook[] };
 export const initialLook: Wardrobe = {
   body: "original",
+  studyTool: "book",
   garment: "plain",
   hat: "none",
   eyes: "bright",
@@ -136,39 +150,88 @@ export const initialLook: Wardrobe = {
   x: 0,
   y: 0,
 };
-export const presets: Record<string, Partial<Wardrobe>> = {
-  "Góc đọc sách": {
-    garment: "sweater",
-    hat: "wool",
-    dye: "umber",
-    texture: "stitch",
-    personality: "calm",
+export const presets: {
+  label: string;
+  look: Partial<Wardrobe> & Pick<Wardrobe, "dye">;
+}[] = [
+  {
+    label: "Góc đọc sách",
+    look: {
+      garment: "sweater",
+      hat: "wool",
+      dye: "umber",
+      texture: "stitch",
+      personality: "calm",
+    },
   },
-  "Nhà thám hiểm": {
-    garment: "jacket",
-    hat: "cap",
-    bag: "pack",
-    dye: "sage",
-    face: "curious",
-    personality: "curious",
+  {
+    label: "Nhà thám hiểm",
+    look: {
+      garment: "jacket",
+      hat: "cap",
+      bag: "pack",
+      dye: "sage",
+      face: "curious",
+      personality: "curious",
+    },
   },
-  "Đêm ngắm sao": {
-    garment: "astronaut",
-    eyes: "star",
-    effect: "stars",
-    dye: "iris",
-    personality: "sunny",
+  {
+    label: "Đêm ngắm sao",
+    look: {
+      garment: "astronaut",
+      eyes: "star",
+      effect: "stars",
+      dye: "iris",
+      personality: "sunny",
+    },
   },
-  "Ngày đến lớp": {
-    garment: "school",
-    hat: "blossom",
-    bag: "satchel",
-    dye: "denim",
-    personality: "coach",
+  {
+    label: "Ngày đến lớp",
+    look: {
+      garment: "school",
+      hat: "blossom",
+      bag: "satchel",
+      dye: "denim",
+      personality: "coach",
+    },
   },
-};
+  {
+    label: "Nhà thực vật",
+    look: {
+      garment: "overalls",
+      hat: "straw",
+      body: "jade",
+      dye: "sage",
+      studyTool: "journal",
+      personality: "curious",
+    },
+  },
+  {
+    label: "Họa sĩ màu nước",
+    look: {
+      garment: "smock",
+      hat: "painter",
+      dye: "berry",
+      studyTool: "sketchpad",
+      face: "happy",
+      personality: "playful",
+    },
+  },
+  {
+    label: "Hoa tiêu nhí",
+    look: {
+      garment: "sailor",
+      hat: "mariner",
+      dye: "denim",
+      studyTool: "chart",
+      eyes: "star",
+      personality: "calm",
+    },
+  },
+];
 const options = {
   body: bodies,
+  studyTool: studyTools,
   garment: clothes,
   hat: hats,
   eyes,
@@ -313,6 +376,7 @@ function pick<T extends object>(
 export function randomOutfit(xp: number): Partial<Wardrobe> {
   return {
     body: pick(bodies),
+    studyTool: pick(studyTools),
     garment: pick(clothes),
     hat: pick(hats, (h) => h !== "laurels" || xp >= 100),
     dye: pick(dyes),

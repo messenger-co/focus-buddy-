@@ -3,7 +3,7 @@ import { motion, useReducedMotion } from "motion/react";
 import type { BuddyAccessory, CompanionColor, CompanionKind } from "../data";
 
 import { useWardrobe, bodies } from "../buddy3/wardrobe";
-import { Garment, Headwear, Finishing, StudyBook, Glints, type BuddyActivity } from "../buddy3/Layers";
+import { Garment, Headwear, Finishing, StudyDeskItem, Glints, type BuddyActivity } from "../buddy3/Layers";
 import "../buddy3/character.css";
 
 const trackMotion=(notify:()=>void)=>{window.addEventListener("focus-buddy-appearance",notify);return ()=>window.removeEventListener("focus-buddy-appearance",notify);};
@@ -862,7 +862,7 @@ export default function Companion({
           </>
         )}
         <Finishing look={look}/>
-        {pose==="studying"&&<StudyBook night={night}/>}
+        {pose==="studying"&&<StudyDeskItem night={night} tool={look.studyTool}/>}
       </motion.g>
       {!sprite && (
         <>
