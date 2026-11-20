@@ -74,6 +74,8 @@ import { useAppearance } from "./foundation/appearance";
 import { english as inEnglish, locale } from "./foundation/language";
 import Boundary from "./foundation/Boundary";
 import StudyNook from "./foundation/StudyNook";
+import LocalBackup from "./foundation/LocalBackup";
+import SiteStatus from "./foundation/SiteStatus";
 import { russianShortcut } from "./easterEgg/russianShortcut";
 const ThemeStudio = lazy(() => import("./foundation/ThemeStudio"));
 const World = lazy(() => import("./world3/World"));
@@ -759,6 +761,7 @@ function App() {
             </button>
           </div>
         )}
+        <SiteStatus />
         {settings && (
           <SettingsModal buddy={buddy} close={() => setSettings(false)} />
         )}
@@ -1557,6 +1560,27 @@ function SettingsModal({ buddy, close }: { buddy: Buddy; close: () => void }) {
           )}
         </section>
       )}
+      <section className="settings-section">
+        <h3>Phiên bản và cập nhật</h3>
+        <p className="muted">
+          Ứng dụng có thể dùng ngoại tuyến sau khi đã tải. Bạn có thể kiểm tra
+          phiên bản mới mà không làm mất dữ liệu đã lưu.
+        </p>
+        <button type="button" className="button secondary" disabled={busy}
+          onClick={() => {
+            void run(async () => {
+              if (!("serviceWorker" in navigator))
+                throw new Error("Trình duyệt này chưa hỗ trợ cập nhật ngoại tuyến.");
+              const registration = await navigator.serviceWorker.getRegistration();
+              if (!registration)
+                throw new Error("Chưa cài đặt bộ nhớ ngoại tuyến. Hãy tải lại khi có mạng.");
+              await registration.update();
+            }, "Đã kiểm tra cập nhật. Nếu có phiên bản mới, ứng dụng sẽ hiện lựa chọn tải lại.");
+          }}>
+          Kiểm tra cập nhật
+        </button>
+      </section>
+      <LocalBackup/>
       <section className="settings-section">
         <h3>Nhẹ nhàng với bạn</h3>
         <p className="muted">
