@@ -14,6 +14,23 @@ Học cùng một bạn nhỏ biết đọc sách, nhảy và ăn mừng khi b�
 
 Chế độ 3D dùng Three.js đã có sẵn trong dự án, giới hạn độ phân giải render để giảm tải thiết bị. Mô hình xe tăng địch được tái sử dụng khi các lượt xuất hiện thay đổi; các đối tượng đồ họa thuộc về một phiên được thu hồi khi thoát. Nếu WebGL không thể khởi tạo, bị mất ngữ cảnh hoặc phát sinh lỗi render, trò chơi chuyển sang Canvas 2D và hiển thị thông báo để thử lại. Việc đổi 3D/2D **không đặt lại trạng thái ván đang chơi**.
 
+### Star collection, easier arcade levels and language
+
+The **Star Basket** now collects falling stars and moons as soon as they reach Buddy's basket, supports dragging between lanes, and allows more time on advanced levels. Rhythm, runner and snake levels have more forgiving pacing. The island platformer and glider use swept collision with a larger visual pickup area so overlapping stars don't get skipped between frames. Existing game records remain stored on the device.
+
+The interface can be switched between **Tiếng Việt** and **English** in Theme Studio. Dynamic star scores, time limits, level outcomes and arcade directions now use the selected language, not just translated labels. The selected language is saved in your browser.
+
+### Reconnecting to Supabase from Settings
+
+Open **Cài đặt & tài khoản → Kết nối máy chủ Supabase → Kết nối lại Supabase**. The app checks the real Supabase Auth health endpoint using the **public publishable key**, distinguishes an offline/unreachable server from a missing or expired user session, and refreshes an existing authenticated session once when appropriate. It never sends the service-role key or removes local game progress.
+
+If the page says **Supabase is not configured**, the GitHub Pages build is missing configuration. In the repository go to **Settings → Secrets and variables → Actions → Variables**, then configure:
+
+- `VITE_SUPABASE_URL` — the project's HTTPS endpoint (`https://<project-ref>.supabase.co`)
+- `VITE_SUPABASE_PUBLISHABLE_KEY` — the project's **publishable** public key only
+
+The workflow `.github/workflows/deploy.yml` reads these repository variables during `npm run build`. Trigger a fresh GitHub Pages deployment after saving them. **Never put a `service_role`, secret API key, password, access token or Groq key in a `VITE_` variable or commit it to the repository.** The online discussion feature separately requires the Supabase room migrations, a verified email account, moderator setup, and the administrator-controlled `enabled` setting described in `supabase/README.md`.
+
 ## Chạy tại máy
 
 Dùng Node.js 22.12 trở lên. Từ thư mục gốc, chạy các lệnh sau.
