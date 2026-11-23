@@ -1,11 +1,15 @@
 import { useEffect, useRef, useState } from "react";
 import Companion from "../../components/Companion";
+import { english } from "../../foundation/language";
 import {
   advanceWorld,
   arrows,
   beatInput,
   cols,
   dropDuration,
+  catchTimeLimit,
+  starCatchProgress,
+  maxDanceMisses,
   makeWorld,
   rows,
   type Arrow,
@@ -181,6 +185,7 @@ function draw(ctx: CanvasRenderingContext2D, w: World) {
       const x = 35 + i * 83;
       rect(x, 20, 80, 149, i === w.lane ? "#c9effc23" : "#afc6e20a");
       rect(x, 169, 80, 4, i === w.lane ? "#ffe39c" : "#8fa6b9");
+      label(String(i + 1), x + 40, 190, 13, i === w.lane ? "#fff3b9" : "#cad7e3");
     }
     poly(
       [
@@ -199,6 +204,11 @@ function draw(ctx: CanvasRenderingContext2D, w: World) {
     for (const item of w.items) {
       const x = 75 + item.lane * 83,
         y = 12 + 149 * Math.min(1, (w.t - item.born) / dropDuration(w.level));
+      if (item.kind !== "storm" &&
+          (w.t - item.born) / dropDuration(w.level) >= starCatchProgress - 0.14 &&
+          item.lane === w.lane) {
+        oval(x, 163, 22, 8, "#ffe7a45c");
+      }
       if (item.kind === "star") {
         oval(x, y, 14, 14, "#ffdc872b");
         star(x, y, 10, "#ffd575");
@@ -308,6 +318,21 @@ function draw(ctx: CanvasRenderingContext2D, w: World) {
   }
   return { x: 42, y: 152, size: 48, tilt: 0 };
 }
+function translateMotionNotice(message: string): string {
+  const points = message.match(/^\+\s*(\d+) điểm/);
+  if (points) return "+" + points[1] + " points · Caught!";
+  const dictionary: Record<string, string> = {
+    "Mây giông! Chuyển làn để tránh nhé.": "Storm cloud! Switch lanes to dodge it.",
+    "Vấp đá trên đường chạy.": "Oops! You hit a rock. Try another jump.",
+    "Chờ nốt vào vòng sáng.": "Wait until the note reaches the glowing ring.",
+    "Đúng nhịp!": "Perfect timing!",
+    "Bắt được nốt!": "Nice catch!",
+    "Lệch hướng rồi.": "Try the matching arrow next time.",
+    "Lỡ một nốt.": "Missed a note. You can still recover.",
+  };
+  return dictionary[message] || message;
+}
+
 export default function MotionGame({
   id,
   level,
@@ -357,17 +382,23 @@ export default function MotionGame({
       sprite.style.transform = `translate(-50%,-100%) rotate(${p.tilt}deg)`;
       const status =
         world.id === "hung-sao"
-          ? `${world.score}/${world.goal} điểm · ${world.hearts} tim · ${Math.max(0, Math.ceil(32 + level - world.t))} giây`
+          ? english
+            ? `${world.score}/${world.goal} points · ${world.hearts} hearts · ${Math.max(0, Math.ceil(catchTimeLimit(level) - world.t))} sec`
+            : `${world.score}/${world.goal} điểm · ${world.hearts} tim · ${Math.max(0, Math.ceil(catchTimeLimit(level) - world.t))} giây`
           : world.id === "vu-dieu"
-            ? `${world.index}/${world.goal} nốt · ${3 - world.misses} tim`
-            : `${world.score}/${world.goal} ${world.id === "ran-vuon" ? "táo" : "tảng đá"}`;
+            ? english
+              ? `${world.index}/${world.goal} notes · ${maxDanceMisses - world.misses} chances`
+              : `${world.index}/${world.goal} nốt · ${maxDanceMisses - world.misses} lượt còn lại`
+            : english
+              ? `${world.score}/${world.goal} ${world.id === "ran-vuon" ? "apples" : "rocks"}`
+              : `${world.score}/${world.goal} ${world.id === "ran-vuon" ? "táo" : "tảng đá"}`;
       if (status !== text) {
         text = status;
         setHud(status);
       }
       if (msg !== world.notice) {
         msg = world.notice;
-        setNotice(msg);
+        setNotice(english ? translateMotionNotice(msg) : msg);
       }
     }
     function tick(now: number) {
@@ -447,7 +478,18 @@ export default function MotionGame({
             );
           if (id === "duong-chay") input("jump");
         }}
+        onPointerMove={(e) => {
+          if (id !== "hung-sao" || !pointer.current || !active) return;
+          const bounds = e.currentTarget.getBoundingClientRect();
+          if (bounds.width <= 0) return;
+          input(Math.round((((e.clientX - bounds.left) / bounds.width) * 400 - 75) / 83));
+        }}
+        onPointerCancel={() => { pointer.current = null; }}
         onPointerUp={(e) => {
+          if (id === "hung-sao") {
+            pointer.current = null;
+            return;
+          }
           if (!pointer.current || id !== "ran-vuon") return;
           const dx = e.clientX - pointer.current.x,
             dy = e.clientY - pointer.current.y;
@@ -508,7 +550,12 @@ export default function MotionGame({
         ))}
       </div>
       <p role="status">
-        {notice || (id === "ran-vuon" ? "Chọn hướng để bắt đầu bò." : "")}
+        {notice || (id === "ran-vuon"
+          ? (english ? "Choose a direction to begin." : "Chọn hướng để bắt đầu bò.")
+          : id === "hung-sao"
+            ? (english ? "Tap or drag to a lane. Catch stars when they reach Buddy's basket!"
+              : "Chạm hoặc kéo để đổi làn. Hứng sao khi chúng chạm giỏ của Buddy!")
+            : "")}
       </p>
     </>
   );
