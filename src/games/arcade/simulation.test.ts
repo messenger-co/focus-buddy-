@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { courses, HEIGHT } from "./courses";
-import { advance, islandX, newRun, STEP, stormY } from "./simulation";
+import { advance, islandX, newRun, STEP, stormY, withinPickupPath } from "./simulation";
 
 const idle = { direction: 0, jump: false, lift: false };
 
@@ -155,5 +155,22 @@ describe("Điều khiển và va chạm", () => {
     });
     expect(advance(c, r, idle)).toContain("fall");
     expect(r.x).toBe(c.checkpoint.x);
+  });
+});
+
+describe("Reliable gem collection at every frame rate", () => {
+  it("collects a star when its artwork visibly overlaps Buddy", () => {
+    const c = courses.jump[0], r = newRun(c);
+    const gem = c.gems[0];
+    Object.assign(r, { x: gem.x + 26, y: gem.y + 16, ground: null, vx: 0, vy: 0 });
+    expect(advance(c, r, idle)).toContain("pickup");
+    expect(r.collected.has(0)).toBe(true);
+    expect(advance(c, r, idle)).not.toContain("pickup");
+  });
+  it("detects a moving Buddy sweeping across a star instead of tunnelling", () => {
+    const gem = { x: 100, y: 100 };
+    expect(withinPickupPath({ x: 70, y: 100 }, { x: 130, y: 100 }, gem, 22)).toBe(true);
+    expect(withinPickupPath({ x: 70, y: 140 }, { x: 130, y: 140 }, gem, 22)).toBe(false);
+    expect(withinPickupPath(gem, gem, gem, 22)).toBe(true);
   });
 });

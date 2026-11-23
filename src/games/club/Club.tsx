@@ -5,6 +5,7 @@ import { Link } from "react-router-dom";
 import { LevelPicker, levelKey, readScore, recordScore } from "../levels";
 import { creativeIds, difficulty, type ClubEntry } from "./catalog";
 import type { Profile } from "../../state";
+import { english as inEnglish } from "../../foundation/language";
 import MotionGame from "./MotionGame";
 import type { MotionId } from "./motion";
 import { challenges } from "./Challenges";
@@ -168,7 +169,14 @@ function Round({
                   Tiếp tục chơi
                 </button>
               )}
-              {(phase==="won" || phase==="lost") && <div role="status"><h2>{phase==="won"?"Hoàn thành rồi!":"Hết lượt"} · {points} điểm</h2></div>}
+              {(phase === "won" || phase === "lost") && (
+                <div className="club-result" role="status">
+                  <h2>{phase === "won"
+                    ? (inEnglish ? "Amazing run! ✨" : "Giỏi lắm! Bạn đã chinh phục chặng này ✨")
+                    : (inEnglish ? "Great try — every run helps! 🌱" : "Chặng này hơi khó, mình thử lại nhé 🌱")}</h2>
+                  <p>{points} {inEnglish ? "points earned" : "điểm đạt được"}</p>
+                </div>
+              )}
               {phase==="won" && onNext && <button className="button primary" onClick={onNext}>Chặng tiếp theo</button>}
               <button
                 className="button secondary"

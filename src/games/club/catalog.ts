@@ -13,7 +13,7 @@ export const clubGames = [
     group: "Vận động",
     mark: "☀",
     tone: "orange",
-    help: "Bạn nhỏ tự chạy. Chạm hoặc nhấn Cách để nhảy qua đá trên đường đến đích.",
+    help: "Nhảy qua những tảng đá trên đường chạy hoàng hôn! Chạm màn hình hoặc nhấn Cách đúng lúc để đưa Buddy về đích.",
   },
   {
     slug: "hung-sao",
@@ -21,7 +21,7 @@ export const clubGames = [
     group: "Vận động",
     mark: "✦",
     tone: "blue",
-    help: "Di chuyển bằng ← → hoặc chạm một làn. Hứng sao vàng được 2 điểm, trăng bạc được 3 điểm. Tránh mây giông.",
+    help: "Đưa Buddy đến đúng làn bằng ← →, chạm hoặc kéo ngón tay. Sao vàng được 2 điểm, trăng bạc được 3 điểm. Đón khi ngôi sao chạm giỏ và tránh mây giông!",
   },
   {
     slug: "vu-dieu",
@@ -29,7 +29,7 @@ export const clubGames = [
     group: "Âm nhạc",
     mark: "♫",
     tone: "lavender",
-    help: "Khi nốt nhạc tới vòng sáng, nhấn mũi tên cùng hướng hoặc nút bên dưới. Ba lần lỡ nhịp sẽ kết thúc ván.",
+    help: "Canh nốt nhạc chạm vòng sáng rồi nhấn đúng mũi tên. Bạn có 4 lượt lỡ nhịp để tìm lại giai điệu!",
   },
   {
     slug: "ran-vuon",
@@ -37,7 +37,7 @@ export const clubGames = [
     group: "Điều khiển",
     mark: "❧",
     tone: "moss",
-    help: "Dùng bốn mũi tên, nút hướng hoặc vuốt để ăn táo. Tránh đá, mép vườn và đuôi của mình.",
+    help: "Dẫn rắn con đi nhặt táo bằng phím mũi tên hoặc vuốt. Nhìn trước một bước để tránh đá, mép vườn và chính chiếc đuôi!",
   },
   {
     slug: "xep-khoi",
