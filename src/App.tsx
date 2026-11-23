@@ -23,6 +23,8 @@ import {
   ChevronRight,
   Clock3,
   Coffee,
+  Cloud,
+  RefreshCw,
   Flame,
   Flower2,
   Gamepad2,
@@ -76,6 +78,8 @@ import Boundary from "./foundation/Boundary";
 import StudyNook from "./foundation/StudyNook";
 import LocalBackup from "./foundation/LocalBackup";
 import SiteStatus from "./foundation/SiteStatus";
+import { checkSupabaseConnection, cloudCheckText, type CloudCheck } from "./cloudHealth";
+import "./cloudHealth.css";
 import { russianShortcut } from "./easterEgg/russianShortcut";
 const ThemeStudio = lazy(() => import("./foundation/ThemeStudio"));
 const World = lazy(() => import("./world3/World"));
@@ -1443,6 +1447,21 @@ function SettingsModal({ buddy, close }: { buddy: Buddy; close: () => void }) {
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
   const [failed, setFailed] = useState(false);
+  const [connection, setConnection] = useState<CloudCheck | null>(null);
+  const [checkingCloud, setCheckingCloud] = useState(false);
+  const connectionInProgress = useRef(false);
+  const reconnectCloud = async () => {
+    if (connectionInProgress.current) return;
+    connectionInProgress.current = true;
+    setCheckingCloud(true);
+    try {
+      const result = await checkSupabaseConnection();
+      setConnection(result);
+    } finally {
+      connectionInProgress.current = false;
+      setCheckingCloud(false);
+    }
+  };
   const run = async (fn: () => Promise<unknown>, text: string) => {
     setBusy(true);
     setMessage("");
@@ -1452,7 +1471,7 @@ function SettingsModal({ buddy, close }: { buddy: Buddy; close: () => void }) {
       setMessage(text);
     } catch (e) {
       setFailed(true);
-      setMessage((e as Error).message);
+      setMessage(e instanceof Error ? e.message : "Chưa hoàn tất. Bạn thử lại nhé.");
     } finally {
       setBusy(false);
     }
@@ -1502,6 +1521,42 @@ function SettingsModal({ buddy, close }: { buddy: Buddy; close: () => void }) {
             ? "Bạn có thể trò chuyện với AI mà không cần email hay đăng nhập. Ứng dụng tự tạo phiên khách khi gửi câu hỏi đầu tiên."
             : "AI trực tuyến chưa được cấu hình. Các gợi ý ngoại tuyến vẫn dùng được mà không cần tài khoản."}
         </p>
+      </section>
+      <section className="settings-section cloud-connection">
+        <div className="cloud-connection-heading">
+          <Cloud size={22} />
+          <div>
+            <h3>{inEnglish ? "Supabase connection" : "Kết nối máy chủ Supabase"}</h3>
+            <p className="muted">
+              {inEnglish
+                ? "Check the actual server, safely refresh an existing session, and find out whether you need to sign in again. Local game progress stays on this device."
+                : "Kiểm tra máy chủ thật, khôi phục phiên đăng nhập nếu có thể và biết khi nào cần đăng nhập lại. Điểm trò chơi trên máy vẫn được giữ nguyên."}
+            </p>
+          </div>
+        </div>
+        <button type="button" className="button secondary" disabled={busy || checkingCloud}
+          onClick={() => { void reconnectCloud(); }}>
+          <RefreshCw size={16} className={checkingCloud ? "cloud-check-spinning" : undefined}/>
+          {checkingCloud ? (inEnglish ? "Checking connection…" : "Đang kiểm tra…")
+            : (inEnglish ? "Reconnect to Supabase" : "Kết nối lại Supabase")}
+        </button>
+        {connection && (
+          <div className={"cloud-connection-result " +
+            (connection.serverReachable ? "connected" : "disconnected")}
+            role="status">
+            <strong>{connection.serverReachable
+              ? (inEnglish ? "Server reachable" : "Máy chủ đã kết nối")
+              : (inEnglish ? "Connection needs attention" : "Cần kiểm tra kết nối")}</strong>
+            <p>{cloudCheckText(connection, inEnglish)}</p>
+          </div>
+        )}
+        {!buddy.cloudConfigured && (
+          <p className="cloud-config-hint">
+            {inEnglish
+              ? "Repository Settings → Secrets and variables → Actions → Variables: set VITE_SUPABASE_URL and VITE_SUPABASE_PUBLISHABLE_KEY, then redeploy GitHub Pages. Never put a service_role key in frontend variables."
+              : "Trong GitHub: Settings → Secrets and variables → Actions → Variables, đặt VITE_SUPABASE_URL và VITE_SUPABASE_PUBLISHABLE_KEY rồi triển khai lại Pages. Không đưa khóa service_role vào mã giao diện."}
+          </p>
+        )}
       </section>
       {buddy.cloudConfigured && (
         <section className="settings-section room-account">
