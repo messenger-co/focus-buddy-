@@ -195,6 +195,27 @@ function stepGlide(
   }
 }
 
+/** Nearest distance from a gem to the travelled path of Buddy's torso.
+ * Resolves fast-frame tunnelling and near-overlaps consistently at every FPS.
+ */
+export function withinPickupPath(
+  start: { x: number; y: number },
+  end: { x: number; y: number },
+  gem: { x: number; y: number },
+  radius: number,
+): boolean {
+  const dx = end.x - start.x;
+  const dy = end.y - start.y;
+  const segmentLengthSquared = dx * dx + dy * dy;
+  const projection = segmentLengthSquared > 0
+    ? Math.max(0, Math.min(1,
+      ((gem.x - start.x) * dx + (gem.y - start.y) * dy) / segmentLengthSquared))
+    : 0;
+  const px = start.x + projection * dx;
+  const py = start.y + projection * dy;
+  return (gem.x - px) ** 2 + (gem.y - py) ** 2 <= radius ** 2;
+}
+
 export function advance(
   course: Course,
   run: Run,
@@ -203,16 +224,20 @@ export function advance(
 ): GameEvent[] {
   const events: GameEvent[] = [];
   if (run.finished) return events;
+  const initial = { x: run.x, y: run.y - 16 };
   run.time += dt;
   if (course.mode === "jump") stepJump(course, run, input, dt, events);
   else stepGlide(course, run, input, dt, events);
   if (events.includes("fall")) return events;
-  const radius = course.mode === "jump" ? 20 : 24;
+  // The gem artwork is wider than the old 20px collision circle.
+  // A slightly forgiving swept pickup area prevents visible overlaps failing.
+  const radius = course.mode === "jump" ? 30 : 31;
+  const end = { x: run.x, y: run.y - 16 };
   for (let i = 0; i < course.gems.length; i++) {
     const gem = course.gems[i];
     if (
       !run.collected.has(i) &&
-      Math.hypot(run.x - gem.x, run.y - 16 - gem.y) < radius
+      withinPickupPath(initial, end, gem, radius)
     ) {
       run.collected.add(i);
       events.push("pickup");
