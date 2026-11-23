@@ -79,6 +79,7 @@ describe("Điều khiển trong câu lạc bộ", () => {
 describe("Friendly timing and collectible reliability", () => {
   it("collects a visible star before it reaches the last pixel of the basket", () => {
     const w = makeWorld("hung-sao", 5);
+    if (w.id !== "hung-sao") throw new Error("Expected the star basket game.");
     w.lane = 2;
     w.next = 999;
     const duration = dropDuration(5);
@@ -92,6 +93,7 @@ describe("Friendly timing and collectible reliability", () => {
   });
   it("gives players a late chance to switch lanes without awarding storm points", () => {
     const w = makeWorld("hung-sao", 4);
+    if (w.id !== "hung-sao") throw new Error("Expected the star basket game.");
     w.next = 999;
     w.items = [
       { lane: 3, born: 0, kind: "moon", resolved: false },
