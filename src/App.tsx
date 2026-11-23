@@ -31,8 +31,10 @@ import {
   Headphones,
   Puzzle,
   MessagesSquare,
+  Globe,
   Heart,
   Home,
+  Keyboard,
   Leaf,
   LoaderCircle,
   Menu,
@@ -64,6 +66,7 @@ import { useBuddy, vietnamDay } from "./state";
 import Assistant from "./ai3/Assistant";
 import {
   COMPANIONS,
+  DAILY_QUOTES,
   EXERCISES,
   type CompanionKind,
   type CompanionColor,
@@ -71,9 +74,14 @@ import {
 } from "./data";
 import { Palette, Box as BoxIcon } from "lucide-react";
 import { MotionConfig } from "motion/react";
-import { palette, paletteLibrary } from "./foundation/themes";
+import { isDarkTheme, palette, type ThemeId } from "./foundation/themes";
 import { useAppearance } from "./foundation/appearance";
-import { english as inEnglish, locale } from "./foundation/language";
+import {
+  english as inEnglish,
+  language,
+  locale,
+  switchLanguage,
+} from "./foundation/language";
 import Boundary from "./foundation/Boundary";
 import StudyNook from "./foundation/StudyNook";
 import LocalBackup from "./foundation/LocalBackup";
@@ -228,13 +236,18 @@ function Modal({
 function App() {
   const buddy = useBuddy();
   const appearance = useAppearance();
-  const dark = Boolean(
-    paletteLibrary.find((t) => t[0] === buddy.progress.profile.theme)?.[3],
-  );
+  const dark = isDarkTheme(buddy.progress.profile.theme);
+  const lastLightTheme = useRef<ThemeId>("meadow");
+  const lastDarkTheme = useRef<ThemeId>("charcoal");
+  useEffect(() => {
+    if (dark) lastDarkTheme.current = buddy.progress.profile.theme;
+    else lastLightTheme.current = buddy.progress.profile.theme;
+  }, [dark, buddy.progress.profile.theme]);
   useEffect(() => {
     document.documentElement.dataset.motion = appearance.motion;
     document.documentElement.dataset.palette = dark ? "dark" : "light";
-  }, [appearance.motion, dark]);
+    document.documentElement.dataset.fontScale = appearance.fontScale;
+  }, [appearance.motion, appearance.fontScale, dark]);
   const navigate = useNavigate();
   const location = useLocation();
   const [menu, setMenu] = useState(false);
@@ -403,6 +416,7 @@ function App() {
         data-palette={dark ? "dark" : "light"}
         data-motion={appearance.motion}
         data-backdrop={appearance.backdrop}
+        data-font-scale={appearance.fontScale}
         style={
           palette(
             buddy.progress.profile.theme,
@@ -537,10 +551,41 @@ function App() {
                   </span>
                 </NavLink>
               )}
+              <button
+                type="button"
+                className="topbar-tool"
+                aria-label={
+                  dark ? "Chuyển sang giao diện sáng" : "Chuyển sang giao diện tối"
+                }
+                title={
+                  dark ? "Chuyển sang giao diện sáng" : "Chuyển sang giao diện tối"
+                }
+                onClick={() =>
+                  void act(() =>
+                    buddy.savePreferences({
+                      ...buddy.progress.profile,
+                      theme: dark
+                        ? lastLightTheme.current
+                        : lastDarkTheme.current,
+                    }),
+                  )
+                }
+              >
+                {dark ? <Sun size={16} /> : <Moon size={16} />}
+              </button>
+              <button
+                type="button"
+                className="topbar-tool topbar-lang"
+                aria-label="Đổi ngôn ngữ giao diện"
+                title="Đổi ngôn ngữ (Tiếng Việt / English)"
+                onClick={() => switchLanguage(language === "en" ? "vi" : "en")}
+              >
+                <Globe size={15} />
+                <span>{language === "en" ? "EN" : "VI"}</span>
+              </button>
               <span
                 className={`mode-tag ${buddy.mode === "online" ? "online" : ""}`}
               >
-                <span />
                 Lưu trên thiết bị
               </span>
               <button
@@ -848,6 +893,13 @@ function Dashboard({
   const minutes = Math.floor(
     sessions.reduce((sum, s) => sum + elapsedMs(s), 0) / MINUTE,
   );
+  const [quoteIdx, setQuoteIdx] = useState(0);
+  const weekStats = studyWeek(sessions, now);
+  const todayMinutes = weekStats.days[6]?.minutes ?? 0;
+  const dailyPct = Math.min(
+    100,
+    Math.round((todayMinutes / Math.max(1, settings.dayGoal)) * 100),
+  );
   const companionName =
     buddy.progress.profile.buddy_name ||
     COMPANIONS.find((c) => c.id === buddy.progress.profile.companion)?.name ||
@@ -905,6 +957,20 @@ function Dashboard({
           <Palette size={18} /> Đổi giao diện <ChevronRight size={15} />
         </NavLink>
       </div>
+      <section className="daily-goal-strip card" aria-label="Mục tiêu tập trung hôm nay">
+        <div className="daily-goal-head">
+          <span className="daily-goal-title">
+            <Target size={16} />
+            <strong>Mục tiêu hôm nay</strong>
+          </span>
+          <span className="daily-goal-nums">
+            <strong>{todayMinutes}</strong>/{settings.dayGoal} phút · {weekStats.streak} ngày liên tiếp
+          </span>
+        </div>
+        <div className="progress-track">
+          <span style={{ width: `${dailyPct}%` }} />
+        </div>
+      </section>
       <div className="dashboard-grid" data-widgets={visibleWidgets}>
         <div className="dashboard-main">
           <section className="focus-hero">
@@ -1004,9 +1070,17 @@ function Dashboard({
             <span className="quote-mark">“</span>
             <div>
               <span>MỘT LỜI NHẮN NHỎ</span>
-              <p>Chậm cũng được, miễn là bạn vẫn bước tiếp.</p>
+              <p>{DAILY_QUOTES[quoteIdx % DAILY_QUOTES.length]}</p>
             </div>
-            <Flower2 size={32} strokeWidth={1.2} />
+            <button
+              type="button"
+              className="quote-next"
+              aria-label="Lời nhắn khác"
+              title="Đổi lời nhắn khác"
+              onClick={() => setQuoteIdx((n) => (n + 1) % DAILY_QUOTES.length)}
+            >
+              <RefreshCw size={15} />
+            </button>
           </section>
         </div>
         <div className="dashboard-side">
@@ -1183,8 +1257,14 @@ function MissionsPage({ buddy }: { buddy: Buddy; busy: boolean }) {
     awarded_xp: number;
     explanation: string;
   } | null>(null);
+  const [subject, setSubject] = useState("all");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
+  const subjects = Array.from(new Set(EXERCISES.map((ex) => ex.subject)));
+  const visibleExercises = EXERCISES.map((ex, idx) => ({ ex, idx })).filter(
+    ({ ex }) => subject === "all" || ex.subject === subject,
+  );
+  const completedCount = buddy.progress.completed_exercises.length;
   const submit = async () => {
     if (!exercise || choice === null) return;
     setSubmitting(true);
@@ -1216,10 +1296,33 @@ function MissionsPage({ buddy }: { buddy: Buddy; busy: boolean }) {
           <span className="section-kicker">VỪA HỌC, VỪA KHÁM PHÁ</span>
           <h2>Thử thách dành cho bạn</h2>
         </div>
-        <span className="muted">3 bài tập ngắn</span>
+        <span className="muted">
+          {completedCount}/{EXERCISES.length} bài tập đã hoàn thành
+        </span>
+      </div>
+      <div className="filter-tabs mission-filters" role="group" aria-label="Lọc bài tập theo môn">
+        <button
+          type="button"
+          className={`filter-tab${subject === "all" ? " active" : ""}`}
+          aria-pressed={subject === "all"}
+          onClick={() => setSubject("all")}
+        >
+          Tất cả ({EXERCISES.length})
+        </button>
+        {subjects.map((sub) => (
+          <button
+            key={sub}
+            type="button"
+            className={`filter-tab${subject === sub ? " active" : ""}`}
+            aria-pressed={subject === sub}
+            onClick={() => setSubject(sub)}
+          >
+            {sub}
+          </button>
+        ))}
       </div>
       <div className="exercise-grid">
-        {EXERCISES.map((ex, i) => (
+        {visibleExercises.map(({ ex, idx }) => (
           <button
             className="card exercise-card"
             key={ex.id}
@@ -1231,16 +1334,16 @@ function MissionsPage({ buddy }: { buddy: Buddy; busy: boolean }) {
             }}
           >
             <span
-              className={`exercise-art ${["mint", "peach", "lavender"][i]}`}
+              className={`exercise-art ${["mint", "peach", "lavender"][idx % 3]}`}
             >
-              {i === 0 ? (
+              {idx % 3 === 0 ? (
                 <Target size={40} strokeWidth={1.3} />
-              ) : i === 1 ? (
+              ) : idx % 3 === 1 ? (
                 <Sprout size={44} strokeWidth={1.3} />
               ) : (
                 <BookOpen size={40} strokeWidth={1.3} />
               )}
-              <span>0{i + 1}</span>
+              <span>{String(idx + 1).padStart(2, "0")}</span>
             </span>
             <span className="section-kicker">{ex.subject}</span>
             <h3>{ex.title}</h3>
@@ -1330,7 +1433,7 @@ function ProgressPage({ buddy, now }: { buddy: Buddy; now: number }) {
   const sessions = buddy.progress.focus_sessions.filter(
     (s) => s.status === "completed",
   );
-  const { days, total } = studyWeek(sessions, now);
+  const { days, total, streak } = studyWeek(sessions, now);
   const weekday = new Intl.DateTimeFormat(locale, {
     weekday: "short",
     timeZone: "Asia/Ho_Chi_Minh",
@@ -1338,6 +1441,13 @@ function ProgressPage({ buddy, now }: { buddy: Buddy; now: number }) {
   const dayLabel = (date: string) =>
     weekday.format(new Date(date + "T12:00:00Z"));
   const max = Math.max(20, ...days.map((d) => d.minutes));
+  const avgMinutes = Math.round(total / 7);
+  const recentMoods = buddy.progress.check_ins.slice(0, 7);
+  const moodMap = {
+    great: { emoji: "☺", label: "Rất vui" },
+    okay: { emoji: "◡", label: "Bình thường" },
+    tired: { emoji: "☾", label: "Hơi mệt" },
+  } as const;
   return (
     <>
       <PageTitle
@@ -1380,8 +1490,8 @@ function ProgressPage({ buddy, now }: { buddy: Buddy; now: number }) {
           <span className="muted">
             {total}{" "}
             {inEnglish
-              ? "minutes · Vietnam time"
-              : "phút tập trung · Giờ Việt Nam"}
+              ? `min · avg ${avgMinutes}/day · ${streak}d streak`
+              : `phút · TB ${avgMinutes} phút/ngày · ${streak} ngày liên tiếp`}
           </span>
         </div>
         <div
@@ -1410,6 +1520,30 @@ function ProgressPage({ buddy, now }: { buddy: Buddy; now: number }) {
           </p>
         )}
       </section>
+      {recentMoods.length > 0 && (
+        <section className="card mood-history-card">
+          <div className="section-heading">
+            <div>
+              <span className="section-kicker">NHỊP CẢM XÚC</span>
+              <h2>Điểm danh gần đây</h2>
+            </div>
+            <span className="muted">{buddy.progress.check_ins.length} ngày</span>
+          </div>
+          <div className="mood-history-row">
+            {recentMoods.map((entry) => (
+              <div className="mood-history-chip" key={entry.day}>
+                <span className={`mood-face ${entry.mood}`}>
+                  {moodMap[entry.mood].emoji}
+                </span>
+                <div>
+                  <strong>{moodMap[entry.mood].label}</strong>
+                  <small>{entry.day.slice(5).replace("-", "/")}</small>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
       <Suspense fallback={null}>
         <Journal />
       </Suspense>
@@ -1636,6 +1770,22 @@ function SettingsModal({ buddy, close }: { buddy: Buddy; close: () => void }) {
         </button>
       </section>
       <LocalBackup/>
+      <section className="settings-section shortcuts-section">
+        <h3>
+          <Keyboard size={16} /> Phím tắt hữu ích
+        </h3>
+        <ul className="shortcuts-list">
+          <li>
+            <kbd>Space</kbd> <span>Bắt đầu hoặc tạm dừng đồng hồ tập trung</span>
+          </li>
+          <li>
+            <kbd>F</kbd> <span>Mở hoặc thoát chế độ toàn màn hình</span>
+          </li>
+          <li>
+            <kbd>Esc</kbd> <span>Đóng hộp thoại hoặc trình đơn</span>
+          </li>
+        </ul>
+      </section>
       <section className="settings-section">
         <h3>Nhẹ nhàng với bạn</h3>
         <p className="muted">

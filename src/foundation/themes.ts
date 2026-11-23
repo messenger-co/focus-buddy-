@@ -18,8 +18,14 @@ export const paletteLibrary = [
   ["starlight", "Đêm sao dịu", 235, false],
   ["frost", "Băng tuyết", 191, false],
   ["sunrise", "Bình minh", 30, false],
+  ["matcha", "Trà xanh dịu", 118, false],
+  ["nord", "Đêm Bắc Cực", 212, true],
+  ["espresso", "Cà phê đêm", 24, true],
 ] as const;
 export type ThemeId = (typeof paletteLibrary)[number][0];
+export function isDarkTheme(id: string): boolean {
+  return Boolean(paletteLibrary.find((t) => t[0] === id)?.[3]);
+}
 export function palette(id: string, accent: number | null = null) {
   const [key, , h, dark] =
     paletteLibrary.find((t) => t[0] === id) ?? paletteLibrary[0];
@@ -37,11 +43,12 @@ export function palette(id: string, accent: number | null = null) {
     "--study-mid": color(s + 3, dark ? 24 : 86),
     "--study-line": color(s / 1.8, dark ? 33 : 83),
     "--study-paper": color(s / 1.7, dark ? 10 : 97),
+    "--study-card": color(s / 1.6, dark ? 14 : 99),
     "--panel": color(s / 1.6, dark ? 14 : 99),
     "--raised": color(s / 1.7, dark ? 19 : 96),
     "--text": color(s / 1.5, dark ? 91 : 18),
     "--subtext": color(s / 2, dark ? 77 : 33),
     "--quiet": color(s / 2, dark ? 72 : 39),
-    "--highlight": color(44, dark ? 76 : 32, accent ?? h),
+    "--highlight": color(48, dark ? 76 : 32, accent ?? h),
   };
 }

@@ -188,6 +188,18 @@ function derived(progress: Progress): Progress {
         description: "Tích lũy 100 điểm kinh nghiệm.",
         earned: progress.profile.total_xp >= 100,
       },
+      {
+        id: "steady-habit",
+        title: "Thói quen vững vàng",
+        description: "Hoàn thành ít nhất 3 phiên tập trung.",
+        earned: focuses >= 3,
+      },
+      {
+        id: "curious-scholar",
+        title: "Học giả chăm chỉ",
+        description: "Giải đúng ít nhất 6 bài luyện tập.",
+        earned: exercises >= 6,
+      },
     ],
     counts: { focus: focuses, exercise: exercises, checkin: checkIns },
   };

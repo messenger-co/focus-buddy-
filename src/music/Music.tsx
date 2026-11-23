@@ -1,5 +1,19 @@
 import { useState, type FormEvent } from "react";
-import { ExternalLink, Headphones, Link2, ListMusic, Music2, ShieldCheck, Trash2 } from "lucide-react";
+import {
+  Check,
+  Copy,
+  ExternalLink,
+  Headphones,
+  Link2,
+  ListMusic,
+  Music2,
+  ShieldCheck,
+  Trash2,
+  Volume2,
+  VolumeX,
+} from "lucide-react";
+import { soundscapes, type Soundscape } from "../focus3/settings";
+import { useAmbience } from "../focus3/useAmbience";
 import "./music.css";
 
 /** YouTube Music uses YouTube's officially supported embed player for public videos / playlists. */
@@ -49,8 +63,14 @@ export default function Music() {
   const [input, setInput] = useState("");
   const [name, setName] = useState("");
   const [error, setError] = useState("");
+  const [filter, setFilter] = useState<"all" | "video" | "playlist">("all");
+  const [copied, setCopied] = useState(false);
   const [selected, setSelected] = useState<MusicLink | null>(null);
   const [playerOpen, setPlayerOpen] = useState(false);
+  const [ambient, setAmbient] = useState<Soundscape>("off");
+  const [ambientVol, setAmbientVol] = useState(55);
+  const audio = useAmbience(ambientVol);
+
   function persist(items: MusicLink[]) {
     setSaved(items);
     try { localStorage.setItem(STORAGE_KEY, JSON.stringify(items)); } catch { /* Browsers can disable storage. */ }
@@ -76,18 +96,82 @@ export default function Music() {
     ? `https://music.youtube.com/playlist?list=${selected.id}`
     : `https://music.youtube.com/watch?v=${selected.id}`
     : "";
+  const visible = saved.filter((item) => filter === "all" || item.kind === filter);
+  const ambientChoices = Object.entries(soundscapes).filter(([id]) => id !== "off") as [Exclude<Soundscape, "off">, string][];
+
   return (
     <main className="music-page">
       <header className="music-hero">
         <span className="music-kicker"><Headphones size={16}/> YOUTUBE MUSIC · GÓC ÂM NHẠC</span>
         <h1>Nhạc nhẹ cho góc học tập</h1>
-        <p>Dán bài hát hoặc playlist công khai từ YouTube Music. Không cần kết nối tài khoản Spotify hay tạo khóa API.</p>
+        <p>Nghe âm thanh tập trung có sẵn không cần mạng, hoặc dán bài hát và playlist công khai từ YouTube Music.</p>
         <div className="music-blobs" aria-hidden="true"><i/><i/><i/></div>
       </header>
+
+      <section className="music-ambient card" aria-label="Âm thanh nền có sẵn">
+        <div className="music-ambient-head">
+          <div>
+            <h2><Volume2 size={20}/> Âm thanh nền phát ngay trên máy</h2>
+            <p>Tổng hợp trực tiếp bằng trình duyệt — không quảng cáo, hoạt động cả khi ngoại tuyến.</p>
+          </div>
+          {audio.playing && (
+            <button
+              type="button"
+              className="button secondary"
+              onClick={() => {
+                audio.stop();
+                setAmbient("off");
+              }}
+            >
+              <VolumeX size={16}/> Tắt âm nền
+            </button>
+          )}
+        </div>
+        <div className="music-ambient-grid">
+          {ambientChoices.map(([id, label]) => {
+            const active = audio.playing && ambient === id;
+            return (
+              <button
+                key={id}
+                type="button"
+                className={`music-ambient-btn${active ? " active" : ""}`}
+                aria-pressed={active}
+                onClick={() => {
+                  if (active) {
+                    audio.stop();
+                    setAmbient("off");
+                  } else {
+                    setAmbient(id);
+                    void audio.play(id);
+                  }
+                }}
+              >
+                <span>{label}</span>
+              </button>
+            );
+          })}
+        </div>
+        {audio.playing && (
+          <label className="music-ambient-vol">
+            <span>Âm lượng nền</span>
+            <input
+              type="range"
+              min={0}
+              max={100}
+              value={ambientVol}
+              aria-label="Âm lượng âm thanh nền"
+              onChange={(e) => setAmbientVol(Number(e.target.value))}
+            />
+            <strong>{ambientVol}%</strong>
+          </label>
+        )}
+        {audio.error && <p className="music-error" role="status">{audio.error}</p>}
+      </section>
+
       <div className="music-layout">
         <section className="music-library">
           <div className="music-section-head">
-            <h2><ListMusic size={21}/> Playlist của bạn</h2><small>12 mục · chỉ lưu trên thiết bị</small>
+            <h2><ListMusic size={21}/> Playlist của bạn</h2><small>{saved.length}/12 mục · chỉ lưu trên thiết bị</small>
           </div>
           <form className="music-add-form" onSubmit={add}>
             <label htmlFor="ytmusic-link">Dán liên kết YouTube Music / YouTube</label>
@@ -102,8 +186,29 @@ export default function Music() {
             <button className="button primary" type="submit"><Music2 size={17}/> Lưu giai điệu</button>
             {error && <p className="music-error" role="alert">{error}</p>}
           </form>
+          {saved.length > 1 && (
+            <div className="filter-tabs" role="group" aria-label="Lọc danh sách nhạc">
+              {(
+                [
+                  ["all", "Tất cả"],
+                  ["video", "Video"],
+                  ["playlist", "Playlist"],
+                ] as const
+              ).map(([id, label]) => (
+                <button
+                  key={id}
+                  type="button"
+                  className={`filter-tab${filter === id ? " active" : ""}`}
+                  aria-pressed={filter === id}
+                  onClick={() => setFilter(id)}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+          )}
           <div className="music-favorites">
-            {saved.length ? saved.map((item) => (
+            {visible.length ? visible.map((item) => (
               <div className="music-item" key={item.kind + ":" + item.id}>
                 <span className="music-item-icon"><Music2 size={18}/></span>
                 <button className="music-item-select" type="button"
@@ -138,7 +243,22 @@ export default function Music() {
                   allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
                   allowFullScreen />
               )}
-              <a className="music-external" href={link} target="_blank" rel="noopener noreferrer"><ExternalLink size={16}/> Mở bằng YouTube Music</a>
+              <div className="music-player-links">
+                <a className="music-external" href={link} target="_blank" rel="noopener noreferrer"><ExternalLink size={16}/> Mở bằng YouTube Music</a>
+                <button
+                  type="button"
+                  className="music-copy"
+                  onClick={() => {
+                    void navigator.clipboard?.writeText(link).then(() => {
+                      setCopied(true);
+                      window.setTimeout(() => setCopied(false), 1800);
+                    }).catch(() => {});
+                  }}
+                >
+                  {copied ? <Check size={15}/> : <Copy size={15}/>}
+                  {copied ? "Đã sao chép" : "Sao chép liên kết"}
+                </button>
+              </div>
             </>
           ) : <p>Thêm một bài hát hoặc playlist để bắt đầu. Nhạc và dữ liệu trò chơi được quản lý riêng.</p>}
           <div className="music-tip">

@@ -24,6 +24,7 @@ const EXACT_KEYS = new Set([
   "focus-buddy-rich-effects-v1",
   "focus-buddy-runner-record-v1",
   "focus-buddy-youtube-music-v1",
+  "focus-buddy-golden-scores-v1",
   "fb3-study-room",
   CHAT_KEY,
   CHAT_PREFERENCE,
@@ -66,7 +67,7 @@ export function backupCategory(key:string):BackupCategory|null {
   if(!EXACT_KEYS.has(key)&&!LEVEL_KEY.test(key)&&
     !LEGACY_ARCADE_KEY.test(key)&&!CREATIVE_KEY.test(key))return null;
   if(key===CHAT_KEY||key===CHAT_PREFERENCE)return "chat";
-  if(key==="focus-buddy-demo-v2")return "progress";
+  if(key==="focus-buddy-demo-v2"||key==="focus-buddy-golden-scores-v1")return "progress";
   if(key==="focus-buddy-focus-studio-v1")return "focus";
   if(key==="focus-buddy-appearance-v3"||key==="focus-buddy-rich-effects-v1")return "appearance";
   if(key==="focus-buddy-journal-v3")return "journal";

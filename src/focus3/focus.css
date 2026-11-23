@@ -11,6 +11,14 @@
   --face: #95636c;
   --face-light: #f4e6e1;
 }
+.focus3[data-look="sunlit"] {
+  --face: #b87c32;
+  --face-light: #f5ebd5;
+}
+.focus3[data-look="lavender"] {
+  --face: #7362a6;
+  --face-light: #ece7f8;
+}
 .f3-heading,
 .f3-clock-head,
 .f3-actions,
@@ -230,6 +238,12 @@
 .f3-swatch[data-color="dusk"] {
   background: #925d68;
 }
+.f3-swatch[data-color="sunlit"] {
+  background: #b87c32;
+}
+.f3-swatch[data-color="lavender"] {
+  background: #7362a6;
+}
 .f3-swatch[aria-pressed="true"] {
   outline: 2px solid var(--study-ink);
   outline-offset: 2px;
@@ -399,3 +413,102 @@
 .f3-volume { margin-top: 12px; display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 3px 8px; font-size: 13px; font-weight: 600; }
 .f3-volume output { font-variant-numeric: tabular-nums; }
 .focus3 .f3-volume input[type="range"] { grid-column: 1/-1; padding: 0; border: 0; accent-color: var(--face); height: 28px; cursor: pointer; }
+.f3-plan-head,
+.f3-tasks-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.f3-chime-toggle,
+.f3-clear-done {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 11px;
+  border-radius: 10px;
+  border: 1px solid var(--study-line);
+  background: var(--study-pale);
+  color: var(--study-ink);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.f3-chime-toggle[aria-pressed="true"] {
+  border-color: var(--face);
+}
+.f3-presets {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+.f3-preset-btn {
+  padding: 7px 13px;
+  border-radius: 10px;
+  border: 1px solid var(--study-line);
+  background: var(--study-paper);
+  color: var(--study-ink);
+  font-size: 12.5px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+}
+.f3-preset-btn.active {
+  background: var(--face);
+  border-color: var(--face);
+  color: #fff;
+}
+.f3-tasks-count {
+  margin-left: 8px;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--subtext);
+  font-variant-numeric: tabular-nums;
+}
+.f3-breath-wrap {
+  display: grid;
+  justify-items: center;
+  gap: 10px;
+  margin: 10px 0 12px;
+}
+.f3-breath-box {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 18px;
+  border-radius: 14px;
+  background: var(--study-pale);
+  border: 1px solid var(--study-line);
+  text-align: left;
+}
+.f3-breath-box strong {
+  display: block;
+  font-size: 13.5px;
+}
+.f3-breath-box small {
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  color: var(--subtext);
+}
+.f3-breath-orb {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: var(--face);
+  opacity: 0.72;
+  transition: transform 0.9s ease, opacity 0.9s ease;
+}
+.f3-breath-box.inhale .f3-breath-orb {
+  transform: scale(1.22);
+  opacity: 1;
+}
+.f3-breath-box.hold .f3-breath-orb {
+  transform: scale(1.22);
+  opacity: 0.85;
+}
+.f3-breath-box.exhale .f3-breath-orb {
+  transform: scale(0.76);
+  opacity: 0.52;
+}

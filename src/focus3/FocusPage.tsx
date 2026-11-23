@@ -12,6 +12,8 @@ import { paletteLibrary } from "../foundation/themes";
 import { NavLink } from "react-router-dom";
 import {
   ArrowRight,
+  Bell,
+  BellOff,
   BookOpen,
   Bookmark,
   Check,
@@ -27,7 +29,9 @@ import {
   Plus,
   Sparkles,
   Sprout,
+  Trash2,
   VolumeX,
+  Wind,
   X,
 } from "lucide-react";
 import type { useBuddy } from "../state";
@@ -57,7 +61,7 @@ import {
   selectedPlan,
   type Soundscape,
 } from "./settings";
-import { useAmbience } from "./useAmbience";
+import { useAmbience, playChime } from "./useAmbience";
 import "./focus.css";
 const Companion = lazy(() => import("../components/Companion"));
 const formatDay = (d: string) =>
@@ -148,8 +152,10 @@ export default function FocusPage({
   const [taskName, setTaskName] = useState(""),
     [confirm, setConfirm] = useState(false),
     [expanded, setExpanded] = useState(false),
+    [breathing, setBreathing] = useState(false),
     [feedback, setFeedback] = useState("");
   const root = useRef<HTMLDivElement>(null);
+  const prevPhase = useRef<string>("ready");
   const rows = buddy.progress.focus_sessions,
     p = buddy.progress.profile;
   const active = rows.find((s) => s.status === "active"),
@@ -250,6 +256,20 @@ export default function FocusPage({
   useEffect(() => {
     if (paused || phase === "rest") audio.stop();
   }, [paused, phase, audio.stop]);
+  useEffect(() => {
+    if (prevPhase.current === "study" && phase === "rest" && settings.chime) {
+      playChime(settings.volume);
+    }
+    if (phase !== "rest") setBreathing(false);
+    prevPhase.current = phase;
+  }, [phase, settings.chime, settings.volume]);
+  const breathCycle = Math.floor(now / 1000) % 12;
+  const breathStage =
+    breathCycle < 4
+      ? { label: "Hít vào chậm rãi", step: 4 - breathCycle, cls: "inhale" }
+      : breathCycle < 8
+        ? { label: "Giữ nhẹ hơi thở", step: 8 - breathCycle, cls: "hold" }
+        : { label: "Thở ra thật êm", step: 12 - breathCycle, cls: "exhale" };
   const noteRow = active ?? rest ?? recent[0];
   const night =
     typeof window !== "undefined" &&
@@ -385,9 +405,31 @@ export default function FocusPage({
             <div className="f3-recess">
               <p>
                 {breakLeft
-                  ? "Bạn có thể đứng dậy, nhìn ra xa hoặc chơi một ván ngắn."
+                  ? "Bạn có thể đứng dậy, nhìn ra xa, hít thở sâu hoặc chơi một ván ngắn."
                   : "Đã tới giờ học tiếp. Bạn có thể bắt đầu khi sẵn sàng."}
               </p>
+              {breakLeft > 0 && (
+                <div className="f3-breath-wrap">
+                  <button
+                    type="button"
+                    className="button secondary f3-breath-btn"
+                    aria-pressed={breathing}
+                    onClick={() => setBreathing((v) => !v)}
+                  >
+                    <Wind size={15} />
+                    {breathing ? "Dừng bài tập thở" : "Thở thư giãn 4-4-4"}
+                  </button>
+                  {breathing && (
+                    <div className={`f3-breath-box ${breathStage.cls}`} role="status">
+                      <span className="f3-breath-orb" aria-hidden="true" />
+                      <div>
+                        <strong>{breathStage.label}</strong>
+                        <small>{breathStage.step} giây</small>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
               <NavLink to="/tro-choi?ghim=1">
                 <Bookmark size={15} />
                 Trò chơi đã ghim
@@ -532,8 +574,48 @@ export default function FocusPage({
       {!expanded && (
         <>
           <section className="card f3-plan">
-            <h2>Thiết lập phiên học</h2>
+            <div className="f3-plan-head">
+              <h2>Thiết lập phiên học</h2>
+              <button
+                type="button"
+                className="f3-chime-toggle"
+                aria-pressed={settings.chime}
+                onClick={() => {
+                  const next = !settings.chime;
+                  write({ chime: next });
+                  if (next) playChime(settings.volume);
+                }}
+              >
+                {settings.chime ? <Bell size={15} /> : <BellOff size={15} />}
+                <span>{settings.chime ? "Chuông báo: Bật" : "Chuông báo: Tắt"}</span>
+              </button>
+            </div>
             <fieldset disabled={!!active || !!rest}>
+              <div className="f3-presets" role="group" aria-label="Chọn nhanh thời lượng">
+                {[15, 20, 25, 45, 60].map((mins) => {
+                  const activePreset =
+                    (mins === 20 && settings.mode === "classic") ||
+                    (mins === 25 && settings.mode === "deep") ||
+                    (mins === 45 && settings.mode === "long") ||
+                    (settings.mode === "custom" && settings.custom === mins);
+                  return (
+                    <button
+                      key={mins}
+                      type="button"
+                      className={`f3-preset-btn${activePreset ? " active" : ""}`}
+                      aria-pressed={activePreset}
+                      onClick={() => {
+                        if (mins === 20) write({ mode: "classic" });
+                        else if (mins === 25) write({ mode: "deep" });
+                        else if (mins === 45) write({ mode: "long" });
+                        else write({ mode: "custom", custom: mins });
+                      }}
+                    >
+                      {mins} phút
+                    </button>
+                  );
+                })}
+              </div>
               <div className="f3-fields">
                 <label className="f3-field">
                   Chế độ học
@@ -605,10 +687,13 @@ export default function FocusPage({
                   ["leaf", "Lá non"],
                   ["ocean", "Nước biển"],
                   ["dusk", "Hoàng hôn"],
+                  ["sunlit", "Nắng mai"],
+                  ["lavender", "Hoa oải hương"],
                 ] as const
               ).map(([id, n]) => (
                 <button
                   key={id}
+                  type="button"
                   className="f3-swatch"
                   data-color={id}
                   aria-label={n}
@@ -685,7 +770,30 @@ export default function FocusPage({
               </details>
             </section>
             <section className="card f3-tasks">
-              <h2>Việc học của bạn</h2>
+              <div className="f3-tasks-head">
+                <h2>
+                  Việc học của bạn
+                  {settings.tasks.length > 0 && (
+                    <small className="f3-tasks-count">
+                      {settings.tasks.filter((t) => t.done).length}/
+                      {settings.tasks.length}
+                    </small>
+                  )}
+                </h2>
+                {settings.tasks.some((t) => t.done) && (
+                  <button
+                    type="button"
+                    className="f3-clear-done"
+                    onClick={() =>
+                      write({
+                        tasks: settings.tasks.filter((t) => !t.done),
+                      })
+                    }
+                  >
+                    <Trash2 size={14} /> Xóa việc đã xong
+                  </button>
+                )}
+              </div>
               <form
                 onSubmit={(e) => {
                   e.preventDefault();

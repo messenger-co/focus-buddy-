@@ -8,8 +8,12 @@ export const soundscapes = {
   fire: "Lửa tí tách",
   chimes: "Chuông gió tre",
   fan: "Quạt bàn",
+  brown: "Nhiễu nâu êm dịu",
+  night: "Đêm dế kêu",
+  library: "Thư viện yên tĩnh",
 } as const;
 export type Soundscape = keyof typeof soundscapes;
+export type ClockLook = "leaf" | "ocean" | "dusk" | "sunlit" | "lavender";
 export interface FocusSettings {
   mode: FocusMode;
   custom: number;
@@ -19,9 +23,10 @@ export interface FocusSettings {
   tasks: { id: string; title: string; done: boolean }[];
   dayGoal: number;
   weekGoal: number;
-  look: "leaf" | "ocean" | "dusk";
+  look: ClockLook;
   sound: Soundscape;
   volume: number;
+  chime: boolean;
 }
 const key = "focus-buddy-focus-studio-v1";
 const defaults: FocusSettings = {
@@ -36,6 +41,7 @@ const defaults: FocusSettings = {
   look: "leaf",
   sound: "off",
   volume: 50,
+  chime: true,
 };
 function read(): FocusSettings {
   try {
@@ -71,12 +77,15 @@ function read(): FocusSettings {
         : [],
       dayGoal: n(d.dayGoal, 1, 480, 40),
       weekGoal: n(d.weekGoal, 1, 3360, 200),
-      look: ["leaf", "ocean", "dusk"].includes(d.look) ? d.look : "leaf",
+      look: ["leaf", "ocean", "dusk", "sunlit", "lavender"].includes(d.look)
+        ? d.look
+        : "leaf",
       sound:
         typeof d.sound === "string" && Object.hasOwn(soundscapes, d.sound)
           ? d.sound
           : "off",
       volume: n(d.volume, 0, 100, defaults.volume),
+      chime: typeof d.chime === "boolean" ? d.chime : true,
     };
   } catch {
     return defaults;

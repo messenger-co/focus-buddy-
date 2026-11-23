@@ -1,6 +1,13 @@
-import { Check, SlidersHorizontal } from "lucide-react";
+import { useState } from "react";
+import { Check, RotateCcw, SlidersHorizontal } from "lucide-react";
 import { paletteLibrary, palette, type ThemeId } from "./themes";
-import { useAppearance, updateAppearance, type Appearance } from "./appearance";
+import {
+  useAppearance,
+  updateAppearance,
+  resetAppearance,
+  type Appearance,
+  type FontScale,
+} from "./appearance";
 import { language, switchLanguage } from "./language";
 const widgets = {
   missions: "Nhiệm vụ",
@@ -16,21 +23,47 @@ export default function ThemeStudio({
   onTheme: (v: ThemeId) => Promise<void>;
 }) {
   const a = useAppearance();
+  const [filter, setFilter] = useState<"all" | "light" | "dark">("all");
+  const visible = paletteLibrary.filter(([, , , dark]) =>
+    filter === "all" ? true : filter === "dark" ? dark : !dark,
+  );
   return (
     <section className="design-studio">
       <header className="page-heading">
         <div>
           <h1>Xưởng giao diện</h1>
-          <p>Chọn ánh sáng, màu sắc và chuyển động cho góc học của bạn.</p>
+          <p>Chọn ánh sáng, màu sắc, cỡ chữ và chuyển động cho góc học của bạn.</p>
         </div>
       </header>
-      <h2>Bảng chủ đề</h2>
+      <div className="palette-bar">
+        <h2>Bảng chủ đề</h2>
+        <div className="filter-tabs" role="group" aria-label="Lọc chủ đề theo ánh sáng">
+          {(
+            [
+              ["all", `Tất cả (${paletteLibrary.length})`],
+              ["light", "Sáng"],
+              ["dark", "Tối"],
+            ] as const
+          ).map(([id, label]) => (
+            <button
+              key={id}
+              type="button"
+              className={`filter-tab${filter === id ? " active" : ""}`}
+              aria-pressed={filter === id}
+              onClick={() => setFilter(id)}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+      </div>
       <div className="palette-grid">
-        {paletteLibrary.map(([id, name, , dark]) => {
+        {visible.map(([id, name, , dark]) => {
           const p = palette(id);
           return (
             <button
               key={id}
+              type="button"
               aria-pressed={id === theme}
               onClick={() => void onTheme(id)}
               className="palette-tile"
@@ -39,7 +72,7 @@ export default function ThemeStudio({
                 className="mini-scene"
                 style={{
                   background: `linear-gradient(145deg,${p["--study-paper"]},${p["--study-mid"]})`,
-                  color: p["--study-accent"],
+                  color: p["--highlight"],
                 }}
               >
                 <i />
@@ -108,6 +141,21 @@ export default function ThemeStudio({
             </select>
           </label>
           <label>
+            Cỡ chữ hiển thị
+            <select
+              value={a.fontScale}
+              onChange={(e) =>
+                updateAppearance({
+                  fontScale: e.target.value as FontScale,
+                })
+              }
+            >
+              <option value="compact">Gọn</option>
+              <option value="normal">Tiêu chuẩn</option>
+              <option value="large">Rộng rõ</option>
+            </select>
+          </label>
+          <label>
             Mức chuyển động
             <select
               value={a.motion}
@@ -141,6 +189,18 @@ export default function ThemeStudio({
               <option value="en">English</option>
             </select>
           </label>
+          <div className="work-settings-footer">
+            <button
+              type="button"
+              className="button secondary"
+              onClick={() => {
+                resetAppearance();
+                void onTheme("meadow");
+              }}
+            >
+              <RotateCcw size={15} /> Khôi phục mặc định
+            </button>
+          </div>
         </section>
         <section className="card work-settings">
           <h2>Trang chính của bạn</h2>

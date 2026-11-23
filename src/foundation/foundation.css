@@ -3,24 +3,72 @@
   --muted: var(--quiet);
   color: var(--text);
 }
+html[data-font-scale="compact"] {
+  font-size: 93%;
+}
+html[data-font-scale="large"] {
+  font-size: 108%;
+}
 .app .sidebar {
   background: linear-gradient(175deg, var(--panel) 63%, var(--study-pale));
   border-color: var(--study-line);
-  padding-top: 22px;
+  padding: 18px 14px 14px;
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  height: 100dvh;
+  overflow: hidden;
 }
 .app .sidebar .brand {
-  margin-bottom: 26px;
+  margin-bottom: 16px;
   color: var(--study-ink);
+  flex-shrink: 0;
+}
+.app .sidebar .sidebar-label {
+  margin-bottom: 8px;
+  flex-shrink: 0;
 }
 .app .sidebar nav {
-  gap: 3px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  padding-right: 2px;
 }
 .app .nav-item {
   color: var(--subtext);
-  min-height: 39px;
+  min-height: 36px;
+  padding: 7px 11px;
+  font-size: 13.5px;
+  border-radius: 10px;
+  box-shadow: none;
+  flex-shrink: 0;
 }
 .app .nav-item.selected {
   color: var(--study-ink);
+  background: linear-gradient(110deg, var(--study-mid), var(--study-pale));
+  box-shadow: none;
+  font-weight: 650;
+}
+.app .sidebar .sidebar-bottom {
+  flex-shrink: 0;
+  padding-top: 10px;
+  margin-top: 8px;
+  border-top: 1px solid var(--study-line);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.app .sidebar .gentle-note {
+  display: none;
+}
+.app .sidebar .sidebar-profile {
+  margin-top: 2px;
+  padding: 9px 10px;
 }
 .app .sidebar .sidebar-label,
 .app .brand small {
@@ -30,6 +78,73 @@
   background: var(--panel);
   border-color: var(--line);
   color: var(--subtext);
+}
+.app .topbar-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.topbar-tool {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  height: 34px;
+  min-width: 34px;
+  padding: 0 9px;
+  border-radius: 10px;
+  border: 1px solid var(--line);
+  background: var(--raised);
+  color: var(--study-ink);
+  font-size: 12px;
+  font-weight: 650;
+  cursor: pointer;
+  transition: background-color 0.16s, border-color 0.16s, transform 0.16s;
+}
+.topbar-tool:hover {
+  background: var(--study-pale);
+  border-color: var(--highlight);
+}
+.app .mode-tag {
+  font-size: 12px;
+  padding: 6px 11px;
+}
+.app main {
+  padding-bottom: 88px;
+}
+.app .stat-card strong,
+.app .bar-column,
+.app .xp-label strong,
+.app .daily-goal-nums {
+  font-variant-numeric: tabular-nums;
+}
+.app .hero-copy p,
+.app .mission-row > div > span,
+.app .friend-card > p,
+.app .mood-card > p,
+.app .daily-thought p,
+.app .achievement p {
+  font-size: 13px;
+  line-height: 1.65;
+}
+.app .date-chip,
+.app .breadcrumb,
+.app .stat-label,
+.app .stat-card small,
+.app .hero-reward,
+.app .assistant-card small,
+.app .mood-option,
+.app .achievement small,
+.app .tiny-tag {
+  font-size: 12px;
+}
+.app .mission-row strong,
+.app .assistant-card strong {
+  font-size: 14px;
+}
+.app .hero-label {
+  font-size: 11px;
+  letter-spacing: 0.9px;
 }
 .app
   :is(
@@ -48,7 +163,7 @@
 .app .focus-hero {
   position: relative;
   isolation: isolate;
-  min-height: 238px;
+  min-height: 244px;
   align-items: center;
   background: linear-gradient(
     110deg,
@@ -56,7 +171,7 @@
     var(--study-pale) 62%,
     var(--panel)
   );
-  padding-right: 44%;
+  padding-right: 45%;
 }
 .app .hero-copy {
   position: relative;
@@ -68,15 +183,24 @@
 }
 .study-nook {
   position: absolute;
-  right: 0;
+  right: 8px;
   bottom: 0;
-  width: 46%;
-  height: 96%;
+  width: 44%;
+  height: 94%;
+  display: flex;
+  align-items: flex-end;
+  justify-content: flex-end;
   pointer-events: none;
   overflow: hidden;
 }
-.study-nook .nook-room,
-.study-nook .nook-desk {
+.nook-stage {
+  position: relative;
+  width: 100%;
+  max-height: 100%;
+  aspect-ratio: 310 / 234;
+}
+.nook-stage .nook-room,
+.nook-stage .nook-desk {
   position: absolute;
   inset: 0;
   width: 100%;
@@ -85,13 +209,15 @@
 .nook-buddy {
   position: absolute;
   left: 26%;
-  top: 28%;
+  top: 26%;
   width: 44%;
-  height: 49%;
+  height: 50%;
   display: grid;
   place-items: center;
 }
 .nook-buddy svg {
+  width: 100%;
+  height: 100%;
   max-width: 100%;
   max-height: 100%;
 }
@@ -108,19 +234,19 @@
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 10px;
-  margin: 16px 0;
+  margin: 16px 0 12px;
 }
 .desk-links a {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 8px;
-  padding: 12px;
+  padding: 12px 14px;
   border: 1px solid var(--line);
   color: var(--study-ink);
   border-radius: 14px;
   background: var(--panel);
-  font-size: 13px;
+  font-size: 13.5px;
   font-weight: 600;
 }
 .desk-links a svg:first-child {
@@ -129,18 +255,166 @@
 .desk-links a svg:last-child {
   margin-left: auto;
 }
+.daily-goal-strip {
+  padding: 13px 18px;
+  margin-bottom: 18px;
+  display: grid;
+  gap: 9px;
+}
+.daily-goal-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.daily-goal-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 13.5px;
+  color: var(--study-ink);
+}
+.daily-goal-title svg {
+  color: var(--highlight);
+}
+.daily-goal-nums {
+  font-size: 12.5px;
+  color: var(--subtext);
+}
+.daily-goal-nums strong {
+  color: var(--text);
+}
+.quote-next {
+  flex: none;
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  border: 1px solid var(--line);
+  background: var(--panel);
+  color: var(--subtext);
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  transition: transform 0.2s, color 0.16s, border-color 0.16s;
+}
+.quote-next:hover {
+  color: var(--highlight);
+  border-color: var(--highlight);
+  transform: rotate(35deg);
+}
 .dashboard-grid:not([data-widgets~="missions"]) .missions-card,
 .dashboard-grid:not([data-widgets~="friend"]) .friend-card,
 .dashboard-grid:not([data-widgets~="mood"]) .mood-card,
 .dashboard-grid:not([data-widgets~="assistant"]) .assistant-card {
   display: none;
 }
+.palette-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 14px;
+}
+.palette-bar h2 {
+  margin: 0;
+}
+.filter-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+}
+.mission-filters {
+  margin-bottom: 16px;
+}
+.filter-tab {
+  padding: 7px 13px;
+  border-radius: 10px;
+  border: 1px solid var(--line);
+  background: var(--panel);
+  color: var(--subtext);
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.15s, color 0.15s, border-color 0.15s;
+}
+.filter-tab:hover {
+  background: var(--study-pale);
+  color: var(--study-ink);
+}
+.filter-tab.active,
+.filter-tab[aria-pressed="true"] {
+  background: var(--study-accent);
+  border-color: var(--study-accent);
+  color: #fff;
+}
+.mood-history-card {
+  margin-top: 18px;
+}
+.mood-history-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 12px;
+}
+.mood-history-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  padding: 8px 12px;
+  border-radius: 12px;
+  border: 1px solid var(--line);
+  background: var(--raised);
+}
+.mood-history-chip strong {
+  display: block;
+  font-size: 12.5px;
+  color: var(--text);
+}
+.mood-history-chip small {
+  display: block;
+  font-size: 11.5px;
+  color: var(--subtext);
+  font-variant-numeric: tabular-nums;
+}
+.shortcuts-section h3 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.shortcuts-list {
+  list-style: none;
+  padding: 0;
+  margin: 10px 0 0;
+  display: grid;
+  gap: 8px;
+}
+.shortcuts-list li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 13px;
+  color: var(--subtext);
+}
+.shortcuts-list kbd {
+  min-width: 48px;
+  text-align: center;
+  padding: 3px 8px;
+  border-radius: 7px;
+  border: 1px solid var(--line);
+  background: var(--raised);
+  color: var(--text);
+  font-family: ui-monospace, monospace;
+  font-size: 12px;
+  font-weight: 600;
+}
 .design-studio > h2 {
   margin-bottom: 12px;
 }
 .palette-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(134px, 1fr));
   gap: 10px;
 }
 .palette-tile {
@@ -156,7 +430,7 @@
   outline-offset: -2px;
 }
 .palette-tile strong {
-  font-size: 12px;
+  font-size: 12.5px;
   display: flex;
   align-items: center;
   gap: 6px;
@@ -165,10 +439,11 @@
 .mini-scene {
   position: relative;
   display: block;
-  height: 50px;
+  height: 52px;
   overflow: hidden;
-  padding: 3px 12px;
+  padding: 4px 12px;
   text-align: right;
+  font-size: 15px;
 }
 .mini-scene i,
 .mini-scene b,
@@ -204,6 +479,11 @@
 .journal-card {
   padding: 20px;
 }
+.work-settings-footer {
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid var(--line);
+}
 .work-settings h2,
 .journal-card h2 {
   display: flex;
@@ -211,6 +491,53 @@
   gap: 8px;
   font-size: 19px;
   margin-bottom: 12px;
+}
+.journal-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 10px;
+}
+.journal-head h2 {
+  margin-bottom: 0;
+}
+.journal-label-row {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+.journal-count {
+  font-size: 12px;
+  color: var(--subtext);
+  font-variant-numeric: tabular-nums;
+}
+.journal-saved {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+  margin-top: 10px;
+}
+.journal-search {
+  display: inline-flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  gap: 6px;
+  padding: 0 10px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--raised);
+  margin: 0 !important;
+}
+.journal-search input {
+  border: 0 !important;
+  background: transparent !important;
+  padding: 8px 2px !important;
+  outline: none;
 }
 .work-settings label,
 .journal-card label {
@@ -227,7 +554,7 @@
   color: var(--text);
   border: 1px solid var(--line);
   border-radius: 10px;
-  padding: 8px;
+  padding: 8px 10px;
   font: inherit;
 }
 .work-settings input[type="checkbox"] {
@@ -239,7 +566,7 @@
   margin-block: 17px;
 }
 .journal-card textarea {
-  min-height: 85px;
+  min-height: 92px;
   resize: vertical;
   width: 100%;
 }
@@ -332,13 +659,109 @@ html:is([data-motion="off"], [data-motion="minimal"]) .app *::after {
 html[data-palette="dark"] {
   color-scheme: dark;
 }
+.app[data-palette="dark"] {
+  --dark: var(--text);
+  --green: var(--highlight);
+  --muted: var(--subtext);
+  --line: var(--study-line);
+  --mint: color-mix(in srgb, #6ba683 18%, var(--raised));
+  --peach: color-mix(in srgb, #e89b72 18%, var(--raised));
+  --lavender: color-mix(in srgb, #a390e0 18%, var(--raised));
+}
+.app[data-palette="dark"]
+  :is(
+    h1,
+    .f3-heading h1,
+    .music-hero h1,
+    .golden-header h1,
+    .discussion-heading h1,
+    .studio-panel-title h2,
+    .buddy-name-form label
+  ) {
+  color: var(--text);
+}
+.app[data-palette="dark"] .focus3 .f3-clock {
+  background:
+    radial-gradient(
+      ellipse at 50% 40%,
+      color-mix(in srgb, var(--face) 16%, transparent),
+      transparent 66%
+    ),
+    var(--panel);
+}
+.app[data-palette="dark"] .bar-track {
+  background: var(--raised);
+  border: 1px solid var(--study-line);
+}
+.app[data-palette="dark"] .reward-tag {
+  background: var(--raised);
+  color: var(--highlight);
+  border: 1px solid var(--study-line);
+}
+.app[data-palette="dark"] .reward-tag.done {
+  background: var(--study-mid);
+  color: var(--text);
+}
+.app[data-palette="dark"] .exercise-art {
+  color: var(--text);
+}
+.app[data-palette="dark"] .exercise-art span {
+  color: var(--text);
+  opacity: 0.24;
+}
+.app[data-palette="dark"] :is(.stat-icon.mint, .mission-icon.mint) {
+  color: #9ddcb4;
+}
+.app[data-palette="dark"] :is(.stat-icon.peach, .mission-icon.peach) {
+  color: #f6b994;
+}
+.app[data-palette="dark"] :is(.stat-icon.lavender, .mission-icon.lavender) {
+  color: #cabaf8;
+}
+.app[data-palette="dark"]
+  :is(
+    .friend-card,
+    .mood-card,
+    .daily-thought,
+    .achievement.earned,
+    .studio-customize,
+    .studio-save-note,
+    .studio-gentle-note,
+    .golden-intro,
+    .golden-card,
+    .golden-question,
+    .golden-scenario,
+    .golden-reflection,
+    .music-library,
+    .music-player-panel,
+    .discussion-heading,
+    .topic-card,
+    .discussion-room
+  ) {
+  background: var(--panel);
+  border-color: var(--line);
+  color: var(--text);
+}
 .app[data-palette="dark"]
   :is(
     .button.secondary,
     .course-picker button:not([aria-pressed="true"]),
     .pad-key,
     .studio-panel,
-    .topic-card,
+    .studio-tabs,
+    .studio-friend,
+    .studio-accessories button,
+    .scene-choice,
+    .buddy-interactions > button,
+    .buddy-bubble,
+    .golden-marks button:not([aria-pressed="true"]),
+    .golden-clock,
+    .music-add-form input,
+    .music-link-row,
+    .music-remove,
+    .music-ambient-btn:not(.active),
+    .room-status-retry,
+    .chat-note,
     .round-caption,
     .word-bank button,
     .tile,
@@ -361,9 +784,56 @@ html[data-palette="dark"] {
     textarea,
     select
   ) {
+  background: var(--raised);
   background-color: var(--raised);
   color: var(--text);
   border-color: var(--line);
+}
+.app[data-palette="dark"] .mission-row:hover {
+  background: var(--study-mid);
+}
+.app[data-palette="dark"] .studio-tabs > button.active,
+.app[data-palette="dark"] .studio-accessories button.chosen,
+.app[data-palette="dark"] .scene-choice.chosen {
+  background: var(--study-mid);
+  border-color: var(--highlight);
+  color: var(--text);
+}
+.app[data-palette="dark"] .message-wall {
+  background: var(--study-paper);
+}
+.app[data-palette="dark"] .buddy-studio .buddy-room {
+  border-color: var(--panel);
+}
+.app[data-palette="dark"] .chat-setup,
+.app[data-palette="dark"] .chat-connect,
+.app[data-palette="dark"] .discussion-practice-tag {
+  background: var(--study-pale);
+  border-color: var(--line);
+  color: var(--text);
+}
+.app[data-palette="dark"] .tiny-tag {
+  background: var(--study-mid);
+  color: var(--text);
+}
+.app[data-palette="dark"]
+  :is(
+    .focus-games-link,
+    .music-kicker,
+    .music-external,
+    .music-copy,
+    .music-item-select[aria-pressed="true"],
+    .golden-kicker,
+    .golden-back,
+    .golden-card small,
+    .golden-index,
+    .golden-question-heading,
+    .topic-join,
+    .room-back,
+    .room-status-retry,
+    .text-link
+  ) {
+  color: var(--highlight);
 }
 .app[data-palette="dark"]
   :is(
@@ -384,10 +854,28 @@ html[data-palette="dark"] {
     .breadcrumb,
     .mission-row span,
     .shelf-caption,
-    .stat-card strong,
     .mood-card h2,
     .friend-card h2,
     .studio-label,
+    .studio-swatches button > strong,
+    .studio-friend > strong,
+    .studio-accessories button > strong,
+    .studio-panel-title p,
+    .studio-save-note,
+    .buddy-name-form small,
+    .studio-bottom-note,
+    .studio-tabs > button,
+    .scene-choice small,
+    .discussion-heading p,
+    .topic-card p,
+    .room-guidance p,
+    .chat-note p,
+    .golden-question-heading small,
+    .golden-answer-label,
+    .golden-small,
+    .music-section-head small,
+    .music-item-select small,
+    .music-empty,
     .page-footer,
     .mode-tag,
     .timer-note,
@@ -404,6 +892,7 @@ html[data-palette="dark"] {
     .card h4,
     .adventure-card-copy h2,
     .studio-heading h1,
+    .scene-choice strong,
     .date-chip strong,
     .stat-card strong,
     .timer-number,
@@ -423,6 +912,7 @@ html[data-palette="dark"] {
     .course-picker button[aria-pressed="true"]
   ) {
   color: var(--study-ink);
+  background: var(--study-mid);
   background-color: var(--study-mid);
 }
 .app[data-palette="dark"]
@@ -434,7 +924,9 @@ html[data-palette="dark"] {
 }
 .app .course-picker button:focus-visible,
 .app select:focus-visible,
-.app textarea:focus-visible {
+.app textarea:focus-visible,
+.app .topbar-tool:focus-visible,
+.app .filter-tab:focus-visible {
   outline: 2px solid var(--highlight);
   outline-offset: 2px;
 }
@@ -443,8 +935,8 @@ html[data-palette="dark"] {
     gap: 6px;
   }
   .desk-links a {
-    font-size: 12px;
-    padding: 10px 8px;
+    font-size: 12.5px;
+    padding: 10px 9px;
   }
 }
 @media (max-width: 600px) {
@@ -455,12 +947,13 @@ html[data-palette="dark"] {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
   .app .focus-hero {
-    padding: 18px 36% 17px 16px;
-    min-height: 207px;
+    padding: 18px 39% 18px 16px;
+    min-height: 214px;
   }
   .study-nook {
-    width: 37%;
-    height: 75%;
+    right: 4px;
+    width: 39%;
+    height: 82%;
   }
   .desk-links {
     grid-template-columns: 1fr 1fr;
@@ -472,12 +965,14 @@ html[data-palette="dark"] {
     padding-top: 16px;
   }
   .app .sidebar .brand {
-    margin-bottom: 16px;
+    margin-bottom: 14px;
+  }
+  .app .topbar-right .mode-tag {
+    display: none;
   }
 }
 
 .app .drawer-close { display: none; }
-.app .sidebar { overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; }
 .session-return { display:inline-flex; align-items:center; gap:6px; height:34px; padding:0 10px; border-radius:10px; color:var(--study-ink); background:var(--study-pale); border:1px solid var(--study-line); font-size:13px; font-weight:650; font-variant-numeric:tabular-nums; text-decoration:none; }
 .room-sign-in { margin-bottom: 1rem; }
 .room-account input { min-width:0; width:100%; padding:10px 12px; border:1px solid var(--line); border-radius:10px; background:var(--raised); color:var(--text); font:inherit; }
@@ -489,7 +984,6 @@ html[data-palette="dark"] {
   .app .sidebar-scrim { z-index:43; }
   .app .drawer-close { display:grid; position:absolute; top:12px; right:8px; }
   .app .sidebar .brand { margin-right:36px; }
-  .app .sidebar-bottom { padding-top:18px; }
+  .app .sidebar-bottom { padding-top:12px; }
   .app .topbar-right:has(.session-return) .mode-tag { display:none; }
 }
-@media (max-height:780px) { .app .sidebar .gentle-note { display:none; } .app .sidebar-bottom { padding-top:16px; } }

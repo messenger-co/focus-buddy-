@@ -1,46 +1,51 @@
 .golden-challenge{max-width:1120px;margin:0 auto;color:var(--study-ink);padding-bottom:36px}
 .golden-header{position:relative;overflow:hidden;padding:34px clamp(20px,4vw,44px);border:1px solid var(--study-line);border-radius:28px;background:linear-gradient(120deg,var(--study-mid),var(--study-pale));margin-bottom:22px}
-.golden-header:after{content:"✦";position:absolute;font-size:140px;right:28px;top:-42px;color:#ffffff70;pointer-events:none}
-.golden-kicker{display:block;font-size:11px;letter-spacing:2px;font-weight:800;color:var(--study-accent);margin-bottom:10px}
+.golden-header:after{content:"✦";position:absolute;font-size:140px;right:28px;top:-42px;color:#ffffff40;pointer-events:none}
+.golden-kicker{display:block;font-size:11.5px;letter-spacing:2px;font-weight:800;color:var(--highlight);margin-bottom:10px}
 .golden-header h1{font-size:clamp(27px,4vw,44px);line-height:1.2;letter-spacing:-1px;margin-bottom:10px;position:relative;z-index:1}
 .golden-header p{font-size:14px;position:relative;z-index:1;max-width:720px}
-.golden-intro{display:flex;align-items:flex-start;gap:13px;border-radius:17px;padding:18px;background:#fff;border:1px solid var(--study-line);margin-bottom:20px;line-height:1.7}
-.golden-intro svg{color:var(--study-accent)}
+.golden-intro{display:flex;align-items:flex-start;gap:13px;border-radius:17px;padding:18px;background:var(--panel);border:1px solid var(--study-line);margin-bottom:20px;line-height:1.7;font-size:14px}
+.golden-intro svg{color:var(--highlight);flex:none}
 .golden-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,290px),1fr));gap:18px}
-.golden-card,.golden-question,.golden-scenario,.golden-reflection{background:#fff;border:1px solid var(--study-line);border-radius:20px;padding:24px;box-shadow:0 8px 26px #19382009}
+.golden-card,.golden-question,.golden-scenario,.golden-reflection{background:var(--panel);border:1px solid var(--study-line);border-radius:20px;padding:24px;box-shadow:0 8px 26px #19382009}
 .golden-card{display:flex;flex-direction:column;gap:12px;min-height:265px;transition:transform .22s,box-shadow .22s}
 .golden-card:hover{transform:translateY(-3px);box-shadow:0 12px 28px #19382013}
-.golden-index{display:grid;place-items:center;width:45px;height:45px;border-radius:15px;background:var(--study-pale);color:var(--study-accent);font-size:19px;font-weight:700}
-.golden-card small{font-size:11px;color:var(--study-accent);font-weight:600}
+.golden-card-top{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.golden-index{display:grid;place-items:center;width:45px;height:45px;border-radius:15px;background:var(--study-pale);color:var(--highlight);font-size:19px;font-weight:700;font-variant-numeric:tabular-nums}
+.golden-best-badge{display:inline-flex;align-items:center;gap:5px;padding:5px 10px;border-radius:10px;background:var(--study-pale);border:1px solid var(--study-line);color:var(--highlight);font-size:12px;font-weight:700;font-variant-numeric:tabular-nums}
+.golden-card small{font-size:12px;color:var(--highlight);font-weight:600}
 .golden-card h2{font-size:19px}
-.golden-card p{font-size:12px;line-height:1.7;flex-grow:1}
+.golden-card p{font-size:13px;line-height:1.7;flex-grow:1}
 .golden-card .button{align-self:start}
-.golden-clock{position:relative;z-index:1;display:inline-flex;align-items:center;gap:10px;font-size:20px;font-weight:700;background:#ffffffa9;border:1px solid #ffffffab;padding:10px 17px;border-radius:15px;margin-top:18px;font-variant-numeric:tabular-nums}
-.golden-back{display:inline-flex;align-items:center;gap:8px;padding:10px 0;margin-bottom:12px;color:var(--study-accent);font-weight:700}
+.golden-clock-bar{position:relative;z-index:1;display:flex;align-items:center;flex-wrap:wrap;gap:12px;margin-top:18px}
+.golden-clock{display:inline-flex;align-items:center;gap:10px;font-size:20px;font-weight:700;background:var(--panel);border:1px solid var(--study-line);color:var(--text);padding:9px 16px;border-radius:14px;font-variant-numeric:tabular-nums}
+.golden-progress-meta{font-size:13px;font-weight:600;color:var(--subtext);font-variant-numeric:tabular-nums}
+.golden-back{display:inline-flex;align-items:center;gap:8px;padding:10px 0;margin-bottom:12px;color:var(--highlight);font-weight:700}
 .golden-scenario{margin:0 0 18px;background:var(--study-paper)}
 .golden-scenario h2{display:flex;align-items:center;gap:10px;font-size:16px;margin-bottom:8px}
-.golden-scenario p{font-size:14px}
+.golden-scenario p{font-size:14px;line-height:1.7}
 .golden-question-list{display:grid;gap:16px}
-.golden-question-heading{display:flex;justify-content:space-between;align-items:center;gap:10px;color:var(--study-accent);font-weight:700;margin-bottom:12px}
-.golden-question-heading span{background:var(--study-pale);border-radius:999px;padding:5px 13px}
-.golden-question-heading small{color:#738076;font-weight:500}
+.golden-question-heading{display:flex;justify-content:space-between;align-items:center;gap:10px;color:var(--highlight);font-weight:700;margin-bottom:12px}
+.golden-question-heading span{background:var(--study-pale);border-radius:10px;padding:5px 12px;font-size:13px}
+.golden-question-heading small{color:var(--subtext);font-weight:500;font-size:12px;font-variant-numeric:tabular-nums}
 .golden-question h3{font-size:16px;margin-bottom:14px;line-height:1.7}
-.golden-answer-label{display:block;margin-bottom:8px;font-size:12px;font-weight:650;color:#65796c}
-.golden-question textarea{width:100%;border-radius:12px;border:1px solid #d9e5d9;padding:13px;background:#fdfefb;color:#34483c;line-height:1.65;font:inherit;resize:vertical}
-.golden-question textarea:focus-visible{outline:3px solid var(--study-mid);outline-offset:2px}
+.golden-answer-label{display:block;margin-bottom:8px;font-size:12.5px;font-weight:650;color:var(--subtext)}
+.golden-question textarea{width:100%;border-radius:12px;border:1px solid var(--study-line);padding:13px;background:var(--raised);color:var(--text);line-height:1.65;font:inherit;resize:vertical}
+.golden-question textarea:focus-visible{outline:2px solid var(--highlight);outline-offset:2px}
 .golden-question textarea[readonly]{background:var(--study-paper)}
 .golden-rubric{margin-top:16px;padding:14px;border-radius:14px;background:var(--study-pale)}
-.golden-rubric p{display:block;font-size:13px;line-height:1.6}
-.golden-rubric p svg{display:inline;vertical-align:middle;color:var(--study-accent);margin-right:5px}
+.golden-rubric p{display:block;font-size:13.5px;line-height:1.65}
+.golden-rubric p svg{display:inline;vertical-align:middle;color:var(--highlight);margin-right:5px}
 .golden-marks{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
-.golden-marks button{border:1px solid var(--study-line);border-radius:999px;background:#fff;padding:8px 14px;font-weight:600;font-size:12px}
+.golden-marks button{border:1px solid var(--study-line);border-radius:10px;background:var(--raised);color:var(--text);padding:8px 14px;font-weight:600;font-size:12.5px;cursor:pointer}
 .golden-marks button[aria-pressed=true]{background:var(--study-accent);border-color:var(--study-accent);color:#fff}
 .golden-actions,.golden-reflection{margin-top:20px;display:grid;gap:13px;justify-items:start}
-.golden-actions p,.golden-reflection p{font-size:13px}
+.golden-actions p,.golden-reflection p{font-size:13.5px}
+.golden-reflection-actions{display:flex;flex-wrap:wrap;gap:10px}
 .golden-result{display:flex;gap:14px;align-items:flex-start;background:var(--study-pale);border:1px solid var(--study-mid);border-radius:19px;padding:18px 22px;margin-bottom:20px}
-.golden-result svg{color:var(--study-accent)}
+.golden-result svg{color:var(--highlight);flex:none}
 .golden-result h2{font-size:20px;margin-bottom:6px}
-.golden-result p{font-size:12px}
-.golden-small{font-size:12px;line-height:1.7;margin-top:16px;color:#6f806f}
+.golden-result p{font-size:13px}
+.golden-small{font-size:12.5px;line-height:1.7;margin-top:16px;color:var(--subtext)}
 @media(max-width:650px){.golden-card,.golden-question,.golden-scenario,.golden-reflection{padding:17px}.golden-header{padding:26px 20px}.golden-header:after{right:-10px;font-size:110px}.golden-result{padding:14px}}
 @media(prefers-reduced-motion:reduce){.golden-card{transition:none}.golden-card:hover{transform:none}}
