@@ -7,6 +7,10 @@ import {
   vectors,
   cols,
   rows,
+  dropDuration,
+  starCatchProgress,
+  catchTimeLimit,
+  maxDanceMisses,
   type Arrow,
 } from "./motion";
 describe("Điều khiển trong câu lạc bộ", () => {
@@ -69,4 +73,44 @@ describe("Điều khiển trong câu lạc bộ", () => {
         expect(w.end).toBe("won");
       }
     });
+});
+
+
+describe("Friendly timing and collectible reliability", () => {
+  it("collects a visible star before it reaches the last pixel of the basket", () => {
+    const w = makeWorld("hung-sao", 5);
+    w.lane = 2;
+    w.next = 999;
+    const duration = dropDuration(5);
+    w.items = [{
+      lane: 2, born: 0, kind: "star", resolved: false,
+    }];
+    advanceWorld(w, duration * (starCatchProgress + 0.01));
+    expect(w.score).toBe(2);
+    expect(w.items).toHaveLength(0);
+    expect(w.notice).toContain("Bắt được");
+  });
+  it("gives players a late chance to switch lanes without awarding storm points", () => {
+    const w = makeWorld("hung-sao", 4);
+    w.next = 999;
+    w.items = [
+      { lane: 3, born: 0, kind: "moon", resolved: false },
+      { lane: 2, born: 0, kind: "storm", resolved: false },
+    ];
+    advanceWorld(w, dropDuration(4) * 0.81);
+    expect(w.score).toBe(0);
+    beatInput(w, 3);
+    advanceWorld(w, 0.12);
+    expect(w.score).toBe(3);
+    expect(w.hearts).toBe(4);
+    advanceWorld(w, 0.5);
+    expect(w.hearts).toBe(4);
+  });
+  it("gives slower drops and more time for high-level star catching", () => {
+    expect(dropDuration(5)).toBeGreaterThan(2);
+    expect(catchTimeLimit(5)).toBeGreaterThan(45);
+    expect(makeWorld("hung-sao", 5)).toMatchObject({ hearts: 4, goal: 20 });
+    expect(maxDanceMisses).toBe(4);
+    expect(makeWorld("vu-dieu", 5).goal).toBeGreaterThan(8);
+  });
 });
