@@ -26,6 +26,7 @@ import {
 import Companion from "../../components/Companion";
 import { COMPANIONS } from "../../data";
 import type { Profile } from "../../state";
+import { english as inEnglish, locale } from "../../foundation/language";
 import {
   adventures,
   courses,
@@ -82,7 +83,7 @@ const keyControls: Record<string, Command> = {
   KeyW: "action",
 };
 const timeText = (seconds: number) =>
-  `${seconds.toLocaleString("vi-VN", { maximumFractionDigits: 1 })} giây`;
+  `${seconds.toLocaleString(locale, { maximumFractionDigits: 1 })} ${inEnglish ? "sec" : "giây"}`;
 
 function Stage({
   course,
@@ -196,11 +197,15 @@ function Stage({
       if (audible.current) chime(audio.current, e);
       if (e === "pickup") setCount(r.collected.size);
       if (e === "flag")
-        setEventText("Đã cắm cờ. Bạn sẽ trở lại đây nếu trượt.");
+        setEventText(inEnglish
+          ? "Checkpoint saved! You'll restart here after a fall."
+          : "Đã cắm cờ. Bạn sẽ trở lại đây nếu trượt.");
       if (e === "fall")
-        setEventText(
-          r.flagged ? "Đã trở về cờ giữa chặng." : "Thử lại từ đầu chặng nhé.",
-        );
+        setEventText(inEnglish
+          ? (r.flagged ? "Back at your checkpoint. You've got this!"
+            : "One more try! You're back at the start.")
+          : (r.flagged ? "Đã trở về cờ giữa chặng."
+            : "Thử lại từ đầu chặng nhé."));
       if (!prefers.matches) {
         const colors =
           e === "fall"
@@ -371,7 +376,7 @@ function Stage({
       setSound(true);
       chime(audio.current, "pickup");
     } catch {
-      setEventText("Trình duyệt chưa bật được âm thanh.");
+      setEventText(inEnglish ? "Your browser could not play the sound." : "Trình duyệt chưa bật được âm thanh.");
     }
   }
 
@@ -394,7 +399,9 @@ function Stage({
         <div className="console-tools">
           <span
             className="arcade-score"
-            aria-label={`${flight ? "Vòng sáng" : "Tinh thể"}: ${count} trên ${course.gems.length}`}
+            aria-label={inEnglish
+              ? `${flight ? "Light rings" : "Stars"}: ${count} of ${course.gems.length}`
+              : `${flight ? "Vòng sáng" : "Tinh thể"}: ${count} trên ${course.gems.length}`}
           >
             {flight ? <Circle size={16} /> : <Diamond size={16} />}
             {count} / {course.gems.length}
@@ -464,7 +471,9 @@ function Stage({
               <Flag size={23} />
               <h2 aria-live="polite">Về đích rồi!</h2>
               <p>
-                {count}/{course.gems.length} {flight ? "vòng sáng" : "tinh thể"}{" "}
+                {count}/{course.gems.length}{" "}
+                {inEnglish ? (flight ? "light rings" : "stars")
+                  : (flight ? "vòng sáng" : "tinh thể")}{" "}
                 · {timeText(game.current.time)}
               </p>
               <div className="curtain-actions">
@@ -519,11 +528,16 @@ function Stage({
       <div className="arcade-readout">
         <p id={helpId}>
           {flight
-            ? "Giữ phím Cách hoặc nút bay để lên cao, thả để hạ xuống. Lượn qua vòng và tránh mây giông." +
+            ? (inEnglish
+                ? "Hold Space or the flight button to climb; release to glide down. Collect the light rings and avoid storm clouds."
+                : "Giữ Cách hoặc nút bay để lên cao, thả để hạ xuống. Thu thập vòng sáng và tránh mây giông.") +
               (course.winds
-                ? " Mũi tên trong dải gió cho biết bạn sẽ bị đẩy lên hay xuống."
+                ? (inEnglish ? " Wind arrows show which way you'll be pushed."
+                  : " Mũi tên trong dải gió cho biết hướng gió đẩy.")
                 : "")
-            : "Dùng ← → hoặc A, D để chạy. Phím Cách hoặc ↑ để nhảy. Nhấn thêm lần nữa khi đang ở trên không."}
+            : (inEnglish
+                ? "Use ← → or A/D to run. Space or ↑ jumps; tap again to double-jump. Fly through stars to collect them!"
+                : "Dùng ← → hoặc A/D để chạy. Cách hoặc ↑ để nhảy, nhấn lần nữa để nhảy đôi. Chạm vào ngôi sao để thu thập!")}
         </p>
         <p className="arcade-signal" role="status">
           {eventText}
@@ -531,7 +545,7 @@ function Stage({
         {best && (
           <p className="arcade-best">
             <Check size={14} />
-            Kỷ lục chặng này: {best.count}/{course.gems.length} ·{" "}
+            {inEnglish ? "Level record" : "Kỷ lục chặng này"}: {best.count}/{course.gems.length} ·{" "}
             {timeText(best.seconds)}
           </p>
         )}
