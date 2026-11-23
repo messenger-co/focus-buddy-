@@ -1,0 +1,68 @@
+.cloud-connection{
+  display:grid;
+  gap:13px;
+  border:1px solid var(--study-line,#d6e2d9);
+  border-radius:15px;
+  padding:17px;
+  background:var(--study-paper,#f6faf5);
+}
+.cloud-connection-heading{
+  display:flex;
+  align-items:flex-start;
+  gap:11px;
+}
+.cloud-connection-heading>svg{
+  flex:none;
+  color:var(--study-accent,#4f8967);
+  margin-top:3px;
+}
+.cloud-connection-heading h3{margin:0 0 6px}
+.cloud-connection-heading p{font-size:12px;line-height:1.65}
+.cloud-connection>.button{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:8px;
+  justify-self:start;
+  min-height:42px;
+}
+.cloud-connection-result{
+  border-radius:11px;
+  border:1px solid var(--study-line,#d6e2d9);
+  background:var(--study-card,#fff);
+  padding:12px;
+  display:grid;gap:4px;
+  line-height:1.65;
+  overflow-wrap:anywhere;
+}
+.cloud-connection-result.connected{
+  border-color:#9fceb0;
+}
+.cloud-connection-result.disconnected{
+  border-color:#dabd98;
+}
+.cloud-connection-result strong{
+  color:var(--study-ink,#355843);
+  font-size:13px;
+}
+.cloud-connection-result p{font-size:12px}
+.cloud-config-hint{
+  color:var(--study-ink,#415a48);
+  font-size:11px;
+  line-height:1.75;
+  overflow-wrap:anywhere;
+  border-left:3px solid var(--study-accent,#4f8967);
+  padding:8px 10px;
+  background:var(--study-card,#fff);
+}
+.cloud-check-spinning{
+  animation:cloud-check-turn 1.2s linear infinite;
+}
+@keyframes cloud-check-turn{to{transform:rotate(360deg)}}
+@media(max-width:540px){
+  .cloud-connection{padding:13px}
+  .cloud-connection>.button{width:100%}
+}
+@media(prefers-reduced-motion:reduce){
+  .cloud-check-spinning{animation:none!important}
+}
