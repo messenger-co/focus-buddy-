@@ -72,7 +72,7 @@ export function makeWorld(id: MotionId, level: number): World {
       ...base,
       id,
       distance: 0,
-      speed: 111 + level * 10,
+      speed: 111 + level * 7,
       y: 0,
       vy: 0,
       rocks,
@@ -85,16 +85,16 @@ export function makeWorld(id: MotionId, level: number): World {
       ...base,
       id,
       lane: 1,
-      next: 0.35,
+      next: 0.55,
       serial: 0,
       items: [],
-      hearts: 3,
-      goal: 10 + 3 * level,
+      hearts: 4,
+      goal: 10 + 2 * level,
     };
   if (id === "vu-dieu") {
     const notes = Array.from({ length: 8 + level * 2 }, (_, i) => ({
       dir: arrows[(i * 3 + Math.floor(i / 3) + level) % 4],
-      at: 2.2 + i * (0.94 - level * 0.057),
+      at: 2.2 + i * (1.02 - level * 0.047),
     }));
     return {
       ...base,
@@ -102,7 +102,7 @@ export function makeWorld(id: MotionId, level: number): World {
       notes,
       index: 0,
       misses: 0,
-      window: 0.32 - level * 0.021,
+      window: 0.37 - level * 0.016,
       goal: notes.length,
     };
   }
@@ -121,7 +121,13 @@ export function makeWorld(id: MotionId, level: number): World {
     goal: 3 + level,
   };
 }
-export const dropDuration = (level: number) => 2.75 - level * 0.19;
+/** Stars catch once they enter Buddy's basket area, not a fraction of a second
+ * after they have already visually touched it. More forgiving at high levels.
+ */
+export const dropDuration = (level: number) => 2.95 - level * 0.12;
+export const starCatchProgress = 0.78;
+export const catchTimeLimit = (level: number) => 42 + level * 2;
+export const maxDanceMisses = 4;
 export function beatInput(w: World, command: Arrow | "jump" | number) {
   if (w.end) return;
   if (
@@ -153,7 +159,7 @@ export function beatInput(w: World, command: Arrow | "jump" | number) {
       w.notice = "Lệch hướng rồi.";
     }
     w.index++;
-    if (w.misses >= 3) w.end = "lost";
+    if (w.misses >= maxDanceMisses) w.end = "lost";
     else if (w.index === w.goal) w.end = "won";
   }
   if (
@@ -197,36 +203,43 @@ export function advanceWorld(w: World, dt: number) {
         kind: n % 5 === 4 ? "storm" : n % 3 === 2 ? "moon" : "star",
         resolved: false,
       });
-      w.next += 1.05 - w.level * 0.065;
+      w.next += 1.13 - w.level * 0.045;
     }
     for (const drop of w.items) {
-      if (drop.resolved || w.t - drop.born < dropDuration(w.level)) continue;
-      drop.resolved = true;
-      if (drop.lane === w.lane) {
-        if (drop.kind === "storm") {
+      if (drop.resolved) continue;
+      const age = w.t - drop.born;
+      const duration = dropDuration(w.level);
+      // Stars/moons are collected as soon as they overlap the basket lane.
+      // Late lane changes still work until the item reaches the ground.
+      if (drop.kind !== "storm" &&
+        drop.lane === w.lane && age >= duration * starCatchProgress &&
+        age <= duration + 0.14) {
+        drop.resolved = true;
+        const pts = drop.kind === "moon" ? 3 : 2;
+        w.score += pts;
+        w.notice = `+ ${pts} điểm · Bắt được rồi!`;
+      } else if (age >= duration) {
+        drop.resolved = true;
+        if (drop.kind === "storm" && drop.lane === w.lane) {
           w.hearts--;
-          w.notice = "Mây giông! Đổi làn nhé.";
-        } else {
-          const pts = drop.kind === "moon" ? 3 : 2;
-          w.score += pts;
-          w.notice = `+${pts} điểm`;
+          w.notice = "Mây giông! Chuyển làn để tránh nhé.";
         }
       }
     }
     w.items = w.items.filter((x) => !x.resolved);
     if (w.score >= w.goal) w.end = "won";
-    else if (!w.hearts || w.t >= 32 + w.level) w.end = "lost";
+    else if (!w.hearts || w.t >= catchTimeLimit(w.level)) w.end = "lost";
   } else if (w.id === "vu-dieu") {
     if (w.index < w.notes.length && w.t > w.notes[w.index].at + w.window) {
       w.index++;
       w.misses++;
       w.notice = "Lỡ một nốt.";
-      if (w.misses >= 3) w.end = "lost";
+      if (w.misses >= maxDanceMisses) w.end = "lost";
       else if (w.index === w.goal) w.end = "won";
     }
   } else if (w.started) {
     w.acc += dt;
-    const speed = 0.34 - w.level * 0.026;
+    const speed = 0.36 - w.level * 0.018;
     if (w.acc < speed) return;
     w.acc -= speed;
     w.dir = w.queued;
