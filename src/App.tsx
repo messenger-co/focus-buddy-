@@ -15,15 +15,19 @@ import {
   useNavigate,
 } from "react-router-dom";
 import {
+  Activity,
   ArrowRight,
   Award,
   BookOpen,
   Check,
   CheckCheck,
+  CheckCircle2,
   ChevronRight,
   Clock3,
   Coffee,
   Cloud,
+  Droplets,
+  Eye,
   RefreshCw,
   Flame,
   Flower2,
@@ -47,6 +51,7 @@ import {
   Sun,
   Target,
   TrendingUp,
+  Wind,
   X,
 } from "lucide-react";
 import { selectedPlan, useFocusSettings } from "./focus3/settings";
@@ -66,10 +71,12 @@ import { useBuddy, vietnamDay } from "./state";
 import Assistant from "./ai3/Assistant";
 import {
   COMPANIONS,
+  DAILY_HABITS,
   DAILY_QUOTES,
   EXERCISES,
   type CompanionKind,
   type CompanionColor,
+  type HabitIcon,
   type Mood,
 } from "./data";
 import { Palette, Box as BoxIcon } from "lucide-react";
@@ -1054,6 +1061,7 @@ function Dashboard({
               <BuddyArt buddy={buddy} sleepy={sleepy} size={190} />
             </StudyNook>
           </section>
+          <DailyHabitsCard buddy={buddy} busy={busy} />
           <section className="card missions-card">
             <div className="section-heading">
               <div>
@@ -1173,6 +1181,123 @@ function Dashboard({
         </div>
       </div>
     </>
+  );
+}
+function habitIcon(kind: HabitIcon) {
+  switch (kind) {
+    case "water":
+      return <Droplets size={17} />;
+    case "stretch":
+      return <Activity size={17} />;
+    case "eyes":
+      return <Eye size={17} />;
+    case "desk":
+      return <CheckCircle2 size={17} />;
+    case "breathe":
+      return <Wind size={17} />;
+  }
+}
+function DailyHabitsCard({ buddy, busy }: { buddy: Buddy; busy: boolean }) {
+  const day = today();
+  const checked = new Set(buddy.progress.daily_habits?.[day] ?? []);
+  const rewarded = new Set(buddy.progress.daily_habit_rewards?.[day] ?? []);
+  const [xpPop, setXpPop] = useState<{ id: string; amount: number; seq: number } | null>(null);
+  const popTimer = useRef<number | null>(null);
+  useEffect(
+    () => () => {
+      if (popTimer.current !== null) window.clearTimeout(popTimer.current);
+    },
+    [],
+  );
+  const doneCount = DAILY_HABITS.filter((h) => checked.has(h.id)).length;
+  const pct = Math.round((doneCount / DAILY_HABITS.length) * 100);
+  const allDone = doneCount === DAILY_HABITS.length;
+
+  async function onToggle(id: string) {
+    if (busy) return;
+    try {
+      const res = await buddy.toggleHabit(id);
+      if (res.awarded_xp > 0) {
+        if (popTimer.current !== null) window.clearTimeout(popTimer.current);
+        setXpPop((prev) => ({
+          id,
+          amount: res.awarded_xp,
+          seq: (prev?.seq ?? 0) + 1,
+        }));
+        popTimer.current = window.setTimeout(() => setXpPop(null), 950);
+      }
+    } catch {
+      /* Lỗi đã được hiển thị qua trạng thái buddy.error. */
+    }
+  }
+
+  return (
+    <section
+      className={`card habits-card ${allDone ? "habits-all-done" : ""}`}
+      aria-label="Thói quen hằng ngày"
+    >
+      <div className="section-heading habits-head">
+        <div>
+          <span className="section-kicker">CHĂM SÓC BẢN THÂN</span>
+          <h2>Thói quen hôm nay</h2>
+        </div>
+        <span className={`habits-counter ${allDone ? "complete" : ""}`}>
+          {allDone ? (
+            <>
+              <Sparkles size={13} /> Đủ {doneCount}/{DAILY_HABITS.length}
+            </>
+          ) : (
+            `${doneCount}/${DAILY_HABITS.length}`
+          )}
+        </span>
+      </div>
+      <div className="progress-track habits-progress">
+        <span style={{ width: `${pct}%` }} />
+      </div>
+      <div className="habit-list" role="group" aria-label="Danh sách thói quen hôm nay">
+        {DAILY_HABITS.map((habit) => {
+          const isDone = checked.has(habit.id);
+          const gotReward = rewarded.has(habit.id);
+          const showPop = xpPop?.id === habit.id;
+          return (
+            <button
+              key={habit.id}
+              type="button"
+              role="checkbox"
+              aria-checked={isDone}
+              disabled={busy}
+              className={`habit-item ${isDone ? "done" : ""}`}
+              onClick={() => void onToggle(habit.id)}
+            >
+              <span className="habit-box" aria-hidden="true">
+                {isDone && <Check size={14} strokeWidth={2.8} />}
+              </span>
+              <span className={`habit-icon icon-${habit.icon}`} aria-hidden="true">
+                {habitIcon(habit.icon)}
+              </span>
+              <span className="habit-copy">
+                <strong>{habit.label}</strong>
+                <small>{habit.hint}</small>
+              </span>
+              <span className={`habit-reward ${gotReward ? "earned" : ""}`}>
+                {gotReward ? (
+                  <>
+                    <Check size={12} /> +{habit.reward} điểm
+                  </>
+                ) : (
+                  `+${habit.reward} điểm`
+                )}
+              </span>
+              {showPop && (
+                <span key={xpPop.seq} className="habit-xp-pop" aria-hidden="true">
+                  +{xpPop.amount} XP
+                </span>
+              )}
+            </button>
+          );
+        })}
+      </div>
+    </section>
   );
 }
 function Stat({
@@ -1694,7 +1819,12 @@ function SettingsModal({ buddy, close }: { buddy: Buddy; close: () => void }) {
       </section>
       {buddy.cloudConfigured && (
         <section className="settings-section room-account">
-          <h3>Tài khoản phòng học</h3>
+          <h3>Phòng thảo luận & điều hành</h3>
+          <p className="muted">
+            Khách có thể vào Phòng thảo luận trực tiếp mà không cần đăng nhập hay
+            xác minh email. Email chỉ cần cho người điều hành (và Supabase gói miễn
+            phí giới hạn 2 email/giờ nếu chưa cấu hình SMTP riêng).
+          </p>
           {buddy.userEmail ? (
             <>
               <p>
@@ -1712,40 +1842,42 @@ function SettingsModal({ buddy, close }: { buddy: Buddy; close: () => void }) {
               </button>
             </>
           ) : (
-            <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                if (!email.trim() || busy) return;
-                void run(
-                  () => buddy.signIn(email),
-                  "Kiểm tra hộp thư và mở liên kết trên trình duyệt này để xác minh.",
-                );
-              }}
-            >
-              <label htmlFor="room-email">Email đăng nhập phòng học</label>
-              <p id="room-email-info" className="muted">
-                Khi phòng mở, thành viên dùng liên kết qua email để đăng nhập.
-                Bạn học chỉ thấy biệt danh.
-              </p>
-              <input
-                id="room-email"
-                type="email"
-                autoComplete="email"
-                required
-                maxLength={254}
-                value={email}
-                aria-describedby="room-email-info"
-                placeholder="ban@example.com"
-                onChange={(e) => setEmail(e.target.value)}
-              />
-              <button
-                type="submit"
-                className="button secondary"
-                disabled={busy || !email.trim()}
+            <details className="room-mod-login">
+              <summary>Đăng nhập bằng email (chỉ dành cho người điều hành)</summary>
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  if (!email.trim() || busy) return;
+                  void run(
+                    () => buddy.signIn(email),
+                    "Kiểm tra hộp thư và mở liên kết trên trình duyệt này để xác minh.",
+                  );
+                }}
               >
-                Gửi liên kết đăng nhập
-              </button>
-            </form>
+                <label htmlFor="room-email">Email người điều hành</label>
+                <p id="room-email-info" className="muted">
+                  Học sinh và khách không cần điền mục này để vào trò chuyện.
+                </p>
+                <input
+                  id="room-email"
+                  type="email"
+                  autoComplete="email"
+                  required
+                  maxLength={254}
+                  value={email}
+                  aria-describedby="room-email-info"
+                  placeholder="ban@example.com"
+                  onChange={(e) => setEmail(e.target.value)}
+                />
+                <button
+                  type="submit"
+                  className="button secondary"
+                  disabled={busy || !email.trim()}
+                >
+                  Gửi liên kết đăng nhập
+                </button>
+              </form>
+            </details>
           )}
         </section>
       )}

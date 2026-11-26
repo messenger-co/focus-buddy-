@@ -204,6 +204,8 @@ export default function Club({
   profile: Profile;
 }) {
   const [level, L] = useState(0);
+  const totalLevels =
+    entry.slug === "duong-ray" ? railwayRoutes.length : difficulty.length;
   return (
     <section className="play-table club-stage">
       <header>
@@ -227,7 +229,7 @@ export default function Club({
         entry={entry}
         profile={profile}
         level={level}
-        onNext={level < difficulty.length - 1 ? () => L(level + 1) : undefined}
+        onNext={level < totalLevels - 1 ? () => L(level + 1) : undefined}
       />
       <Link className="back-to-shelf" to="/tro-choi">
         Về bàn trò chơi

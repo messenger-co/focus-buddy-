@@ -303,11 +303,222 @@ html[data-font-scale="large"] {
   border-color: var(--highlight);
   transform: rotate(35deg);
 }
+.dashboard-grid:not([data-widgets~="habits"]) .habits-card,
 .dashboard-grid:not([data-widgets~="missions"]) .missions-card,
 .dashboard-grid:not([data-widgets~="friend"]) .friend-card,
 .dashboard-grid:not([data-widgets~="mood"]) .mood-card,
 .dashboard-grid:not([data-widgets~="assistant"]) .assistant-card {
   display: none;
+}
+.habits-card {
+  display: grid;
+  gap: 12px;
+}
+.habits-head {
+  align-items: center;
+  margin-bottom: 0;
+}
+.habits-counter {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 11px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  background: var(--study-pale);
+  color: var(--study-ink);
+  border: 1px solid var(--study-line);
+  transition: background-color 0.22s ease, color 0.22s ease, transform 0.22s ease;
+}
+.habits-counter.complete {
+  background: var(--study-accent);
+  border-color: var(--study-accent);
+  color: #fff;
+}
+.habits-progress {
+  margin-bottom: 2px;
+}
+.habit-list {
+  display: grid;
+  gap: 8px;
+}
+.habit-item {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 13px;
+  border: 1px solid var(--line);
+  background: var(--raised);
+  color: var(--text);
+  text-align: left;
+  cursor: pointer;
+  transition:
+    background-color 0.18s ease,
+    border-color 0.18s ease,
+    transform 0.18s cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 0.18s ease;
+}
+.habit-item:hover:not(:disabled) {
+  background: var(--study-pale);
+  border-color: var(--highlight);
+  transform: translateY(-1px);
+}
+.habit-item:active:not(:disabled) {
+  transform: scale(0.99);
+}
+.habit-item.done {
+  background: color-mix(in srgb, var(--study-pale) 76%, var(--panel));
+  border-color: color-mix(in srgb, var(--highlight) 48%, var(--line));
+}
+.habit-box {
+  flex: none;
+  width: 22px;
+  height: 22px;
+  border-radius: 7px;
+  border: 1.8px solid var(--study-line);
+  background: var(--panel);
+  color: #fff;
+  display: grid;
+  place-items: center;
+  transition: background-color 0.18s ease, border-color 0.18s ease, transform 0.2s ease;
+}
+.habit-item.done .habit-box {
+  background: var(--study-accent);
+  border-color: var(--study-accent);
+  animation: habit-check-pop 0.32s cubic-bezier(0.22, 1.35, 0.36, 1);
+}
+.habit-icon {
+  flex: none;
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  display: grid;
+  place-items: center;
+  transition: transform 0.22s ease;
+}
+.habit-item:hover .habit-icon {
+  transform: scale(1.06) rotate(-4deg);
+}
+.habit-icon.icon-water {
+  background: #e1f1fb;
+  color: #2f759c;
+}
+.habit-icon.icon-stretch {
+  background: #e5f2e4;
+  color: #467a50;
+}
+.habit-icon.icon-eyes {
+  background: #ede6f9;
+  color: #7455a1;
+}
+.habit-icon.icon-desk {
+  background: #f9ecdc;
+  color: #a36a37;
+}
+.habit-icon.icon-breathe {
+  background: #e3f4f1;
+  color: #357c73;
+}
+.habit-copy {
+  min-width: 0;
+  flex: 1;
+  display: grid;
+  gap: 2px;
+}
+.habit-copy strong {
+  font-size: 13.5px;
+  font-weight: 650;
+  color: var(--text);
+  transition: opacity 0.18s ease;
+}
+.habit-copy small {
+  font-size: 11.5px;
+  color: var(--subtext);
+}
+.habit-item.done .habit-copy strong {
+  text-decoration: line-through;
+  text-decoration-color: color-mix(in srgb, var(--subtext) 65%, transparent);
+  opacity: 0.78;
+}
+.habit-reward {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 4px 9px;
+  border-radius: 999px;
+  font-size: 11.5px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  background: var(--study-pale);
+  color: var(--study-ink);
+  border: 1px solid var(--study-line);
+}
+.habit-reward.earned {
+  background: color-mix(in srgb, var(--study-accent) 16%, transparent);
+  border-color: color-mix(in srgb, var(--study-accent) 36%, transparent);
+  color: var(--study-accent);
+}
+.habit-xp-pop {
+  position: absolute;
+  right: 14px;
+  top: -6px;
+  padding: 3px 9px;
+  border-radius: 999px;
+  background: var(--study-accent);
+  color: #fff;
+  font-size: 11.5px;
+  font-weight: 800;
+  letter-spacing: 0.2px;
+  pointer-events: none;
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.16);
+  animation: xp-float 0.9s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+}
+@keyframes habit-check-pop {
+  0% { transform: scale(0.72); }
+  55% { transform: scale(1.18); }
+  100% { transform: scale(1); }
+}
+@keyframes xp-float {
+  0% {
+    opacity: 0;
+    transform: translateY(8px) scale(0.86);
+  }
+  20% {
+    opacity: 1;
+    transform: translateY(-2px) scale(1.04);
+  }
+  80% {
+    opacity: 1;
+    transform: translateY(-18px) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-26px) scale(0.95);
+  }
+}
+.room-mod-login {
+  margin-top: 8px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid var(--line);
+  background: var(--raised);
+}
+.room-mod-login summary {
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--study-ink);
+}
+.room-mod-login form {
+  margin-top: 10px;
+  display: grid;
+  gap: 8px;
 }
 .palette-bar {
   display: flex;
@@ -791,6 +1002,62 @@ html[data-palette="dark"] {
 }
 .app[data-palette="dark"] .mission-row:hover {
   background: var(--study-mid);
+}
+.app[data-palette="dark"] .habit-item {
+  background: var(--raised);
+  border-color: var(--line);
+}
+.app[data-palette="dark"] .habit-item:hover:not(:disabled),
+.app[data-palette="dark"] .habit-item.done {
+  background: color-mix(in srgb, var(--study-mid) 72%, var(--raised));
+  border-color: var(--highlight);
+}
+.app[data-palette="dark"] .habit-icon.icon-water {
+  background: color-mix(in srgb, #5cb2e0 20%, var(--panel));
+  color: #9dd4f7;
+}
+.app[data-palette="dark"] .habit-icon.icon-stretch {
+  background: color-mix(in srgb, #6bba7a 20%, var(--panel));
+  color: #a1dfb0;
+}
+.app[data-palette="dark"] .habit-icon.icon-eyes {
+  background: color-mix(in srgb, #a389e0 20%, var(--panel));
+  color: #cbbaf8;
+}
+.app[data-palette="dark"] .habit-icon.icon-desk {
+  background: color-mix(in srgb, #e5a567 20%, var(--panel));
+  color: #f6c493;
+}
+.app[data-palette="dark"] .habit-icon.icon-breathe {
+  background: color-mix(in srgb, #56bcae 20%, var(--panel));
+  color: #9be0d6;
+}
+.app[data-palette="dark"] .habit-reward {
+  background: var(--panel);
+  color: var(--text);
+  border-color: var(--line);
+}
+.app[data-palette="dark"] .habit-reward.earned {
+  background: color-mix(in srgb, var(--highlight) 20%, var(--panel));
+  color: var(--highlight);
+  border-color: color-mix(in srgb, var(--highlight) 42%, var(--line));
+}
+.app[data-palette="dark"] .habits-counter {
+  background: var(--raised);
+  color: var(--text);
+  border-color: var(--line);
+}
+.app[data-palette="dark"] .habits-counter.complete {
+  background: var(--study-accent);
+  color: #fff;
+  border-color: var(--study-accent);
+}
+.app[data-palette="dark"] .room-mod-login {
+  background: var(--raised);
+  border-color: var(--line);
+}
+.app[data-palette="dark"] .room-mod-login summary {
+  color: var(--text);
 }
 .app[data-palette="dark"] .studio-tabs > button.active,
 .app[data-palette="dark"] .studio-accessories button.chosen,

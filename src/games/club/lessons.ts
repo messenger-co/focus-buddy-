@@ -25,6 +25,16 @@ export const quizzes = [
       "Chạy|Cây|Đỏ|Tròn",
       "Chạy là một động từ.",
     ),
+    question(
+      "Một tuần lễ có bao nhiêu ngày?",
+      "7|5|6|8",
+      "Một tuần gồm 7 ngày từ Thứ Hai đến Chủ Nhật.",
+    ),
+    question(
+      "Nước đóng băng thành đá ở nhiệt độ nào?",
+      "0°C|10°C|50°C|100°C",
+      "Ở áp suất chuẩn, nước chuyển từ lỏng sang rắn ở 0°C.",
+    ),
   ],
   [
     question(
@@ -41,6 +51,16 @@ export const quizzes = [
       "Từ nào nghĩa là thư viện trong tiếng Anh?",
       "Library|Kitchen|Garden|Bridge",
       "Library là nơi lưu trữ và cho mượn sách.",
+    ),
+    question(
+      "Loài chim nào không biết bay nhưng bơi rất giỏi?",
+      "Chim cánh cụt|Chim sẻ|Chim ưng|Chim bồ câu",
+      "Cánh của chim cánh cụt tiến hóa như mái chèo để bơi dưới nước.",
+    ),
+    question(
+      "Dấu câu nào thường đặt cuối câu hỏi?",
+      "Dấu chấm hỏi (?)|Dấu phẩy (,)|Dấu hai chấm (:)|Dấu chấm phẩy (;)",
+      "Dấu chấm hỏi đánh dấu câu nghi vấn.",
     ),
   ],
   [
@@ -59,6 +79,16 @@ export const quizzes = [
       "Nhiệt độ|Áp suất|Khối lượng|Thời gian",
       "Nhiệt kế cho biết mức nóng, lạnh.",
     ),
+    question(
+      "Hành tinh nào lớn nhất trong Hệ Mặt Trời?",
+      "Sao Mộc|Sao Thổ|Trái Đất|Sao Hỏa",
+      "Sao Mộc là hành tinh khí khổng lồ lớn nhất Hệ Mặt Trời.",
+    ),
+    question(
+      "Chọn từ trái nghĩa với “kiên nhẫn”.",
+      "Nóng vội|Điềm tĩnh|Chăm chỉ|Nhẹ nhàng",
+      "Nóng vội là vội vàng, thiếu kiên trì chờ đợi.",
+    ),
   ],
   [
     question(
@@ -75,6 +105,16 @@ export const quizzes = [
       "Chọn dạng quá khứ của go.",
       "Went|Gone|Going|Goes",
       "Went là dạng quá khứ đơn của go.",
+    ),
+    question(
+      "Diện tích hình chữ nhật dài 8 cm, rộng 5 cm là bao nhiêu?",
+      "40 cm²|26 cm²|13 cm²|35 cm²",
+      "Diện tích hình chữ nhật bằng chiều dài nhân chiều rộng: 8 × 5 = 40 cm².",
+    ),
+    question(
+      "Hiện tượng cầu vồng xuất hiện chủ yếu do tính chất nào của ánh sáng?",
+      "Tán sắc ánh sáng|Phản xạ âm|Từ trường|Hấp thụ nhiệt",
+      "Ánh sáng mặt trời đi qua giọt nước mưa bị khúc xạ và tán sắc thành dải màu.",
     ),
   ],
   [
@@ -93,6 +133,16 @@ export const quizzes = [
       "So sánh|Nhân hóa|Điệp từ|Liệt kê",
       "Từ như nối hai vế để làm nổi bật nét tương đồng.",
     ),
+    question(
+      "Tổng các góc trong của một tứ giác bất kỳ bằng bao nhiêu độ?",
+      "360°|180°|270°|540°",
+      "Một tứ giác có thể chia thành hai tam giác, nên tổng góc là 2 × 180° = 360°.",
+    ),
+    question(
+      "Trong máy tính, 1 kilobyte (theo chuẩn nhị phân KiB) gồm bao nhiêu byte?",
+      "1024|512|256|2048",
+      "2¹⁰ = 1024 byte.",
+    ),
   ],
   [
     question(
@@ -110,34 +160,60 @@ export const quizzes = [
       "will stay|would stayed|staying|have stay",
       "Mệnh đề chính của câu điều kiện loại một thường dùng will và động từ nguyên thể.",
     ),
+    question(
+      "Giá trị của 2⁵ − 3² là bao nhiêu?",
+      "23|25|19|27",
+      "2⁵ = 32 và 3² = 9, nên 32 − 9 = 23.",
+    ),
+    question(
+      "Khi giảm kích thước một khối lập phương cạnh xuống một nửa, thể tích thay đổi thế nào?",
+      "Giảm 8 lần|Giảm 2 lần|Giảm 4 lần|Giảm 6 lần",
+      "Thể tích tỉ lệ với lập phương cạnh: (1/2)³ = 1/8.",
+    ),
   ],
 ];
 export const typingLines = [
-  ["Mây nhẹ qua đồi", "Lật từng trang sách", "Gió về trong vườn"],
+  [
+    "Mây nhẹ qua đồi",
+    "Lật từng trang sách",
+    "Gió về trong vườn",
+    "Uống một ngụm nước mát",
+    "Ngồi thẳng lưng thật êm",
+  ],
   [
     "Mỗi ngày một ý tưởng",
     "Cất bút lên giá sách",
     "Từng bước nhỏ đều đáng quý",
+    "Đọc chậm để hiểu thật sâu",
+    "Ánh đèn vàng ấm áp góc bàn",
   ],
   [
     "Nắng sớm đánh thức khu vườn",
     "Bạn nhỏ nghiêng đầu đọc sách",
     "Ghi chú giúp mình nhớ lâu",
+    "Một câu hỏi hay mở ra chân trời mới",
+    "Sau mỗi giờ học hãy nhìn ra khung cửa",
   ],
   [
     "Trước khi bắt đầu, hãy chọn một mục tiêu.",
     "Gấp cuốn sổ lại và hít thở thật chậm.",
     "Hôm nay, mình học một điều mới.",
+    "Vươn vai một chút để tinh thần tỉnh táo.",
+    "Sự đều đặn quan trọng hơn tốc độ nhất thời.",
   ],
   [
     "Khi gặp bài khó, mình thử tách thành những câu hỏi nhỏ.",
     "Sau một phiên tập trung, đôi mắt cũng cần nghỉ ngơi.",
     "Thảo luận cùng bạn giúp mình hiểu nhiều góc nhìn.",
+    "Viết lại kiến thức bằng lời của mình giúp nhớ lâu hơn.",
+    "Không cần hoàn hảo ngay, chỉ cần kiên trì từng bước.",
   ],
   [
     "Một lời giải hay không chỉ có đáp số, mà còn giải thích được từng bước.",
     "Đọc lại ghi chú sau buổi học giúp mình nhận ra điều còn chưa rõ.",
     "Những ý tưởng lớn đôi khi bắt đầu từ một câu hỏi rất giản dị.",
+    "Dành hai mươi phút trọn vẹn cho một việc sẽ mang lại sự bình yên bất ngờ.",
+    "Khi ta học với sự tò mò, mỗi trang sách đều trở thành một cuộc phiêu lưu.",
   ],
 ];
 export function editDistance(a: string, b: string) {

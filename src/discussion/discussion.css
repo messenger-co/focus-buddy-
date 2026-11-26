@@ -456,9 +456,37 @@
 .discussion-page :is(.topic-join,.room-back,.room-status-retry,.room-sign-in,.discussion-access-info button):focus-visible{
   outline:3px solid var(--study-accent,#4d8b66);outline-offset:3px;
 }
+.room-guest-bar,
+.discussion-guest-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+.room-guest-bar {
+  margin-bottom: 18px;
+}
+.room-guest-bar .room-sign-in {
+  margin-bottom: 0;
+}
+.room-guest-bar .room-error,
+.discussion-access-info .room-error {
+  flex-basis: 100%;
+  border-radius: 10px;
+}
+.topic-card {
+  transition: transform 0.2s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.2s ease, border-color 0.2s ease;
+}
+@media (hover: hover) and (prefers-reduced-motion: no-preference) {
+  .topic-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 12px 26px #354b3714;
+    border-color: var(--study-accent, #527b61);
+  }
+}
 @media(max-width:690px){
   .discussion-practice-content{padding:15px}
-  .discussion-practice-actions .button,.discussion-access-info .button{width:100%;justify-content:center}
+  .discussion-practice-actions .button,.discussion-access-info .button,.room-guest-bar .button{width:100%;justify-content:center}
   .discussion-practice-tag{font-size:11px}
 }
 @media(prefers-reduced-motion:reduce){

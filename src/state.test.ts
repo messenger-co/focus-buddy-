@@ -184,6 +184,32 @@ describe("Tiến trình dùng thử", () => {
     expect(progress.check_ins).toHaveLength(2);
   });
 
+  it("thói quen hằng ngày thưởng +5 điểm mỗi mục một lần/ngày và không cộng trùng khi bật tắt lại", () => {
+    const day1 = Date.parse("2026-11-17T10:00:00Z");
+    const day2 = Date.parse("2026-11-18T10:00:00Z");
+    const first = demoReducer(createDemoProgress(), { type: "habit", id: "water" }, day1);
+    expect(first.result).toMatchObject({ awarded_xp: 5, total_xp: 5 });
+    expect(first.progress.daily_habits?.[vietnamDay(day1)]).toEqual(["water"]);
+    // Toggle off -> keeps XP, removes checkmark
+    const off = demoReducer(first.progress, { type: "habit", id: "water" }, day1);
+    expect(off.result).toMatchObject({ awarded_xp: 0, total_xp: 5 });
+    expect(off.progress.daily_habits?.[vietnamDay(day1)]).toBeUndefined();
+    // Toggle back on same day -> no duplicate XP farming
+    const reOn = demoReducer(off.progress, { type: "habit", id: "water" }, day1);
+    expect(reOn.result).toMatchObject({ awarded_xp: 0, total_xp: 5 });
+    expect(reOn.progress.daily_habits?.[vietnamDay(day1)]).toEqual(["water"]);
+    // Another habit same day -> +5 XP
+    const secondHabit = demoReducer(reOn.progress, { type: "habit", id: "stretch" }, day1);
+    expect(secondHabit.result).toMatchObject({ awarded_xp: 5, total_xp: 10 });
+    // Next Vietnam day -> resets and awards +5 XP again
+    const nextDay = demoReducer(secondHabit.progress, { type: "habit", id: "water" }, day2);
+    expect(nextDay.result).toMatchObject({ awarded_xp: 5, total_xp: 15 });
+    // Invalid habit throws
+    expect(() =>
+      demoReducer(nextDay.progress, { type: "habit", id: "unknown" }, day2),
+    ).toThrow("Thói quen không hợp lệ");
+  });
+
   it("dữ liệu cục bộ hỏng hoặc bị chặn không làm ứng dụng ngừng chạy", () => {
     localStorage.setItem(DEMO_STORAGE_KEY, "{invalid");
     expect(readDemoProgress().profile.total_xp).toBe(0);

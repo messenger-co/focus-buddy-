@@ -33,6 +33,7 @@ try{
  await db.exec(await readFile(new URL("../migrations/202611190001_moderated_rooms.sql",import.meta.url),"utf8"));
  await db.exec(await readFile(new URL("../migrations/202611200001_private_room_channels.sql",import.meta.url),"utf8"));
  await db.exec(await readFile(new URL("../migrations/202611200002_room_revisions.sql",import.meta.url),"utf8"));
+ await db.exec(await readFile(new URL("../migrations/202611250001_guest_discussion_access.sql",import.meta.url),"utf8"));
  await q("insert into realtime.messages(topic,extension) values ('focus-buddy-room:toan','broadcast'),('focus-buddy-room:tu-hoc','broadcast'),('focus-buddy-room:toan','presence'),('another-app','broadcast')");
  const revisions = ()=>q("select topic from realtime.messages where starts_with(topic,'focus-buddy-room:')");
  await q("select set_config('realtime.topic','focus-buddy-room:toan',false)");
@@ -46,7 +47,21 @@ try{
  await as(alice);await deny("select public.fb_room_join('toan')");
  await root();await q("update buddy_community.settings set enabled=true");
  await q("insert into buddy_community.rooms values('rieng','Nhóm có lời mời','Ôn bài chung',true)");
- await as(guest);await deny("select public.fb_room_join('toan')");
+ // Anonymous guest can enter public moderated rooms without email auth, but cannot access private rooms or moderation.
+ await as(guest);
+ eq((await one("select public.fb_community_status()")).verified,true);
+ eq((await one("select public.fb_community_status()")).moderator,false);
+ await q("select public.fb_room_join('toan')");
+ await deny("select public.fb_room_join('rieng')");
+ await deny("select public.fb_moderation_queue()");
+ const guestMsg=await send("Mình là khách, muốn hỏi bài toán này.");
+ eq((await feed("toan")).messages[0].state,"pending");
+ await deny("select public.fb_moderate($1,'approve')",[guestMsg]);
+ await q("select public.fb_room_delete($1)",[guestMsg]);
+ await q("select public.fb_room_leave('toan')");
+ await root();
+ await q("update buddy_community.rooms set last_send=null where id='toan'");
+ await q("delete from realtime.messages where topic='focus-buddy-room:toan' and payload ? '_test_event'");
  await as(alice);eq((await one("select public.fb_community_status()")).rooms.length,9);
  await deny("select public.fb_room_join('rieng')");await deny("select public.fb_room_feed('toan')");
  await deny("insert into buddy_community.moderators values(auth.uid())");await deny("update public.fb_room_updates set revision=88");

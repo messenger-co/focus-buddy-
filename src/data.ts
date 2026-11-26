@@ -220,6 +220,52 @@ export const DAILY_QUOTES: string[] = [
   "Ghi lại điều vừa hiểu giúp kiến thức ở lại lâu gấp nhiều lần.",
 ];
 
+export type HabitIcon = "water" | "stretch" | "eyes" | "desk" | "breathe";
+export interface DailyHabit {
+  id: string;
+  label: string;
+  hint: string;
+  reward: number;
+  icon: HabitIcon;
+}
+export const DAILY_HABITS: readonly DailyHabit[] = [
+  {
+    id: "water",
+    label: "Uống một cốc nước",
+    hint: "Giữ cơ thể tỉnh táo khi học",
+    reward: 5,
+    icon: "water",
+  },
+  {
+    id: "stretch",
+    label: "Vươn vai & giãn cơ",
+    hint: "Thả lỏng cổ, vai và lưng",
+    reward: 5,
+    icon: "stretch",
+  },
+  {
+    id: "eyes",
+    label: "Nghỉ mắt 20 giây",
+    hint: "Nhìn xa khỏi màn hình một chút",
+    reward: 5,
+    icon: "eyes",
+  },
+  {
+    id: "desk",
+    label: "Dọn gọn bàn học",
+    hint: "Không gian thoáng giúp dễ tập trung",
+    reward: 5,
+    icon: "desk",
+  },
+  {
+    id: "breathe",
+    label: "Hít thở sâu 3 nhịp",
+    hint: "Làm dịu tâm trí trước khi tiếp tục",
+    reward: 5,
+    icon: "breathe",
+  },
+] as const;
+
 export const ACCESSORIES: {
   id: BuddyAccessory;
   name: string;

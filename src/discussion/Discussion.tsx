@@ -20,6 +20,7 @@ import {
 } from "./catalog";
 import {
   rpc,
+  enterAsGuest,
   decodeCommunityStatus,
   roomEntryMode,
   type RoomEntryMode,
@@ -175,6 +176,9 @@ function SelfStudyRoom({
   room,
   status,
   connectionError,
+  guestBusy,
+  guestError,
+  onJoinGuest,
   refresh,
   onExit,
   openAccount,
@@ -183,6 +187,9 @@ function SelfStudyRoom({
   room: Room;
   status: Status;
   connectionError: string;
+  guestBusy: boolean;
+  guestError: string;
+  onJoinGuest: () => Promise<void>;
   refresh: () => void;
   onExit: () => void;
   openAccount: () => void;
@@ -245,15 +252,22 @@ function SelfStudyRoom({
               </>
             ) : !status.verified ? (
               <>
-                <strong>Cần xác minh email để thảo luận trực tuyến</strong>
-                <p>Để bảo vệ học sinh, bài đăng được duyệt trước khi hiển thị. Bạn có thể
-                  đăng nhập bằng email đã xác minh trong Cài đặt.</p>
-                <button type="button" className="button primary" onClick={openAccount}>
-                  Đăng nhập để thảo luận
-                </button>
-                <button type="button" className="button secondary" onClick={refresh}>
-                  Tôi đã xác minh · Kiểm tra lại
-                </button>
+                <strong>Vào thảo luận ngay không cần email</strong>
+                <p>Bạn có thể tham gia với tư cách khách ngay lập tức — không cần tạo tài khoản hay xác minh email. Bài đăng vẫn được kiểm duyệt để giữ phòng an toàn.</p>
+                <div className="discussion-guest-actions">
+                  <button
+                    type="button"
+                    className="button primary"
+                    disabled={guestBusy}
+                    onClick={() => void onJoinGuest()}
+                  >
+                    {guestBusy ? "Đang tạo phiên khách…" : "Vào thảo luận ngay (Khách)"}
+                  </button>
+                  <button type="button" className="button secondary" onClick={openAccount}>
+                    Đăng nhập điều hành viên
+                  </button>
+                </div>
+                {guestError && <p className="room-error" role="alert">{guestError}</p>}
               </>
             ) : (
               <>
@@ -682,6 +696,8 @@ export default function Discussion({
   const [refreshCount, setRefreshCount] = useState(0);
   const [connection, setConnection] = useState<"loading" | "ready" | "error">("loading");
   const [connectionError, setConnectionError] = useState("");
+  const [guestBusy, setGuestBusy] = useState(false);
+  const [guestError, setGuestError] = useState("");
 
   useEffect(() => {
     let disposed = false;
@@ -725,6 +741,30 @@ export default function Discussion({
   }, [refreshCount]);
 
   const refresh = () => setRefreshCount((count) => count + 1);
+  async function joinAsGuest(goLive = false) {
+    if (guestBusy) return;
+    setGuestBusy(true);
+    setGuestError("");
+    try {
+      await enterAsGuest();
+      const result = await rpc<unknown>("fb_community_status");
+      const next = decodeCommunityStatus(result);
+      setStatus(next);
+      setConnection("ready");
+      setConnectionError("");
+      if (!next.verified) {
+        setGuestError(
+          "Quản trị viên cần áp dụng migration chế độ khách (202611250001_guest_discussion_access.sql) trên Supabase.",
+        );
+      } else if (goLive && next.enabled) {
+        setEntryMode("live");
+      }
+    } catch (error) {
+      setGuestError(messageOf(error));
+    } finally {
+      setGuestBusy(false);
+    }
+  }
   const availableRooms = status.rooms.length ? status.rooms : closed.rooms;
   function enterRoom(topic: Room) {
     setEntryMode(roomEntryMode(status));
@@ -748,6 +788,9 @@ export default function Discussion({
         room={room}
         status={status}
         connectionError={connection === "error" ? connectionError : ""}
+        guestBusy={guestBusy}
+        guestError={guestError}
+        onJoinGuest={() => joinAsGuest(true)}
         refresh={refresh}
         onExit={() => setRoom(null)}
         openAccount={openAccount}
@@ -762,7 +805,7 @@ export default function Discussion({
         <div>
           <Users size={23} />
           <h1>Phòng thảo luận</h1>
-          <p>Chọn chủ đề để tự học, hoặc trao đổi trực tuyến khi phòng có người duyệt.</p>
+          <p>Chọn chủ đề để tự học, hoặc vào trò chuyện trực tuyến ngay với tư cách khách.</p>
         </div>
         <div className="talk-emblem" aria-hidden="true">
           <BookOpen />
@@ -785,12 +828,12 @@ export default function Discussion({
                 : !status.enabled
                   ? "Phòng trực tuyến chưa được quản trị viên mở. Bạn vẫn có thể vào từng chủ đề để tự học."
                   : !status.verified
-                    ? "Đăng nhập bằng email đã xác minh để gửi bài cho người điều hành."
+                    ? "Bạn có thể vào thảo luận ngay với tư cách khách mà không cần đăng nhập email."
                     : "Nội dung được người điều hành duyệt trước khi hiện cho bạn học."}{" "}
             Giữ riêng họ tên thật, trường lớp, địa chỉ và thông tin liên hệ.
             Tôn trọng người khác và dùng nút báo cáo khi cần.
           </p>
-          {(connection === "error" || connection === "ready" && !status.enabled) && (
+          {(connection === "error" || (connection === "ready" && !status.enabled)) && (
             <button type="button" className="room-status-retry" onClick={refresh}>
               Kiểm tra lại kết nối phòng
             </button>
@@ -798,13 +841,24 @@ export default function Discussion({
         </div>
       </aside>
       {connection === "ready" && status.enabled && !status.verified && (
-        <button
-          type="button"
-          className="button secondary room-sign-in"
-          onClick={openAccount}
-        >
-          Đăng nhập để thảo luận
-        </button>
+        <div className="room-guest-bar">
+          <button
+            type="button"
+            className="button primary room-sign-in"
+            disabled={guestBusy}
+            onClick={() => void joinAsGuest(false)}
+          >
+            {guestBusy ? "Đang tạo phiên khách…" : "Vào thảo luận ngay (Khách)"}
+          </button>
+          <button
+            type="button"
+            className="button secondary room-sign-in"
+            onClick={openAccount}
+          >
+            Đăng nhập điều hành viên
+          </button>
+          {guestError && <p className="room-error" role="alert">{guestError}</p>}
+        </div>
       )}
       <div className="discussion-topics">
         {availableRooms.map((topic) => (
@@ -829,8 +883,8 @@ export default function Discussion({
         ))}
       </div>
       <p className="room-policy">
-        <Flag size={16} /> Chỉ tài khoản email đã xác minh mới đăng bài lên
-        phòng trực tuyến đang mở; mọi bài đăng phải qua kiểm duyệt.
+        <Flag size={16} /> Khách có thể tham gia phòng trực tuyến đang mở mà không
+        cần email; mọi bài đăng đều qua kiểm duyệt để giữ môi trường học an toàn.
         Chủ đề tự học không gửi dữ liệu lên mạng.
       </p>
     </div>

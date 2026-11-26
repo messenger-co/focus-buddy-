@@ -51,6 +51,38 @@ export const routes = [
     steps: "NNNESENNEESWSESWSEE",
     lanterns: 4,
   },
+  {
+    name: "Cầu gỗ rừng thông",
+    width: 6,
+    height: 5,
+    row: 1,
+    steps: "EESSEENNE",
+    lanterns: 3,
+  },
+  {
+    name: "Đồi hoa hướng dương",
+    width: 6,
+    height: 5,
+    row: 0,
+    steps: "ESSSENNEESSE",
+    lanterns: 4,
+  },
+  {
+    name: "Bến cảng sương mai",
+    width: 7,
+    height: 5,
+    row: 2,
+    steps: "NEESSEENNNESSE",
+    lanterns: 4,
+  },
+  {
+    name: "Hành trình sao chổi",
+    width: 7,
+    height: 6,
+    row: 5,
+    steps: "NNENNEESSSEENNNE",
+    lanterns: 5,
+  },
 ] as const;
 
 export type Tile = "straight" | "curve" | "trees" | "pond";

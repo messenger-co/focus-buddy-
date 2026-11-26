@@ -7,6 +7,7 @@ import {
   ACCESSORIES,
   SCENES,
   THEMES,
+  DAILY_HABITS,
 } from "./data";
 import type {
   CompanionKind,
@@ -94,6 +95,8 @@ export type Progress = {
   focus_sessions: FocusSession[];
   completed_exercises: string[];
   check_ins: { day: string; mood: Mood; created_at: string }[];
+  daily_habits?: Record<string, string[]>;
+  daily_habit_rewards?: Record<string, string[]>;
   achievements: Achievement[];
   missions: Mission[];
   counts?: { focus: number; exercise: number; checkin: number };
@@ -110,6 +113,7 @@ export type AssessmentResult = {
 };
 export type DemoAction =
   | { type: "checkin"; mood: Mood }
+  | { type: "habit"; id: string }
   | { type: "start"; id: string; plan?: FocusPlan }
   | { type: "pause" | "resume" | "endBreak"; id: string }
   | { type: "note"; id: string; text: string }
@@ -221,9 +225,32 @@ export function createDemoProgress(): Progress {
     focus_sessions: [],
     completed_exercises: [],
     check_ins: [],
+    daily_habits: {},
+    daily_habit_rewards: {},
     achievements: [],
     missions: [],
   });
+}
+
+function sanitizeHabitMap(raw: unknown): Record<string, string[]> {
+  if (!raw || typeof raw !== "object" || Array.isArray(raw)) return {};
+  const validIds = new Set(DAILY_HABITS.map((h) => h.id));
+  const out: Record<string, string[]> = {};
+  const keys = Object.keys(raw as Record<string, unknown>)
+    .filter((k) => /^\d{4}-\d{2}-\d{2}$/.test(k))
+    .sort()
+    .slice(-14);
+  for (const day of keys) {
+    const list = (raw as Record<string, unknown>)[day];
+    if (!Array.isArray(list)) continue;
+    const clean = [
+      ...new Set(
+        list.filter((id): id is string => typeof id === "string" && validIds.has(id)),
+      ),
+    ];
+    if (clean.length) out[day] = clean;
+  }
+  return out;
 }
 
 export function readDemoProgress(storage?: Pick<Storage, "getItem">): Progress {
@@ -321,6 +348,8 @@ export function readDemoProgress(storage?: Pick<Storage, "getItem">): Progress {
         /^\d{4}-\d{2}-\d{2}$/.test(c.day) &&
         ["great", "okay", "tired"].includes(c.mood),
     );
+    data.daily_habits = sanitizeHabitMap(data.daily_habits);
+    data.daily_habit_rewards = sanitizeHabitMap(data.daily_habit_rewards);
     return derived(data);
   } catch {
     return createDemoProgress();
@@ -360,6 +389,29 @@ export function demoReducer(
       });
       xp = 10;
     }
+  } else if (action.type === "habit") {
+    const habit = DAILY_HABITS.find((h) => h.id === action.id);
+    if (!habit) throw new Error("Thói quen không hợp lệ.");
+    const day = vietnamDay(now);
+    const habits = sanitizeHabitMap(progress.daily_habits);
+    const rewarded = sanitizeHabitMap(progress.daily_habit_rewards);
+    const todaySet = new Set(habits[day] ?? []);
+    const rewardedSet = new Set(rewarded[day] ?? []);
+    if (todaySet.has(habit.id)) {
+      todaySet.delete(habit.id);
+    } else {
+      todaySet.add(habit.id);
+      if (!rewardedSet.has(habit.id)) {
+        rewardedSet.add(habit.id);
+        xp = habit.reward;
+      }
+    }
+    if (todaySet.size) habits[day] = [...todaySet];
+    else delete habits[day];
+    if (rewardedSet.size) rewarded[day] = [...rewardedSet];
+    else delete rewarded[day];
+    progress.daily_habits = sanitizeHabitMap(habits);
+    progress.daily_habit_rewards = sanitizeHabitMap(rewarded);
   } else if (action.type === "start") {
     const active = progress.focus_sessions.find((s) => s.status === "active");
     if (active) result = active;
@@ -638,6 +690,10 @@ export function useBuddy() {
     (mood: Mood) => mutate({ type: "checkin", mood }) as Promise<RewardResult>,
     [mutate],
   );
+  const toggleHabit = useCallback(
+    (id: string) => mutate({ type: "habit", id }) as Promise<RewardResult>,
+    [mutate],
+  );
   const startFocus = useCallback(
     (plan?: FocusPlan) =>
       mutate({
@@ -681,7 +737,7 @@ export function useBuddy() {
   const signIn = useCallback(async (email: string) => {
     if (!supabase)
       throw new Error(
-        "Đăng nhập AI chưa được cấu hình. Các hoạt động học tập vẫn dùng được trên thiết bị.",
+        "Đăng nhập máy chủ chưa được cấu hình. Các hoạt động học tập vẫn dùng được trên thiết bị.",
       );
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim()))
       throw new Error("Bạn nhập một địa chỉ thư điện tử hợp lệ nhé.");
@@ -689,11 +745,18 @@ export function useBuddy() {
       email: email.trim(),
       options: { emailRedirectTo: authRedirectUrl() },
     });
-    if (authError)
+    if (authError) {
+      const msg = authError.message || "";
+      if (/rate limit|over_email_send_rate_limit|email.*limit|smtp/i.test(msg)) {
+        throw new Error(
+          "Supabase mặc định chỉ gửi tối đa 2 email/giờ (hoặc chưa cấu hình SMTP riêng). Khách có thể vào phòng thảo luận trực tiếp mà không cần email.",
+        );
+      }
       throw friendlyError(
         authError,
-        "Chưa gửi được liên kết đăng nhập. Bạn kiểm tra địa chỉ hoặc thử lại sau nhé.",
+        "Chưa gửi được liên kết đăng nhập. Khách vẫn có thể vào thảo luận trực tiếp không cần email.",
       );
+    }
   }, []);
   const signOut = useCallback(async () => {
     if (!supabase) return;
@@ -711,8 +774,10 @@ export function useBuddy() {
     loading,
     error,
     userEmail: session?.user.email || null,
+    isAnonymous: session?.user.is_anonymous === true,
     refresh,
     checkIn,
+    toggleHabit,
     startFocus,
     completeFocus,
     cancelFocus,

@@ -416,13 +416,17 @@
     transform: translateY(0) scale(1);
   }
 }
+.progress-track > span {
+  transition: width 0.45s cubic-bezier(0.22, 1, 0.36, 1);
+}
 .focus-active .orbit,
 .focus-active .hero-leaf,
 .focus-active .friend-halo,
 .focus-active .friend-plant,
 .focus-active .daily-thought > svg,
 .focus-active .achievement.earned > span,
-.focus-active .achievement.earned:after {
+.focus-active .achievement.earned:after,
+.focus-active .rail-lamp.lit {
   animation-play-state: paused !important;
 }
 .focus-active .page-heading,

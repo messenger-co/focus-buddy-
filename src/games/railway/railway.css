@@ -150,10 +150,33 @@
   height: auto;
   display: block;
 }
+@keyframes lantern-glow {
+  0%,
+  100% {
+    box-shadow: 0 0 7px #f3c864;
+    transform: scale(1);
+  }
+  50% {
+    box-shadow: 0 0 15px #ffe07d;
+    transform: scale(1.08);
+  }
+}
 @media (prefers-reduced-motion: no-preference) {
   html:not([data-motion="off"]):not([data-motion="minimal"]) .rail-train {
     transition:
       left 0.2s ease-in-out,
       top 0.2s ease-in-out;
+  }
+  html:not([data-motion="off"]):not([data-motion="minimal"]) .rail-board .rail-tile > svg {
+    transition: transform 0.16s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  html:not([data-motion="off"]):not([data-motion="minimal"]) .rail-board .rail-tile:hover:not(:disabled) > svg {
+    transform: scale(1.04);
+  }
+  html:not([data-motion="off"]):not([data-motion="minimal"]) .rail-board .rail-tile:active:not(:disabled) > svg {
+    transform: scale(0.94);
+  }
+  html:not([data-motion="off"]):not([data-motion="minimal"]) .rail-lamp.lit {
+    animation: lantern-glow 1.9s ease-in-out infinite;
   }
 }

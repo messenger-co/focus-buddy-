@@ -41,7 +41,7 @@ describe("discussion room entry and diagnostics", () => {
     })).toContain("migration");
     expect(roomErrorMessage({
       code: "42501", message: "permission denied",
-    })).toContain("email");
+    })).toContain("khách");
     expect(roomErrorMessage(new Error("Failed to fetch"))).toContain("mạng");
     expect(roomErrorMessage(new Error("Phòng đang đóng."))).toBe("Phòng đang đóng.");
     expect(roomErrorMessage(new Error("Internal SQL diagnostics with private details")))

@@ -10,6 +10,7 @@ import {
 } from "./appearance";
 import { language, switchLanguage } from "./language";
 const widgets = {
+  habits: "Thói quen hằng ngày",
   missions: "Nhiệm vụ",
   friend: "Bạn đồng hành",
   mood: "Điểm danh cảm xúc",

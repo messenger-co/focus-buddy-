@@ -102,12 +102,31 @@ export function roomErrorMessage(error: unknown): string {
     return "Máy chủ chưa cài đặt đầy đủ phòng thảo luận. Quản trị viên cần áp dụng các migration Supabase theo tài liệu dự án.";
   if (code === "42501" || code === "PGRST301" ||
     /\b(jwt|not authenticated|permission denied|unauthorized|invalid token)\b/i.test(message))
-    return "Phiên đăng nhập chưa hợp lệ hoặc chưa đủ quyền. Hãy đăng nhập lại bằng email đã xác minh.";
+    return "Phiên thảo luận chưa sẵn sàng hoặc đã hết hạn. Hãy bấm Vào bằng chế độ khách rồi thử lại.";
   if (/failed to fetch|networkerror|network request failed|fetch failed|timed out/i.test(message))
     return "Không kết nối được máy chủ phòng thảo luận. Kiểm tra mạng rồi thử lại.";
   if (/^(Tin cần|Hãy |Cần |Phòng |Tài khoản |Bạn |Nội dung |Tin |Thao tác |Chỉ người|Cổng |Trạng thái |Danh mục )/.test(message))
     return message;
   return "Chưa kết nối được phòng thảo luận. Hãy thử lại hoặc báo quản trị viên kiểm tra Supabase.";
+}
+
+export async function enterAsGuest(): Promise<void> {
+  if (!supabase)
+    throw new Error(
+      "Phòng thảo luận trực tuyến chưa được cấu hình. Bạn vẫn có thể vào chủ đề tự học trên thiết bị.",
+    );
+  const { data } = await supabase.auth.getSession();
+  if (data.session) return;
+  const { error } = await supabase.auth.signInAnonymously();
+  if (error) {
+    const msg = error.message || "";
+    if (/anonymous.*disabled|anonymous_provider_disabled/i.test(msg)) {
+      throw new Error(
+        "Quản trị viên cần bật Anonymous Sign-Ins trong Supabase (Authentication → Providers) để khách vào trực tiếp.",
+      );
+    }
+    throw new Error(roomErrorMessage(error));
+  }
 }
 
 export async function rpc<T>(

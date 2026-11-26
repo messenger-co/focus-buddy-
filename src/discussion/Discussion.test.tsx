@@ -5,6 +5,8 @@ import Discussion from "./Discussion";
 const stubs = vi.hoisted(() => ({
   rpc: vi.fn(),
   onAuthChange: vi.fn(),
+  getSession: vi.fn(),
+  signInAnonymously: vi.fn(),
   channel: vi.fn(),
   removeChannel: vi.fn(),
 }));
@@ -15,7 +17,11 @@ vi.mock("./room", async (original) => {
 });
 vi.mock("../cloud", () => ({
   supabase: {
-    auth: { onAuthStateChange: stubs.onAuthChange },
+    auth: {
+      onAuthStateChange: stubs.onAuthChange,
+      getSession: stubs.getSession,
+      signInAnonymously: stubs.signInAnonymously,
+    },
     channel: stubs.channel,
     removeChannel: stubs.removeChannel,
   },
@@ -37,8 +43,12 @@ const active = {
 beforeEach(() => {
   stubs.rpc.mockReset();
   stubs.onAuthChange.mockReset();
+  stubs.getSession.mockReset();
+  stubs.signInAnonymously.mockReset();
   stubs.channel.mockReset();
   stubs.removeChannel.mockReset();
+  stubs.getSession.mockResolvedValue({ data: { session: null }, error: null });
+  stubs.signInAnonymously.mockResolvedValue({ data: { session: { user: { id: "guest-1" } } }, error: null });
   stubs.onAuthChange.mockImplementation(() => ({
     data: { subscription: { unsubscribe: vi.fn() } },
   }));
@@ -74,14 +84,24 @@ describe("discussion room entry", () => {
     expect(screen.getByRole("heading", { name: "Phòng thảo luận" })).toBeTruthy();
   });
 
-  it("shows email sign-in rather than silently rejecting unverified users", async () => {
+  it("lets guests enter live chat in one click without email auth while keeping moderator sign-in optional", async () => {
+    const openAccount = vi.fn();
+    stubs.rpc.mockResolvedValueOnce(requiresLogin).mockResolvedValueOnce(active);
+    render(<Discussion openAccount={openAccount} />);
+    await waitFor(() => expect(screen.getByRole("button", { name: "Vào thảo luận ngay (Khách)" })).toBeTruthy());
+    fireEvent.click(screen.getByRole("button", { name: "Vào thảo luận ngay (Khách)" }));
+    await waitFor(() => expect(stubs.signInAnonymously).toHaveBeenCalledTimes(1));
+    await waitFor(() => expect(screen.getByRole("button", { name: /Vào phòng/ })).toBeTruthy());
+  });
+
+  it("still provides optional moderator sign-in from the topic screen", async () => {
     const openAccount = vi.fn();
     stubs.rpc.mockResolvedValue(requiresLogin);
     render(<Discussion openAccount={openAccount} />);
-    await waitFor(() => expect(screen.getByRole("button", { name: "Đăng nhập để thảo luận" })).toBeTruthy());
+    await waitFor(() => expect(screen.getByRole("button", { name: /Vào chủ đề/ })).toBeTruthy());
     fireEvent.click(screen.getByRole("button", { name: /Vào chủ đề/ }));
-    expect(screen.getByText(/Cần xác minh email để thảo luận trực tuyến/)).toBeTruthy();
-    fireEvent.click(screen.getByRole("button", { name: "Đăng nhập để thảo luận" }));
+    expect(screen.getByText(/Vào thảo luận ngay không cần email/)).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "Đăng nhập điều hành viên" }));
     expect(openAccount).toHaveBeenCalledTimes(1);
     expect(stubs.rpc.mock.calls.some(([name]) => name === "fb_room_join")).toBe(false);
   });

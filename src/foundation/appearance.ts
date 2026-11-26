@@ -14,13 +14,26 @@ const defaults: Appearance = {
   motion: "normal",
   backdrop: "plain",
   accent: null,
-  widgets: ["missions", "friend", "mood", "assistant"],
+  widgets: ["habits", "missions", "friend", "mood", "assistant"],
   fontScale: "normal",
 };
 export function parseAppearance(raw: string | null): Appearance {
   try {
     const a = JSON.parse(raw ?? "null");
     if (!a) return defaults;
+    const savedWidgets = Array.isArray(a.widgets)
+      ? [
+          ...new Set<string>(
+            a.widgets.filter((w: string) => defaults.widgets.includes(w)),
+          ),
+        ]
+      : defaults.widgets;
+    const widgets =
+      Array.isArray(a.widgets) &&
+      a.widgetsVersion !== 2 &&
+      !savedWidgets.includes("habits")
+        ? ["habits", ...savedWidgets]
+        : savedWidgets;
     return {
       motion: ["off", "minimal", "normal", "enhanced"].includes(a.motion)
         ? a.motion
@@ -32,13 +45,7 @@ export function parseAppearance(raw: string | null): Appearance {
         Number.isInteger(a.accent) && a.accent >= 0 && a.accent < 360
           ? a.accent
           : null,
-      widgets: Array.isArray(a.widgets)
-        ? [
-            ...new Set<string>(
-              a.widgets.filter((w: string) => defaults.widgets.includes(w)),
-            ),
-          ]
-        : defaults.widgets,
+      widgets,
       fontScale: ["compact", "normal", "large"].includes(a.fontScale)
         ? a.fontScale
         : "normal",
@@ -68,7 +75,7 @@ export function useAppearance() {
 }
 export function updateAppearance(change: Partial<Appearance>) {
   const next = { ...parseAppearance(snapshot()), ...change };
-  const raw = JSON.stringify(next);
+  const raw = JSON.stringify({ ...next, widgetsVersion: 2 });
   try {
     localStorage.setItem(key, raw);
   } catch {

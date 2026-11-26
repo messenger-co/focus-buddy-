@@ -193,6 +193,10 @@ export const wordSets: Phrase[][] = [
       "Ai cũng có thể dạy ta một điều hay, kể cả bạn cùng lớp.",
       "Học thầy|không tày|học|bạn",
     ),
+    saying(
+      "Muốn hiểu sâu, đừng ngại hỏi người đi trước.",
+      "Muốn|biết|phải|hỏi,|muốn|giỏi|phải|học",
+    ),
   ],
   [
     saying("Một người giúp đỡ một người lúc khó khăn.", "Lá|lành|đùm|lá|rách"),
@@ -200,6 +204,10 @@ export const wordSets: Phrase[][] = [
     saying(
       "Dù khác nhau, hãy biết yêu thương nhau.",
       "Bầu ơi|thương lấy|bí cùng,|tuy rằng|khác giống|nhưng chung|một giàn",
+    ),
+    saying(
+      "Thêm bạn sẽ thêm niềm vui và sự sẻ chia.",
+      "Thêm|bạn|bớt|thù",
     ),
   ],
   [
@@ -215,6 +223,10 @@ export const wordSets: Phrase[][] = [
       "Nhiều trải nghiệm mở rộng hiểu biết của mình.",
       "Đi|một|ngày|đàng,|học|một|sàng|khôn",
     ),
+    saying(
+      "Càng lớn càng học thêm nhiều điều rộng mở.",
+      "Học|một|biết|mười",
+    ),
   ],
   [
     saying(
@@ -225,6 +237,10 @@ export const wordSets: Phrase[][] = [
     saying(
       "Món quà đúng lúc khó khăn là quý nhất.",
       "Một miếng|khi đói|bằng|một gói|khi no",
+    ),
+    saying(
+      "Đoàn kết tạo nên sức mạnh vượt qua mọi thử thách.",
+      "Thuận|vợ|thuận|chồng|tát|biển|Đông|cũng|cạn",
     ),
   ],
   [
@@ -240,6 +256,10 @@ export const wordSets: Phrase[][] = [
     saying(
       "Hãy cẩn thận trước khi đưa ra quyết định.",
       "Uốn|lưỡi|bảy|lần|trước|khi|nói",
+    ),
+    saying(
+      "Khó khăn là dịp để rèn luyện bản lĩnh.",
+      "Lửa|thử|vàng,|gian|nan|thử|sức",
     ),
   ],
 ];
