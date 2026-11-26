@@ -16,7 +16,9 @@ import {
 } from "react-router-dom";
 import {
   Activity,
+  ArrowDownRight,
   ArrowRight,
+  ArrowUpRight,
   Award,
   BookOpen,
   Check,
@@ -42,6 +44,7 @@ import {
   Leaf,
   LoaderCircle,
   Menu,
+  Minus,
   Moon,
   Play,
   Settings,
@@ -907,6 +910,30 @@ function Dashboard({
     100,
     Math.round((todayMinutes / Math.max(1, settings.dayGoal)) * 100),
   );
+  const weeklyPct = Math.min(
+    100,
+    Math.round((weekStats.total / Math.max(1, settings.weekGoal)) * 100),
+  );
+  const weeklyTrendShort =
+    weekStats.trend === "up"
+      ? `+${weekStats.delta} ${inEnglish ? "min" : "phút"}`
+      : weekStats.trend === "down"
+        ? `−${Math.abs(weekStats.delta)} ${inEnglish ? "min" : "phút"}`
+        : inEnglish
+          ? "Steady"
+          : "Ổn định";
+  const weeklyTrendNote =
+    weekStats.trend === "up"
+      ? inEnglish
+        ? `Up ${weekStats.delta} min compared to last week (${weekStats.previousTotal} min)`
+        : `Tăng ${weekStats.delta} phút so với tuần trước (${weekStats.previousTotal} phút)`
+      : weekStats.trend === "down"
+        ? inEnglish
+          ? `Down ${Math.abs(weekStats.delta)} min compared to last week (${weekStats.previousTotal} min)`
+          : `Giảm ${Math.abs(weekStats.delta)} phút so với tuần trước (${weekStats.previousTotal} phút)`
+        : inEnglish
+          ? `Same as last week (${weekStats.previousTotal} min)`
+          : `Bằng tuần trước (${weekStats.previousTotal} phút)`;
   const companionName =
     buddy.progress.profile.buddy_name ||
     COMPANIONS.find((c) => c.id === buddy.progress.profile.companion)?.name ||
@@ -964,18 +991,57 @@ function Dashboard({
           <Palette size={18} /> Đổi giao diện <ChevronRight size={15} />
         </NavLink>
       </div>
-      <section className="daily-goal-strip card" aria-label="Mục tiêu tập trung hôm nay">
-        <div className="daily-goal-head">
-          <span className="daily-goal-title">
-            <Target size={16} />
-            <strong>Mục tiêu hôm nay</strong>
-          </span>
-          <span className="daily-goal-nums">
-            <strong>{todayMinutes}</strong>/{settings.dayGoal} phút · {weekStats.streak} ngày liên tiếp
-          </span>
-        </div>
-        <div className="progress-track">
-          <span style={{ width: `${dailyPct}%` }} />
+      <section
+        className="daily-goal-strip card"
+        aria-label="Mục tiêu tập trung hôm nay và trong tuần"
+      >
+        <div className="goal-strip-grid">
+          <div className="goal-item">
+            <div className="daily-goal-head">
+              <span className="daily-goal-title">
+                <Target size={16} />
+                <strong>Mục tiêu hôm nay</strong>
+              </span>
+              <span className="daily-goal-nums">
+                <strong>{todayMinutes}</strong>/{settings.dayGoal} phút ·{" "}
+                {weekStats.streak} ngày liên tiếp
+              </span>
+            </div>
+            <div className="progress-track">
+              <span style={{ width: `${dailyPct}%` }} />
+            </div>
+          </div>
+          <div className="goal-item">
+            <div className="daily-goal-head">
+              <span className="daily-goal-title">
+                <TrendingUp size={16} />
+                <strong>Mục tiêu tuần</strong>
+              </span>
+              <span className="daily-goal-nums weekly-goal-meta">
+                <span>
+                  <strong>{weekStats.total}</strong>/{settings.weekGoal} phút
+                </span>
+                <span
+                  className={`weekly-trend trend-${weekStats.trend}`}
+                  data-trend={weekStats.trend}
+                  title={weeklyTrendNote}
+                  aria-label={weeklyTrendNote}
+                >
+                  {weekStats.trend === "up" ? (
+                    <ArrowUpRight size={13} strokeWidth={2.5} aria-hidden="true" />
+                  ) : weekStats.trend === "down" ? (
+                    <ArrowDownRight size={13} strokeWidth={2.5} aria-hidden="true" />
+                  ) : (
+                    <Minus size={13} strokeWidth={2.5} aria-hidden="true" />
+                  )}
+                  <span>{weeklyTrendShort}</span>
+                </span>
+              </span>
+            </div>
+            <div className="progress-track">
+              <span style={{ width: `${weeklyPct}%` }} />
+            </div>
+          </div>
         </div>
       </section>
       <div className="dashboard-grid" data-widgets={visibleWidgets}>

@@ -78,6 +78,7 @@ export function latestBreak(rows: FocusSession[]) {
 }
 const day = (t: number) =>
   new Date(t + 7 * 60 * MINUTE).toISOString().slice(0, 10);
+export type WeekTrend = "up" | "down" | "flat";
 export function studyWeek(sessions: FocusSession[], now: number) {
   const totals = new Map<string, number>();
   for (const s of sessions) {
@@ -89,11 +90,18 @@ export function studyWeek(sessions: FocusSession[], now: number) {
     const key = day(now - (6 - i) * 86400000);
     return { day: key, minutes: Math.floor((totals.get(key) ?? 0) / MINUTE) };
   });
+  const total = days.reduce((s, d) => s + d.minutes, 0);
+  const previousTotal = Array.from({ length: 7 }, (_, i) => {
+    const key = day(now - (13 - i) * 86400000);
+    return Math.floor((totals.get(key) ?? 0) / MINUTE);
+  }).reduce((s, m) => s + m, 0);
+  const delta = total - previousTotal;
+  const trend: WeekTrend = delta > 0 ? "up" : delta < 0 ? "down" : "flat";
   let streak = 0,
     offset = totals.has(day(now)) ? 0 : 1;
   while (totals.has(day(now - offset * 86400000))) {
     streak++;
     offset++;
   }
-  return { days, total: days.reduce((s, d) => s + d.minutes, 0), streak };
+  return { days, total, previousTotal, delta, trend, streak };
 }

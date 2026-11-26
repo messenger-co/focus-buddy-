@@ -94,8 +94,73 @@ describe("Phiên học nâng cao", () => {
     expect(elapsedMs(p.focus_sessions[0])).toBe(8 * MINUTE + 10);
     expect(studyWeek(p.focus_sessions, at + 15 * MINUTE)).toMatchObject({
       total: 8,
+      previousTotal: 0,
+      delta: 8,
+      trend: "up",
       streak: 1,
     });
     expect(latestBreak(p.focus_sessions)).toBeUndefined();
+  });
+
+  it("so sánh xu hướng học tập tuần này với tuần trước (tăng, giảm, ổn định và bỏ qua phiên quá 14 ngày)", () => {
+    const DAY = 86_400_000;
+    const makeDone = (id: string, daysAgo: number, mins: number) => {
+      const start = at - daysAgo * DAY;
+      const end = start + mins * MINUTE;
+      return {
+        id,
+        started_at: new Date(start).toISOString(),
+        ends_at: new Date(end).toISOString(),
+        completed_at: new Date(end).toISOString(),
+        status: "completed" as const,
+        minutes: mins,
+        mode: "classic" as const,
+        paused_ms: 0,
+      };
+    };
+
+    // No sessions -> flat baseline
+    expect(studyWeek([], at)).toMatchObject({
+      total: 0,
+      previousTotal: 0,
+      delta: 0,
+      trend: "flat",
+    });
+
+    // Current week (50 min) > previous week (20 min), ignoring a 60-min session from 15 days ago
+    const upSessions = [
+      makeDone("c1", 0, 25),
+      makeDone("c2", 3, 25),
+      makeDone("p1", 7, 20),
+      makeDone("old", 15, 60),
+    ];
+    expect(studyWeek(upSessions, at)).toMatchObject({
+      total: 50,
+      previousTotal: 20,
+      delta: 30,
+      trend: "up",
+    });
+
+    // Current week (15 min) < previous week (45 min)
+    const downSessions = [
+      makeDone("c1", 1, 15),
+      makeDone("p1", 8, 25),
+      makeDone("p2", 13, 20),
+    ];
+    expect(studyWeek(downSessions, at)).toMatchObject({
+      total: 15,
+      previousTotal: 45,
+      delta: -30,
+      trend: "down",
+    });
+
+    // Equal non-zero weeks (30 min vs 30 min) -> flat
+    const flatSessions = [makeDone("c1", 2, 30), makeDone("p1", 10, 30)];
+    expect(studyWeek(flatSessions, at)).toMatchObject({
+      total: 30,
+      previousTotal: 30,
+      delta: 0,
+      trend: "flat",
+    });
   });
 });
