@@ -442,21 +442,35 @@ export default function Assistant({
             <BookOpen size={22} />
             <p>
               {t(
-                "Bạn muốn học gì cùng mình?",
-                "What would you like to work on?",
+                "Bạn muốn học gì cùng mình hôm nay?",
+                "What would you like to work on today?",
               )}
             </p>
-            <button
-              type="button"
-              onClick={() => {
-                setInput(
-                  lang === "vi" ? modes[mode].prompt : modes[mode].english,
-                );
-                inputEl.current?.focus();
-              }}
-            >
-              {lang === "vi" ? modes[mode].prompt : modes[mode].english}
-            </button>
+            <div className="ai-starter-grid">
+              {[
+                lang === "vi" ? modes[mode].prompt : modes[mode].english,
+                t(
+                  "Giúp mình lập kế hoạch ôn tập 20 phút không xao nhãng.",
+                  "Help me build a 20-minute distraction-free study plan.",
+                ),
+                t(
+                  "Giải thích ngắn gọn cách vượt qua cảm giác khó tập trung khi đọc sách.",
+                  "Explain a simple way to stay focused while reading a long chapter.",
+                ),
+              ].map((promptText) => (
+                <button
+                  key={promptText}
+                  type="button"
+                  className="ai-starter-chip"
+                  onClick={() => {
+                    setInput(promptText);
+                    inputEl.current?.focus();
+                  }}
+                >
+                  {promptText}
+                </button>
+              ))}
+            </div>
           </div>
         )}
         {displayed.map((row, i) => (

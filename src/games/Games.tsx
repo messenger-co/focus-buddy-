@@ -698,13 +698,44 @@ export default function Games({
         </>
       ) : (
         <>
-          <header className="arcade-lobby-heading">
-            <h1>Trò chơi tập trung</h1>
-            <p>
-              Chọn một chuyến phiêu lưu cùng{" "}
-              {profile.buddy_name || "bạn nhỏ của bạn"}.
-            </p>
+          <header className="arcade-lobby-heading game-hub-hero">
+            <div className="game-hub-hero-copy">
+              <span className="section-kicker">GIẢI LAO THÔNG MINH · RÈN PHẢN XẠ</span>
+              <h1>Trò chơi tập trung</h1>
+              <p>
+                Chọn một chuyến phiêu lưu ngắn cùng{" "}
+                {profile.buddy_name || "bạn nhỏ của bạn"} để nạp lại sự tỉnh táo
+                giữa các phiên học.
+              </p>
+            </div>
+            <div className="game-hub-stats" aria-label="Thống kê kho trò chơi">
+              <div>
+                <strong>{visible.size}</strong>
+                <span>Trò chơi hiển thị</span>
+              </div>
+              <div>
+                <strong>{pins.length}</strong>
+                <span>Đã ghim</span>
+              </div>
+              <div>
+                <strong>5–10p</strong>
+                <span>Mỗi giờ nghỉ</span>
+              </div>
+            </div>
           </header>
+          <div className="game-hub-tabs" role="group" aria-label="Chọn nhanh nhóm trò chơi">
+            {Object.entries(sections).map(([id, label]) => (
+              <button
+                key={id}
+                type="button"
+                className={`filter-tab${group === id ? " active" : ""}`}
+                aria-pressed={group === id}
+                onClick={() => filterBy("nhom", id === "all" ? "" : id)}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
           <div className="shelf-filters">
             <label className="shelf-query">
               <Search size={18} aria-hidden="true" />
@@ -761,43 +792,47 @@ export default function Games({
               </button>
             </div>
           )}
-          {visible.has("vuon-buddy") && (
-            <Link className="garden-promo" to="/tro-choi/vuon-buddy">
-              <span className="garden-promo-icon">
-                <Flower2 size={31} />
-              </span>
-              <span>
-                <small>TRÒ CHƠI CÙNG BUDDY · 1 PHÚT</small>
-                <strong>Vườn hoa lấp lánh</strong>
-                <em>
-                  Tìm 10 bông hoa phát sáng. Một cuộc phiêu lưu nhỏ trong giờ
-                  nghỉ!
-                </em>
-              </span>
-              <ArrowRight size={21} />
-            </Link>
-          )}
-          {visible.has("buddy-run") && (
-            <div className="buddy-big-games">
-              <Link
-                to="/tro-choi/buddy-run"
-                className="buddy-feature-game runner-feature"
-              >
-                <span className="buddy-feature-emoji" aria-hidden="true">
-                  🏃
-                </span>
-                <div>
-                  <small>NHẢY · THỬ PHẢN XẠ · CẤP ĐỘ TĂNG DẦN</small>
-                  <h2>Buddy Runner</h2>
-                  <p>
-                    Trò chơi giống khủng long offline, nhưng chính Buddy của bạn
-                    chạy và nhảy. Có kỷ lục lưu cục bộ.
-                  </p>
-                  <span>
-                    Chơi ngay <ArrowRight size={15} />
+          {(visible.has("vuon-buddy") || visible.has("buddy-run")) && (
+            <div className="game-hub-featured">
+              {visible.has("vuon-buddy") && (
+                <Link className="garden-promo" to="/tro-choi/vuon-buddy">
+                  <span className="garden-promo-icon">
+                    <Flower2 size={31} />
                   </span>
+                  <span>
+                    <small>TRÒ CHƠI CÙNG BUDDY · 1 PHÚT</small>
+                    <strong>Vườn hoa lấp lánh</strong>
+                    <em>
+                      Tìm 10 bông hoa phát sáng. Một cuộc phiêu lưu nhỏ trong giờ
+                      nghỉ!
+                    </em>
+                  </span>
+                  <ArrowRight size={21} />
+                </Link>
+              )}
+              {visible.has("buddy-run") && (
+                <div className="buddy-big-games">
+                  <Link
+                    to="/tro-choi/buddy-run"
+                    className="buddy-feature-game runner-feature"
+                  >
+                    <span className="buddy-feature-emoji" aria-hidden="true">
+                      🏃
+                    </span>
+                    <div>
+                      <small>NHẢY · THỬ PHẢN XẠ · CẤP ĐỘ TĂNG DẦN</small>
+                      <h2>Buddy Runner</h2>
+                      <p>
+                        Trò chơi giống khủng long offline, nhưng chính Buddy của
+                        bạn chạy và nhảy. Có kỷ lục lưu cục bộ.
+                      </p>
+                      <span>
+                        Chơi ngay <ArrowRight size={15} />
+                      </span>
+                    </div>
+                  </Link>
                 </div>
-              </Link>
+              )}
             </div>
           )}
           {hasAdventure && (

@@ -14,7 +14,20 @@ import {
 } from "lucide-react";
 import { soundscapes, type Soundscape } from "../focus3/settings";
 import { useAmbience } from "../focus3/useAmbience";
+import { campaignUrl } from "../foundation/campaignMedia";
 import "./music.css";
+
+const MUSIC_PRESETS: ReadonlyArray<{
+  id: string;
+  label: string;
+  note: string;
+  sound: Exclude<Soundscape, "off">;
+  volume: number;
+}> = [
+  { id: "deep-read", label: "Đọc sách thư viện", note: "Thư viện · 45%", sound: "library", volume: 45 },
+  { id: "homework", label: "Giải bài tập sâu", note: "Tiếng ồn nâu · 50%", sound: "brown", volume: 50 },
+  { id: "calm-night", label: "Ôn bài buổi tối", note: "Mưa nhẹ · 40%", sound: "rain", volume: 40 },
+];
 
 /** YouTube Music uses YouTube's officially supported embed player for public videos / playlists. */
 const STORAGE_KEY = "focus-buddy-youtube-music-v1";
@@ -101,11 +114,39 @@ export default function Music() {
 
   return (
     <main className="music-page">
-      <header className="music-hero">
-        <span className="music-kicker"><Headphones size={16}/> YOUTUBE MUSIC · GÓC ÂM NHẠC</span>
-        <h1>Nhạc nhẹ cho góc học tập</h1>
-        <p>Nghe âm thanh tập trung có sẵn không cần mạng, hoặc dán bài hát và playlist công khai từ YouTube Music.</p>
-        <div className="music-blobs" aria-hidden="true"><i/><i/><i/></div>
+      <header className="music-hero music-hero-photo">
+        <img
+          src={campaignUrl("students-library-reading.jpg")}
+          alt="Học sinh Trường THCS Đồng Giao đọc sách tập trung trong thư viện"
+          className="music-hero-bg"
+          referrerPolicy="no-referrer"
+        />
+        <div className="music-hero-scrim" aria-hidden="true" />
+        <div className="music-hero-content">
+          <span className="music-kicker"><Headphones size={16}/> GÓC ÂM NHẠC · KHÔNG GIAN TẬP TRUNG</span>
+          <h1>Nhạc nhẹ cho góc học tập</h1>
+          <p>Nghe âm thanh nền có sẵn ngay cả khi ngoại tuyến, hoặc lưu playlist công khai từ YouTube Music cho giờ học tập trung.</p>
+          <div className="music-quick-presets" role="group" aria-label="Gợi ý chế độ âm thanh học tập">
+            {MUSIC_PRESETS.map((preset) => {
+              const active = audio.playing && ambient === preset.sound && ambientVol === preset.volume;
+              return (
+                <button
+                  key={preset.id}
+                  type="button"
+                  className={`music-preset-btn${active ? " active" : ""}`}
+                  onClick={() => {
+                    setAmbient(preset.sound);
+                    setAmbientVol(preset.volume);
+                    void audio.play(preset.sound);
+                  }}
+                >
+                  <strong>{preset.label}</strong>
+                  <small>{preset.note}</small>
+                </button>
+              );
+            })}
+          </div>
+        </div>
       </header>
 
       <section className="music-ambient card" aria-label="Âm thanh nền có sẵn">
@@ -146,6 +187,11 @@ export default function Music() {
                   }
                 }}
               >
+                {active && (
+                  <span className="music-eq" aria-hidden="true">
+                    <i /><i /><i />
+                  </span>
+                )}
                 <span>{label}</span>
               </button>
             );

@@ -13,6 +13,7 @@ import {
   Sparkles,
 } from "lucide-react";
 import { CHALLENGES, type FocusChallenge } from "./challenges";
+import { CampaignFigureCard } from "../foundation/CampaignShowcase";
 import "./challenges.css";
 
 const STORAGE_KEY = "focus-buddy-golden-challenge-v1";
@@ -410,21 +411,30 @@ export default function Challenges() {
   const completedCount = Object.keys(scores).length;
   return (
     <div className="golden-challenge">
-      <header className="golden-header">
-        <span className="golden-kicker">CHINH PHỤC TỪNG BƯỚC</span>
-        <h1>20 phút tập trung vàng</h1>
-        <p>
-          Năm thử thách liên môn cho học sinh lớp 6–9, dựa trên bộ câu hỏi của
-          dự án.
-        </p>
-      </header>
-      <div className="golden-intro">
-        <Clock3 size={22} />
-        <span>
-          Chọn một tình huống, trả lời 5 câu trong 20 phút và tự đánh giá theo
-          thang 10 điểm. Không cần AI hoặc tài khoản.
-          {completedCount > 0 && ` · Đã hoàn thành ${completedCount}/${CHALLENGES.length} thử thách.`}
-        </span>
+      <div className="golden-hero-split">
+        <div className="golden-hero-copy">
+          <header className="golden-header">
+            <span className="golden-kicker">CHINH PHỤC TỪNG BƯỚC · THCS ĐỒNG GIAO</span>
+            <h1>20 phút tập trung vàng</h1>
+            <p>
+              Năm thử thách liên môn cho học sinh lớp 6–9, dựa trên bộ câu hỏi
+              của chiến dịch Popcorn Brain Reset.
+            </p>
+          </header>
+          <div className="golden-intro">
+            <Clock3 size={22} />
+            <span>
+              Chọn một tình huống, trả lời 5 câu trong 20 phút và tự đánh giá theo
+              thang 10 điểm. Không cần AI hoặc tài khoản.
+              {completedCount > 0 && ` · Đã hoàn thành ${completedCount}/${CHALLENGES.length} thử thách.`}
+            </span>
+          </div>
+        </div>
+        <CampaignFigureCard
+          assetId="poster-20min-golden"
+          eyebrow="ÁP PHÍCH THỬ THÁCH"
+          compact
+        />
       </div>
       <div className="golden-cards">
         {CHALLENGES.map((item, index) => {

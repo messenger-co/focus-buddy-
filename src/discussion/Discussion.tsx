@@ -31,7 +31,18 @@ import {
   type Feed,
   type Review,
 } from "./room";
+import { getCampaignAsset } from "../foundation/campaignMedia";
+import { CampaignImage, CampaignLightbox } from "../foundation/CampaignShowcase";
 import "./discussion.css";
+
+const COMMUNITY_PHOTOS = [
+  "poster-fanpage-launch",
+  "students-library-wisdom",
+  "students-standee-1",
+  "students-standee-4",
+  "students-standee-2",
+  "students-standee-3",
+].map(getCampaignAsset);
 
 const clock = new Intl.DateTimeFormat("vi-VN", {
   hour: "2-digit",
@@ -698,6 +709,7 @@ export default function Discussion({
   const [connectionError, setConnectionError] = useState("");
   const [guestBusy, setGuestBusy] = useState(false);
   const [guestError, setGuestError] = useState("");
+  const [galleryIndex, setGalleryIndex] = useState<number | null>(null);
 
   useEffect(() => {
     let disposed = false;
@@ -882,11 +894,53 @@ export default function Discussion({
           </article>
         ))}
       </div>
+      <section
+        className="discussion-community-showcase card"
+        aria-label="Hoạt động cộng đồng Popcorn Brain Reset"
+      >
+        <div className="section-heading">
+          <div>
+            <span className="section-kicker">CỘNG ĐỒNG HỌC SINH THCS ĐỒNG GIAO</span>
+            <h2>Lan tỏa thói quen đọc sâu & học tập trung</h2>
+          </div>
+          <button
+            type="button"
+            className="text-link"
+            onClick={() => setGalleryIndex(0)}
+          >
+            Xem toàn bộ ảnh <ArrowRight size={14} />
+          </button>
+        </div>
+        <div className="discussion-photo-grid">
+          {COMMUNITY_PHOTOS.map((photo, idx) => (
+            <button
+              key={photo.id}
+              type="button"
+              className={`discussion-photo-tile${idx === 0 ? " featured" : ""}`}
+              onClick={() => setGalleryIndex(idx)}
+            >
+              <CampaignImage asset={photo} className="discussion-photo-img" />
+              <div className="discussion-photo-caption">
+                <strong>{photo.titleVi}</strong>
+                <span>{photo.captionVi}</span>
+              </div>
+            </button>
+          ))}
+        </div>
+      </section>
       <p className="room-policy">
         <Flag size={16} /> Khách có thể tham gia phòng trực tuyến đang mở mà không
         cần email; mọi bài đăng đều qua kiểm duyệt để giữ môi trường học an toàn.
         Chủ đề tự học không gửi dữ liệu lên mạng.
       </p>
+      {galleryIndex !== null && (
+        <CampaignLightbox
+          items={COMMUNITY_PHOTOS}
+          index={galleryIndex}
+          onClose={() => setGalleryIndex(null)}
+          onIndex={setGalleryIndex}
+        />
+      )}
     </div>
   );
 }

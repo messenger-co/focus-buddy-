@@ -57,6 +57,7 @@ import {
   TrendingUp,
   Wind,
   X,
+  Zap,
 } from "lucide-react";
 import { selectedPlan, useFocusSettings } from "./focus3/settings";
 import FocusPage from "./focus3/FocusPage";
@@ -92,6 +93,12 @@ import { MotionConfig } from "motion/react";
 import { isDarkTheme, palette, type ThemeId } from "./foundation/themes";
 import { useAppearance } from "./foundation/appearance";
 import {
+  dailySpotlight,
+  firstStepHint,
+  studyHeatmap,
+  timeOfDayContext,
+} from "./foundation/engagement";
+import {
   english as inEnglish,
   language,
   locale,
@@ -101,6 +108,7 @@ import Boundary from "./foundation/Boundary";
 import StudyNook from "./foundation/StudyNook";
 import LocalBackup from "./foundation/LocalBackup";
 import SiteStatus from "./foundation/SiteStatus";
+import CampaignShowcase, { CampaignFigureCard } from "./foundation/CampaignShowcase";
 import { checkSupabaseConnection, cloudCheckText, type CloudCheck } from "./cloudHealth";
 import "./cloudHealth.css";
 import { russianShortcut } from "./easterEgg/russianShortcut";
@@ -118,15 +126,15 @@ type Buddy = ReturnType<typeof useBuddy>;
 const navItems = [
   { to: "/", icon: Home, label: "Góc của bạn" },
   { to: "/tap-trung", icon: Clock3, label: "Giờ tập trung" },
-  { to: "/nhiem-vu", icon: BookOpen, label: "Nhiệm vụ học tập" },
-  { to: "/ban-dong-hanh", icon: Heart, label: "Bạn đồng hành" },
   { to: "/tro-choi", icon: Gamepad2, label: "Trò chơi tập trung" },
-  { to: "/the-gioi-3d", icon: BoxIcon, label: "Phòng học 3D" },
-  { to: "/giao-dien", icon: Palette, label: "Xưởng giao diện" },
-  { to: "/thu-thach", icon: Puzzle, label: "20 phút thử thách" },
   { to: "/am-nhac", icon: Headphones, label: "Góc âm nhạc" },
+  { to: "/nhiem-vu", icon: BookOpen, label: "Nhiệm vụ học tập" },
+  { to: "/thu-thach", icon: Puzzle, label: "20 phút thử thách" },
+  { to: "/ban-dong-hanh", icon: Heart, label: "Bạn đồng hành" },
   { to: "/thao-luan", icon: MessagesSquare, label: "Phòng thảo luận" },
   { to: "/hanh-trinh", icon: TrendingUp, label: "Hành trình của bạn" },
+  { to: "/the-gioi-3d", icon: BoxIcon, label: "Phòng học 3D" },
+  { to: "/giao-dien", icon: Palette, label: "Xưởng giao diện" },
 ];
 const number = (n: number) => n.toLocaleString(locale);
 const today = () => vietnamDay();
@@ -459,165 +467,203 @@ function App() {
           Bỏ qua điều hướng
         </a>
         {menu && (
-          <button
-            className="sidebar-scrim"
-            aria-label="Đóng trình đơn"
-            tabIndex={-1}
-            aria-hidden="true"
-            onClick={dismissMenu}
-          />
-        )}
-        <aside
-          ref={menuPanel}
-          id="main-sidebar"
-          className={`sidebar ${menu ? "sidebar-open" : ""}`}
-          role={menu ? "dialog" : undefined}
-          aria-modal={menu || undefined}
-          aria-label={menu ? "Trình đơn học tập" : undefined}
-        >
-          <button
-            className="drawer-close icon-button"
-            aria-label="Đóng trình đơn"
-            onClick={dismissMenu}
-          >
-            <X size={20} />
-          </button>
-          <NavLink to="/" className="brand" onClick={() => setMenu(false)}>
-            <span className="brand-mark">
-              <Sprout size={25} />
-            </span>
-            <span>
-              Bạn Đồng Hành<small>CÙNG BẠN MỖI NGÀY</small>
-            </span>
-          </NavLink>
-          <div className="sidebar-label">KHÔNG GIAN HỌC TẬP</div>
-          <nav aria-label="Điều hướng chính">
-            {navItems.map(({ to, icon: Icon, label }) => (
-              <NavLink
-                key={to}
-                to={to}
-                onClick={() => setMenu(false)}
-                end={to === "/"}
-                className={({ isActive }) =>
-                  `nav-item ${isActive ? "selected" : ""}`
-                }
+          <>
+            <button
+              className="sidebar-scrim"
+              aria-label="Đóng trình đơn"
+              tabIndex={-1}
+              aria-hidden="true"
+              onClick={dismissMenu}
+            />
+            <aside
+              ref={menuPanel}
+              id="main-sidebar"
+              className="sidebar mobile-drawer sidebar-open"
+              role="dialog"
+              aria-modal="true"
+              aria-label="Trình đơn học tập"
+            >
+              <button
+                className="drawer-close icon-button"
+                aria-label="Đóng trình đơn"
+                onClick={dismissMenu}
               >
-                <Icon size={19} strokeWidth={1.7} />
-                <span>{label}</span>
-                {to === "/tap-trung" && active && <span className="live-dot" />}
+                <X size={20} />
+              </button>
+              <NavLink to="/" className="brand" onClick={() => setMenu(false)}>
+                <span className="brand-mark">
+                  <Sprout size={23} />
+                </span>
+                <span>
+                  Bạn Đồng Hành<small>THCS ĐỒNG GIAO · POPCORN BRAIN RESET</small>
+                </span>
               </NavLink>
-            ))}
-          </nav>
-          <div className="sidebar-bottom">
-            <div className="gentle-note">
-              <Flower2 size={24} />
-              <p>
-                Mỗi bước nhỏ đều
-                <br />
-                là một bước tiến.
-              </p>
-              <span>Bạn đang làm rất tốt rồi.</span>
-            </div>
-            <button className="nav-item" onClick={openSettings}>
-              <Settings size={19} />
-              <span>Cài đặt & tài khoản</span>
-            </button>
-            <div className="sidebar-profile">
-              <span className="avatar">
-                <Leaf size={21} />
-              </span>
-              <div>
-                <strong>{buddy.progress.profile.display_name}</strong>
-                <small>
-                  Cấp {buddy.progress.profile.level} · Mầm nhỏ chăm chỉ
-                </small>
-              </div>
-              <button
-                className="icon-button"
-                aria-label="Mở tài khoản"
-                onClick={openSettings}
-              >
-                <ChevronRight size={16} />
-              </button>
-            </div>
-          </div>
-        </aside>
-        <div className="workspace" inert={menu}>
-          <header className="topbar">
-            <div className="breadcrumb">
-              <button
-                className="icon-button mobile-menu"
-                ref={menuTrigger}
-                aria-expanded={menu}
-                aria-controls="main-sidebar"
-                aria-label="Mở trình đơn"
-                onClick={() => setMenu(true)}
-              >
-                <Menu size={21} />
-              </button>
-              <span>Không gian học tập</span>
-              <ChevronRight size={14} />
-              <strong>{page}</strong>
-            </div>
-            <div className="topbar-right">
-              {(active || rest) && location.pathname !== "/tap-trung" && (
-                <NavLink
-                  to="/tap-trung"
-                  className="session-return"
-                  aria-label={active ? "Quay về phiên học" : "Quay về giờ nghỉ"}
+              <div className="sidebar-label">KHÔNG GIAN HỌC TẬP</div>
+              <nav aria-label="Điều hướng di động">
+                {navItems.map(({ to, icon: Icon, label }) => (
+                  <NavLink
+                    key={to}
+                    to={to}
+                    onClick={() => setMenu(false)}
+                    end={to === "/"}
+                    className={({ isActive }) =>
+                      `nav-item ${isActive ? "selected" : ""}`
+                    }
+                  >
+                    <Icon size={18} strokeWidth={1.8} />
+                    <span>{label}</span>
+                    {to === "/tap-trung" && active && <span className="live-dot" />}
+                  </NavLink>
+                ))}
+              </nav>
+              <div className="sidebar-bottom">
+                <div className="gentle-note">
+                  <Flower2 size={22} />
+                  <p>Mỗi bước nhỏ đều là một bước tiến.</p>
+                  <span>Bạn đang làm rất tốt rồi.</span>
+                </div>
+                <button
+                  className="nav-item"
+                  onClick={() => {
+                    setMenu(false);
+                    setChat(true);
+                  }}
                 >
-                  {active ? <Clock3 size={15} /> : <Coffee size={15} />}
-                  <span>
-                    {active
-                      ? clockText(remaining, active.mode === "stopwatch")
-                      : clockText(restLeft)}
+                  <Sparkles size={18} />
+                  <span>Mở trợ lý AI</span>
+                </button>
+                <button className="nav-item" onClick={openSettings}>
+                  <Settings size={18} />
+                  <span>Tài khoản & cài đặt</span>
+                </button>
+              </div>
+            </aside>
+          </>
+        )}
+        <div className="workspace workspace-topnav" inert={menu}>
+          <header className="site-header">
+            <div className="masthead-bar">
+              <div className="masthead-inner">
+                <div className="masthead-left">
+                  <button
+                    className="icon-button mobile-menu"
+                    ref={menuTrigger}
+                    aria-expanded={menu}
+                    aria-controls="main-sidebar"
+                    aria-label="Mở trình đơn"
+                    onClick={() => setMenu(true)}
+                  >
+                    <Menu size={21} />
+                  </button>
+                  <NavLink to="/" className="masthead-brand">
+                    <span className="brand-mark">
+                      <Sprout size={22} />
+                    </span>
+                    <span className="masthead-brand-copy">
+                      <strong>Focus Buddy</strong>
+                      <small>THCS Đồng Giao · Popcorn Brain Reset</small>
+                    </span>
+                  </NavLink>
+                </div>
+                <div className="topbar-right masthead-tools">
+                  {(active || rest) && location.pathname !== "/tap-trung" && (
+                    <NavLink
+                      to="/tap-trung"
+                      className="session-return"
+                      aria-label={active ? "Quay về phiên học" : "Quay về giờ nghỉ"}
+                    >
+                      {active ? <Clock3 size={15} /> : <Coffee size={15} />}
+                      <span>
+                        {active
+                          ? clockText(remaining, active.mode === "stopwatch")
+                          : clockText(restLeft)}
+                      </span>
+                    </NavLink>
+                  )}
+                  <button
+                    type="button"
+                    className="masthead-ai-btn"
+                    aria-label="Trò chuyện cùng bạn"
+                    onClick={() => setChat(true)}
+                  >
+                    <Sparkles size={15} aria-hidden="true" />
+                    <span>Trợ lý AI</span>
+                  </button>
+                  <button
+                    type="button"
+                    className="topbar-tool"
+                    aria-label={
+                      dark ? "Chuyển sang giao diện sáng" : "Chuyển sang giao diện tối"
+                    }
+                    title={
+                      dark ? "Chuyển sang giao diện sáng" : "Chuyển sang giao diện tối"
+                    }
+                    onClick={() =>
+                      void act(() =>
+                        buddy.savePreferences({
+                          ...buddy.progress.profile,
+                          theme: dark
+                            ? lastLightTheme.current
+                            : lastDarkTheme.current,
+                        }),
+                      )
+                    }
+                  >
+                    {dark ? <Sun size={16} /> : <Moon size={16} />}
+                  </button>
+                  <button
+                    type="button"
+                    className="topbar-tool topbar-lang"
+                    aria-label="Đổi ngôn ngữ giao diện"
+                    title="Đổi ngôn ngữ (Tiếng Việt / English)"
+                    onClick={() => switchLanguage(language === "en" ? "vi" : "en")}
+                  >
+                    <Globe size={15} />
+                    <span>{language === "en" ? "EN" : "VI"}</span>
+                  </button>
+                  <span
+                    className={`mode-tag ${buddy.mode === "online" ? "online" : ""}`}
+                  >
+                    Lưu trên thiết bị
                   </span>
-                </NavLink>
-              )}
-              <button
-                type="button"
-                className="topbar-tool"
-                aria-label={
-                  dark ? "Chuyển sang giao diện sáng" : "Chuyển sang giao diện tối"
-                }
-                title={
-                  dark ? "Chuyển sang giao diện sáng" : "Chuyển sang giao diện tối"
-                }
-                onClick={() =>
-                  void act(() =>
-                    buddy.savePreferences({
-                      ...buddy.progress.profile,
-                      theme: dark
-                        ? lastLightTheme.current
-                        : lastDarkTheme.current,
-                    }),
-                  )
-                }
-              >
-                {dark ? <Sun size={16} /> : <Moon size={16} />}
-              </button>
-              <button
-                type="button"
-                className="topbar-tool topbar-lang"
-                aria-label="Đổi ngôn ngữ giao diện"
-                title="Đổi ngôn ngữ (Tiếng Việt / English)"
-                onClick={() => switchLanguage(language === "en" ? "vi" : "en")}
-              >
-                <Globe size={15} />
-                <span>{language === "en" ? "EN" : "VI"}</span>
-              </button>
-              <span
-                className={`mode-tag ${buddy.mode === "online" ? "online" : ""}`}
-              >
-                Lưu trên thiết bị
-              </span>
-              <button
-                className="avatar small"
-                onClick={openSettings}
-                aria-label="Tài khoản của bạn"
-              >
-                <Leaf size={17} />
-              </button>
+                  <button
+                    type="button"
+                    className="masthead-account-btn"
+                    onClick={openSettings}
+                    aria-label="Cài đặt & tài khoản"
+                    title="Cài đặt & tài khoản"
+                  >
+                    <span className="avatar small">
+                      <Leaf size={15} />
+                    </span>
+                    <span className="masthead-account-meta">
+                      <strong>{buddy.progress.profile.display_name}</strong>
+                      <small>Cấp {buddy.progress.profile.level}</small>
+                    </span>
+                    <Settings size={14} className="masthead-account-gear" aria-hidden="true" />
+                  </button>
+                </div>
+              </div>
+            </div>
+            <div className="topnav-strip">
+              <nav className="topnav-inner" aria-label="Điều hướng chính">
+                {navItems.map(({ to, icon: Icon, label }) => (
+                  <NavLink
+                    key={to}
+                    to={to}
+                    end={to === "/"}
+                    className={({ isActive }) =>
+                      `topnav-link${isActive ? " active" : ""}`
+                    }
+                  >
+                    <Icon size={15} strokeWidth={2} aria-hidden="true" />
+                    <span>{label}</span>
+                    {to === "/tap-trung" && active && (
+                      <span className="live-dot topnav-live-dot" aria-hidden="true" />
+                    )}
+                  </NavLink>
+                ))}
+              </nav>
             </div>
           </header>
           <main id="main-content" tabIndex={-1}>
@@ -809,20 +855,6 @@ function App() {
             </footer>
           </main>
         </div>
-        {!chat &&
-          !menu &&
-          !location.pathname.startsWith("/the-gioi-3d") &&
-          location.pathname !== "/thao-luan" &&
-          !location.pathname.startsWith("/tro-choi/") && (
-            <button
-              className="chat-launch"
-              aria-label="Trò chuyện cùng bạn"
-              onClick={() => setChat(true)}
-            >
-              <Sparkles size={18} aria-hidden="true" />
-              <span>Trò chuyện cùng bạn</span>
-            </button>
-          )}
         {toast && (
           <div className="toast" role="status">
             <CheckCheck size={20} />
@@ -907,11 +939,15 @@ function Dashboard({
     (s) => s.status === "completed",
   );
   const mood = buddy.progress.check_ins.find((c) => c.day === today());
-  const visibleWidgets = useAppearance().widgets.join(" ");
+  const appearance = useAppearance();
+  const visibleWidgets = appearance.widgets.join(" ");
+  const reducedMotion =
+    appearance.motion === "off" || appearance.motion === "minimal";
   const [settings, writeSettings] = useFocusSettings();
   const [editingGoals, setEditingGoals] = useState(false);
   const [dayGoalDraft, setDayGoalDraft] = useState(String(settings.dayGoal));
   const [weekGoalDraft, setWeekGoalDraft] = useState(String(settings.weekGoal));
+  const [moodBurst, setMoodBurst] = useState(0);
   useEffect(() => {
     setDayGoalDraft(String(settings.dayGoal));
     setWeekGoalDraft(String(settings.weekGoal));
@@ -937,6 +973,32 @@ function Dashboard({
     100,
     Math.round((weekStats.total / Math.max(1, settings.weekGoal)) * 100),
   );
+  const todayKey = today();
+  const habitsDoneToday = (buddy.progress.daily_habits?.[todayKey] ?? []).length;
+  const timeCtx = timeOfDayContext(now, inEnglish);
+  const heatmap = studyHeatmap(sessions, buddy.progress.check_ins, now, 21);
+  const spotlight = dailySpotlight({
+    dayKey: todayKey,
+    todayMinutes,
+    dayGoal: settings.dayGoal,
+    habitsDone: habitsDoneToday,
+    exercisesDone: buddy.progress.completed_exercises.length,
+    hasMoodToday: !!mood,
+    english: inEnglish,
+  });
+  const stepHint = firstStepHint({
+    todayMinutes,
+    dayGoal: settings.dayGoal,
+    streak: weekStats.streak,
+    habitsDone: habitsDoneToday,
+    english: inEnglish,
+  });
+  const checkInCount =
+    buddy.progress.counts?.checkin ?? buddy.progress.check_ins.length;
+  const animCheckIns = useAnimatedNumber(checkInCount, reducedMotion);
+  const animMinutes = useAnimatedNumber(minutes, reducedMotion);
+  const animXp = useAnimatedNumber(buddy.progress.profile.total_xp, reducedMotion);
+  const xpToNext = 100 - (buddy.progress.profile.total_xp % 100);
   const weeklyTrendShort =
     weekStats.trend === "up"
       ? `+${weekStats.delta} ${inEnglish ? "min" : "phút"}`
@@ -961,12 +1023,30 @@ function Dashboard({
     buddy.progress.profile.buddy_name ||
     COMPANIONS.find((c) => c.id === buddy.progress.profile.companion)?.name ||
     "Cáo Mây";
+  const handleSpotlightAction = () => {
+    if (spotlight.actionType === "focus") {
+      if (active || rest) navigate("/tap-trung");
+      else start(plan);
+    } else if (spotlight.actionType === "missions") {
+      navigate("/nhiem-vu");
+    } else if (spotlight.actionType === "habits") {
+      document.getElementById("daily-habits-card")?.scrollIntoView({
+        behavior: reducedMotion ? "auto" : "smooth",
+        block: "center",
+      });
+    } else if (spotlight.actionType === "mood") {
+      document.getElementById("mood-checkin-card")?.scrollIntoView({
+        behavior: reducedMotion ? "auto" : "smooth",
+        block: "center",
+      });
+    }
+  };
   return (
     <>
       <PageTitle
-        eyebrow="MỘT NGÀY MỚI, MỘT KHỞI ĐẦU NHỎ"
+        eyebrow={timeCtx.eyebrow}
         title={`${inEnglish ? "Hello" : "Chào"} ${buddy.progress.profile.display_name},`}
-        description="Hôm nay, mình cùng tiến bộ một chút nhé."
+        description={timeCtx.subtitle}
       >
         <div className="date-chip">
           <Sun size={17} />
@@ -978,28 +1058,52 @@ function Dashboard({
           }).format(new Date(now))}
         </div>
       </PageTitle>
-      <div className="stats-row">
+      <div className="stats-row stats-ribbon">
         <Stat
-          icon={<Flame size={21} />}
+          icon={<Flame size={20} />}
           label="Ngày đã điểm danh"
-          value={number(
-            buddy.progress.counts?.checkin ?? buddy.progress.check_ins.length,
-          )}
+          value={number(animCheckIns.display)}
           unit="ngày"
+          hint={
+            weekStats.streak > 0
+              ? inEnglish
+                ? `${weekStats.streak}-day focus streak`
+                : `Chuỗi ${weekStats.streak} ngày tập trung`
+              : inEnglish
+                ? "Log mood to earn +10 XP"
+                : "Điểm danh ngay để nhận +10 điểm"
+          }
+          pulsing={animCheckIns.pulsing}
           color="peach"
         />
         <Stat
-          icon={<Clock3 size={21} />}
+          icon={<Clock3 size={20} />}
           label="Thời gian đã tập trung"
-          value={number(minutes)}
+          value={number(animMinutes.display)}
           unit="phút"
+          hint={
+            todayMinutes > 0
+              ? inEnglish
+                ? `${todayMinutes} min logged today`
+                : `Hôm nay đã học ${todayMinutes} phút`
+              : inEnglish
+                ? "Start with a 15-min block"
+                : "Khởi động bằng phiên 15 phút"
+          }
+          pulsing={animMinutes.pulsing}
           color="mint"
         />
         <Stat
-          icon={<Sparkles size={21} />}
+          icon={<Sparkles size={20} />}
           label="Điểm kinh nghiệm"
-          value={number(buddy.progress.profile.total_xp)}
+          value={number(animXp.display)}
           unit="điểm"
+          hint={
+            inEnglish
+              ? `Level ${buddy.progress.profile.level} · ${xpToNext} XP to next`
+              : `Cấp ${buddy.progress.profile.level} · còn ${xpToNext} điểm lên cấp`
+          }
+          pulsing={animXp.pulsing}
           color="lavender"
         />
       </div>
@@ -1062,6 +1166,60 @@ function Dashboard({
             </div>
             <div className="progress-track">
               <span style={{ width: `${weeklyPct}%` }} />
+            </div>
+          </div>
+        </div>
+        <div className="study-heatmap-row">
+          <div className="study-heatmap-meta">
+            <span className="study-heatmap-title">
+              <strong>{inEnglish ? "21-day study rhythm" : "Nhịp học 21 ngày"}</strong>
+              <span className="study-heatmap-count">
+                {heatmap.activeDays}/{heatmap.totalDays}{" "}
+                {inEnglish ? "active days" : "ngày có hoạt động"}
+              </span>
+            </span>
+            <span className="study-heatmap-nudge">{stepHint}</span>
+          </div>
+          <div className="study-heatmap-bar">
+            <div
+              className="study-heatmap-cells"
+              role="img"
+              aria-label={
+                inEnglish
+                  ? `21-day activity heatmap: ${heatmap.activeDays} active days`
+                  : `Nhịp học 21 ngày: ${heatmap.activeDays} ngày có hoạt động`
+              }
+            >
+              {heatmap.cells.map((cell) => {
+                const label =
+                  cell.minutes > 0
+                    ? inEnglish
+                      ? `${cell.shortLabel}: ${cell.minutes} min focused`
+                      : `${cell.shortLabel}: ${cell.minutes} phút tập trung`
+                    : cell.checkedIn
+                      ? inEnglish
+                        ? `${cell.shortLabel}: Checked in`
+                        : `${cell.shortLabel}: Đã điểm danh`
+                      : inEnglish
+                        ? `${cell.shortLabel}: No activity yet`
+                        : `${cell.shortLabel}: Chưa có hoạt động`;
+                return (
+                  <span
+                    key={cell.day}
+                    className={`heat-cell lvl-${cell.intensity}${cell.isToday ? " is-today" : ""}`}
+                    title={label}
+                  />
+                );
+              })}
+            </div>
+            <div className="study-heatmap-legend" aria-hidden="true">
+              <span>{inEnglish ? "Less" : "Ít"}</span>
+              <i className="heat-cell lvl-0" />
+              <i className="heat-cell lvl-1" />
+              <i className="heat-cell lvl-2" />
+              <i className="heat-cell lvl-3" />
+              <i className="heat-cell lvl-4" />
+              <span>{inEnglish ? "More" : "Nhiều"}</span>
             </div>
           </div>
         </div>
@@ -1216,6 +1374,48 @@ function Dashboard({
               <BuddyArt buddy={buddy} sleepy={sleepy} size={190} />
             </StudyNook>
           </section>
+          <section
+            className={`card spotlight-card${spotlight.completed ? " done" : ""}`}
+            aria-label={inEnglish ? "Today's spotlight challenge" : "Thử thách hôm nay"}
+          >
+            <div className="spotlight-top">
+              <div className="spotlight-copy">
+                <span className="spotlight-kicker">
+                  <Zap size={13} aria-hidden="true" />
+                  {inEnglish ? "TODAY'S SPOTLIGHT" : "THỬ THÁCH HÔM NAY"}
+                </span>
+                <h2>{spotlight.title}</h2>
+                <p>{spotlight.summary}</p>
+              </div>
+              {spotlight.completed ? (
+                <span className="spotlight-done-tag">
+                  <Check size={14} strokeWidth={2.5} />
+                  {inEnglish ? "Completed" : "Đã hoàn thành"}
+                </span>
+              ) : (
+                <button
+                  type="button"
+                  className="button spotlight-cta"
+                  disabled={busy}
+                  onClick={handleSpotlightAction}
+                >
+                  {spotlight.actionLabel}
+                  <ArrowRight size={14} />
+                </button>
+              )}
+            </div>
+            <div className="spotlight-foot">
+              <div className="progress-track spotlight-track">
+                <span style={{ width: `${spotlight.pct}%` }} />
+              </div>
+              <span className="spotlight-nums">
+                <strong>
+                  {spotlight.current}/{spotlight.target}
+                </strong>{" "}
+                {spotlight.unit}
+              </span>
+            </div>
+          </section>
           <DailyHabitsCard buddy={buddy} busy={busy} />
           <section className="card missions-card">
             <div className="section-heading">
@@ -1276,7 +1476,7 @@ function Dashboard({
                 ? "Mình nghỉ một chút rồi cùng học tiếp nhé."
                 : active
                   ? "Mình sẽ yên lặng ở đây cùng bạn."
-                  : "Mình sẵn sàng đồng hành cùng bạn rồi!"}
+                  : timeCtx.buddyLine}
             </p>
             <div className="xp-label">
               <span>
@@ -1294,7 +1494,7 @@ function Dashboard({
               {sleepy ? "Chào ngày mới" : "Cho bạn nhỏ nghỉ ngơi"}
             </button>
           </section>
-          <section className="card mood-card">
+          <section id="mood-checkin-card" className="card mood-card">
             <span className="section-kicker">LẮNG NGHE BẢN THÂN</span>
             <h2>Hôm nay bạn thấy sao?</h2>
             <p>
@@ -1314,7 +1514,10 @@ function Dashboard({
                   key={m.id}
                   className={`mood-option ${mood?.mood === m.id ? "chosen" : ""}`}
                   disabled={!!mood || busy}
-                  onClick={() => checkIn(m.id)}
+                  onClick={() => {
+                    setMoodBurst((n) => n + 1);
+                    checkIn(m.id);
+                  }}
                 >
                   <span className={`mood-face ${m.id}`}>{m.emoji}</span>
                   {m.label}
@@ -1322,6 +1525,11 @@ function Dashboard({
                 </button>
               ))}
             </div>
+            {moodBurst > 0 && (
+              <span key={moodBurst} className="spark-burst mood-burst" aria-hidden="true">
+                <i /><i /><i /><i /><i /><i />
+              </span>
+            )}
           </section>
           <button className="assistant-card" onClick={openChat}>
             <span>
@@ -1335,6 +1543,7 @@ function Dashboard({
           </button>
         </div>
       </div>
+      <CampaignShowcase />
     </>
   );
 }
@@ -1388,6 +1597,7 @@ function DailyHabitsCard({ buddy, busy }: { buddy: Buddy; busy: boolean }) {
 
   return (
     <section
+      id="daily-habits-card"
       className={`card habits-card ${allDone ? "habits-all-done" : ""}`}
       aria-label="Thói quen hằng ngày"
     >
@@ -1444,9 +1654,14 @@ function DailyHabitsCard({ buddy, busy }: { buddy: Buddy; busy: boolean }) {
                 )}
               </span>
               {showPop && (
-                <span key={xpPop.seq} className="habit-xp-pop" aria-hidden="true">
-                  +{xpPop.amount} XP
-                </span>
+                <>
+                  <span key={xpPop.seq} className="habit-xp-pop" aria-hidden="true">
+                    +{xpPop.amount} XP
+                  </span>
+                  <span key={`b-${xpPop.seq}`} className="spark-burst" aria-hidden="true">
+                    <i /><i /><i /><i /><i /><i />
+                  </span>
+                </>
               )}
             </button>
           );
@@ -1455,27 +1670,62 @@ function DailyHabitsCard({ buddy, busy }: { buddy: Buddy; busy: boolean }) {
     </section>
   );
 }
+function useAnimatedNumber(target: number, disabled: boolean) {
+  const [display, setDisplay] = useState(target);
+  const [pulsing, setPulsing] = useState(false);
+  const prevRef = useRef(target);
+  useEffect(() => {
+    const start = prevRef.current;
+    prevRef.current = target;
+    if (disabled || target <= start) {
+      setDisplay(target);
+      return;
+    }
+    setPulsing(true);
+    let raf = 0;
+    const t0 = performance.now();
+    const duration = 380;
+    const step = (now: number) => {
+      const p = Math.min(1, (now - t0) / duration);
+      const eased = 1 - Math.pow(1 - p, 3);
+      setDisplay(Math.round(start + (target - start) * eased));
+      if (p < 1) raf = requestAnimationFrame(step);
+    };
+    raf = requestAnimationFrame(step);
+    const pulseTimer = window.setTimeout(() => setPulsing(false), 620);
+    return () => {
+      cancelAnimationFrame(raf);
+      window.clearTimeout(pulseTimer);
+    };
+  }, [target, disabled]);
+  return { display, pulsing };
+}
 function Stat({
   icon,
   label,
   value,
   unit,
+  hint,
+  pulsing,
   color,
 }: {
   icon: ReactNode;
   label: string;
   value: string;
   unit: string;
+  hint?: string;
+  pulsing?: boolean;
   color: string;
 }) {
   return (
-    <div className="stat-card">
+    <div className={`stat-card${pulsing ? " metric-pulse" : ""}`}>
       <span className={`stat-icon ${color}`}>{icon}</span>
-      <div>
+      <div className="stat-body">
         <span className="stat-label">{label}</span>
         <strong>
           {value} <small>{unit}</small>
         </strong>
+        {hint && <span className="stat-hint">{hint}</span>}
       </div>
     </div>
   );
@@ -1561,6 +1811,18 @@ function MissionsPage({ buddy }: { buddy: Buddy; busy: boolean }) {
         title="Những nhiệm vụ nhỏ, niềm vui lớn"
         description="Khám phá theo nhịp của bạn. Mỗi lần thử đều là một cơ hội để học."
       />
+      <div className="campaign-pair-grid">
+        <CampaignFigureCard
+          assetId="card-what-to-know"
+          eyebrow="HIỂU VỀ NÃO BỎNG NGÔ"
+          compact
+        />
+        <CampaignFigureCard
+          assetId="card-reset-guide"
+          eyebrow="CẨM NANG TẬP TRUNG"
+          compact
+        />
+      </div>
       <section className="card">
         <div className="section-heading">
           <h2>Mục tiêu đầu tiên</h2>
@@ -1887,6 +2149,7 @@ function ProgressPage({ buddy, now }: { buddy: Buddy; now: number }) {
           </div>
         </section>
       )}
+      <DigitalFootprintCheck />
       <Suspense fallback={null}>
         <Journal />
       </Suspense>
@@ -1916,6 +2179,109 @@ function ProgressPage({ buddy, now }: { buddy: Buddy; now: number }) {
         ))}
       </div>
     </>
+  );
+}
+const FOOTPRINT_KEY = "focus-buddy-footprint-v1";
+const FOOTPRINT_PILLARS = [
+  { id: "attention", label: "Duy trì chú ý", hint: "Giữ tập trung trọn vẹn một phiên 15–20 phút." },
+  { id: "distraction", label: "Kiểm soát sao nhãng", hint: "Chủ động tắt thông báo, hạn chế chuyển tab liên tục." },
+  { id: "reading", label: "Đọc sâu & ghi nhớ", hint: "Đọc hết đoạn văn hoặc trang sách trước khi lướt tiếp." },
+  { id: "persistence", label: "Kiên trì hoàn thành", hint: "Làm trọn một nhiệm vụ nhỏ rồi mới nghỉ." },
+  { id: "device", label: "Tự kiểm soát thiết bị", hint: "Đặt lịch nghỉ màn hình và cất điện thoại khi học." },
+] as const;
+
+function DigitalFootprintCheck() {
+  const [scores, setScores] = useState<Record<string, number>>(() => {
+    try {
+      const parsed = JSON.parse(localStorage.getItem(FOOTPRINT_KEY) || "{}");
+      return parsed && typeof parsed === "object" ? parsed : {};
+    } catch {
+      return {};
+    }
+  });
+  const setScore = (id: string, val: number) => {
+    setScores((prev) => {
+      const next = { ...prev, [id]: val };
+      try {
+        localStorage.setItem(FOOTPRINT_KEY, JSON.stringify(next));
+      } catch {
+        /* Device storage optional. */
+      }
+      return next;
+    });
+  };
+  const total = FOOTPRINT_PILLARS.reduce((sum, p) => sum + (scores[p.id] || 0), 0);
+  const rated = FOOTPRINT_PILLARS.filter((p) => (scores[p.id] || 0) > 0).length;
+
+  return (
+    <section
+      className="card footprint-rubric-card"
+      aria-label="Bộ chỉ số Popcorn Brain và Dấu chân số"
+    >
+      <div className="footprint-grid">
+        <div className="footprint-poster-col">
+          <CampaignFigureCard
+            assetId="poster-digital-footprint"
+            eyebrow="TRƯỜNG THCS ĐỒNG GIAO"
+          />
+        </div>
+        <div className="footprint-rubric-col">
+          <div className="section-heading">
+            <div>
+              <span className="section-kicker">TỰ ĐÁNH GIÁ 5 TIÊU CHÍ</span>
+              <h2>Bộ chỉ số Dấu chân số</h2>
+            </div>
+            <span className="footprint-score-readout">
+              <strong>{total}</strong>/25 sao
+            </span>
+          </div>
+          <p className="muted">
+            Chấm điểm trung thực cho bản thân mỗi tuần (1 đến 5 sao) để theo dõi
+            sự tiến bộ theo mô hình Popcorn Brain Reset.
+          </p>
+          <div className="footprint-list">
+            {FOOTPRINT_PILLARS.map((pillar) => {
+              const current = scores[pillar.id] || 0;
+              return (
+                <div key={pillar.id} className="footprint-row">
+                  <div>
+                    <strong>{pillar.label}</strong>
+                    <small>{pillar.hint}</small>
+                  </div>
+                  <div
+                    className="footprint-stars"
+                    role="group"
+                    aria-label={`Đánh giá ${pillar.label}`}
+                  >
+                    {[1, 2, 3, 4, 5].map((star) => (
+                      <button
+                        key={star}
+                        type="button"
+                        className={`footprint-star${star <= current ? " active" : ""}`}
+                        aria-label={`${star} sao cho ${pillar.label}`}
+                        aria-pressed={current === star}
+                        onClick={() => setScore(pillar.id, star)}
+                      >
+                        <Star size={15} fill={star <= current ? "currentColor" : "none"} />
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+          {rated === FOOTPRINT_PILLARS.length && (
+            <p className="footprint-summary" role="status">
+              {total >= 20
+                ? "Tuyệt vời! Bạn đang làm chủ nhịp tập trung số rất vững vàng."
+                : total >= 14
+                  ? "Khá tốt! Hãy chọn 1 tiêu chí thấp nhất để cải thiện trong tuần tới."
+                  : "Bắt đầu từ từng bước nhỏ: thử 1 phiên 15 phút không thông báo hôm nay nhé!"}
+            </p>
+          )}
+        </div>
+      </div>
+    </section>
   );
 }
 function SettingsModal({ buddy, close }: { buddy: Buddy; close: () => void }) {
