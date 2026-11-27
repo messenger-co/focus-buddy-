@@ -512,3 +512,13 @@
   transform: scale(0.76);
   opacity: 0.52;
 }
+.f3-week-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.f3-week-head h2 {
+  margin: 0;
+}

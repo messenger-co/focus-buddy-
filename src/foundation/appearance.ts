@@ -1,12 +1,14 @@
 import { useSyncExternalStore } from "react";
 export type MotionChoice = "off" | "minimal" | "normal" | "enhanced";
 export type FontScale = "compact" | "normal" | "large";
+export type FontStyle = "editorial" | "magazine" | "classic";
 export interface Appearance {
   motion: MotionChoice;
   backdrop: "plain" | "grid" | "stars" | "leaves";
   accent: number | null;
   widgets: string[];
   fontScale: FontScale;
+  fontStyle: FontStyle;
 }
 const key = "focus-buddy-appearance-v3",
   event = "focus-buddy-appearance";
@@ -16,6 +18,7 @@ const defaults: Appearance = {
   accent: null,
   widgets: ["habits", "missions", "friend", "mood", "assistant"],
   fontScale: "normal",
+  fontStyle: "editorial",
 };
 export function parseAppearance(raw: string | null): Appearance {
   try {
@@ -49,6 +52,9 @@ export function parseAppearance(raw: string | null): Appearance {
       fontScale: ["compact", "normal", "large"].includes(a.fontScale)
         ? a.fontScale
         : "normal",
+      fontStyle: ["editorial", "magazine", "classic"].includes(a.fontStyle)
+        ? a.fontStyle
+        : "editorial",
     };
   } catch {
     return defaults;
@@ -84,6 +90,7 @@ export function updateAppearance(change: Partial<Appearance>) {
   fallback = raw;
   document.documentElement.dataset.motion = next.motion;
   document.documentElement.dataset.fontScale = next.fontScale;
+  document.documentElement.dataset.fontStyle = next.fontStyle;
   window.dispatchEvent(new Event(event));
 }
 export function resetAppearance() {

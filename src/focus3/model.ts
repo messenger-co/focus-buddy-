@@ -105,3 +105,58 @@ export function studyWeek(sessions: FocusSession[], now: number) {
   }
   return { days, total, previousTotal, delta, trend, streak };
 }
+
+export const QUICK_DURATIONS = [15, 20, 25, 45, 60] as const;
+
+export function presetPatchForMinutes(
+  mins: number,
+): { mode: FocusMode; custom?: number } {
+  if (mins === 20) return { mode: "classic" };
+  if (mins === 25) return { mode: "pomodoro" };
+  if (mins === 45) return { mode: "deep" };
+  if (mins === 60) return { mode: "long" };
+  return { mode: "custom", custom: mins };
+}
+
+export function isPresetActive(
+  mode: FocusMode,
+  custom: number,
+  mins: number,
+): boolean {
+  if (mins === 20) return mode === "classic" || (mode === "custom" && custom === 20);
+  if (mins === 25) return mode === "pomodoro" || (mode === "custom" && custom === 25);
+  if (mins === 45) return mode === "deep" || (mode === "custom" && custom === 45);
+  if (mins === 60) return mode === "long" || (mode === "custom" && custom === 60);
+  return mode === "custom" && custom === mins;
+}
+
+export function tabTitleForFocus({
+  page,
+  active,
+  remaining,
+  restLeft,
+  english = false,
+}: {
+  page: string;
+  active?: { mode?: FocusMode; paused_at?: string | null };
+  remaining: number;
+  restLeft: number;
+  english?: boolean;
+}): string {
+  if (active) {
+    const time = clockText(remaining, active.mode === "stopwatch");
+    const status = active.paused_at
+      ? english
+        ? "Paused"
+        : "Tạm dừng"
+      : english
+        ? "Focusing"
+        : "Đang tập trung";
+    return `${time} · ${status} · Focus Buddy`;
+  }
+  if (restLeft > 0) {
+    const time = clockText(restLeft);
+    return `${time} · ${english ? "Break" : "Giờ nghỉ"} · Focus Buddy`;
+  }
+  return `${page} · Focus Buddy`;
+}

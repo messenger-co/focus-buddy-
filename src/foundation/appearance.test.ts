@@ -12,11 +12,15 @@ describe("appearance & themes", () => {
     localStorage.clear();
   });
 
-  it("parses fontScale safely with defaults", () => {
+  it("parses fontScale and fontStyle safely with defaults", () => {
     expect(parseAppearance(null).fontScale).toBe("normal");
     expect(parseAppearance(JSON.stringify({ fontScale: "large" })).fontScale).toBe("large");
     expect(parseAppearance(JSON.stringify({ fontScale: "compact" })).fontScale).toBe("compact");
     expect(parseAppearance(JSON.stringify({ fontScale: "invalid" })).fontScale).toBe("normal");
+    expect(parseAppearance(null).fontStyle).toBe("editorial");
+    expect(parseAppearance(JSON.stringify({ fontStyle: "magazine" })).fontStyle).toBe("magazine");
+    expect(parseAppearance(JSON.stringify({ fontStyle: "classic" })).fontStyle).toBe("classic");
+    expect(parseAppearance(JSON.stringify({ fontStyle: "comic" })).fontStyle).toBe("editorial");
   });
 
   it("updates and resets appearance back to defaults", () => {
@@ -25,18 +29,23 @@ describe("appearance & themes", () => {
       backdrop: "stars",
       motion: "minimal",
       fontScale: "large",
+      fontStyle: "magazine",
     });
     const saved = parseAppearance(localStorage.getItem("focus-buddy-appearance-v3"));
     expect(saved.fontScale).toBe("large");
+    expect(saved.fontStyle).toBe("magazine");
     expect(saved.accent).toBe(196);
     expect(document.documentElement.dataset.fontScale).toBe("large");
+    expect(document.documentElement.dataset.fontStyle).toBe("magazine");
 
     resetAppearance();
     const afterReset = parseAppearance(localStorage.getItem("focus-buddy-appearance-v3"));
     expect(afterReset.fontScale).toBe("normal");
+    expect(afterReset.fontStyle).toBe("editorial");
     expect(afterReset.accent).toBeNull();
     expect(afterReset.backdrop).toBe("plain");
     expect(document.documentElement.dataset.fontScale).toBe("normal");
+    expect(document.documentElement.dataset.fontStyle).toBe("editorial");
   });
 
   it("identifies dark and light themes accurately", () => {

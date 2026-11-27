@@ -8,6 +8,9 @@ import {
   studyWeek,
   latestBreak,
   focusModes,
+  presetPatchForMinutes,
+  isPresetActive,
+  tabTitleForFocus,
 } from "./model";
 
 const at = Date.parse("2026-11-18T15:00:00Z");
@@ -162,5 +165,52 @@ describe("Phiên học nâng cao", () => {
       delta: 0,
       trend: "flat",
     });
+  });
+
+  it("ánh xạ đúng các mức thời lượng nhanh sang chế độ chuẩn và cập nhật tiêu đề tab trình duyệt", () => {
+    expect(presetPatchForMinutes(15)).toEqual({ mode: "custom", custom: 15 });
+    expect(presetPatchForMinutes(20)).toEqual({ mode: "classic" });
+    expect(presetPatchForMinutes(25)).toEqual({ mode: "pomodoro" });
+    expect(presetPatchForMinutes(45)).toEqual({ mode: "deep" });
+    expect(presetPatchForMinutes(60)).toEqual({ mode: "long" });
+
+    for (const mins of [15, 20, 25, 45, 60]) {
+      const patch = presetPatchForMinutes(mins);
+      const p = planFor(patch.mode, patch.custom ?? 20);
+      expect(p.minutes).toBe(mins);
+      expect(isPresetActive(patch.mode, patch.custom ?? 20, mins)).toBe(true);
+    }
+
+    expect(
+      tabTitleForFocus({
+        page: "Góc của bạn",
+        active: { mode: "pomodoro", paused_at: null },
+        remaining: 12 * MINUTE + 5_000,
+        restLeft: 0,
+      }),
+    ).toBe("12:05 · Đang tập trung · Focus Buddy");
+    expect(
+      tabTitleForFocus({
+        page: "Góc của bạn",
+        active: { mode: "classic", paused_at: "2026-11-18T15:05:00Z" },
+        remaining: 10 * MINUTE,
+        restLeft: 0,
+        english: true,
+      }),
+    ).toBe("10:00 · Paused · Focus Buddy");
+    expect(
+      tabTitleForFocus({
+        page: "Giờ tập trung",
+        remaining: 0,
+        restLeft: 3 * MINUTE + 40_000,
+      }),
+    ).toBe("03:40 · Giờ nghỉ · Focus Buddy");
+    expect(
+      tabTitleForFocus({
+        page: "Góc của bạn",
+        remaining: 0,
+        restLeft: 0,
+      }),
+    ).toBe("Góc của bạn · Focus Buddy");
   });
 });

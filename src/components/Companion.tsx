@@ -119,23 +119,30 @@ export default function Companion({
       <g className="buddy-face-detail">
         {look.texture==="freckles"&&[0,1,2,3,4,5].map(i=><g key={i} fill={bodyColors[1]}>{[-1,1].map(k=><circle key={k} cx={160+k*(eyeX+6+i%3*4)} cy={eyeY+14+Math.floor(i/3)*4} r="1.65"/>)}</g>)}
         {look.texture==="stitch"&&<path d={`M115 ${eyeY+16}q6 10 18 14m54 0q12-3 18-14`} fill="none" stroke={bodyColors[1]} strokeWidth="2.2" strokeDasharray="3 3"/>}
-        {eyesClosed?<g fill="none" stroke="#574447" strokeWidth="4" strokeLinecap="round">{[-1,1].map(k=><path key={k} d={`M${150+k*eyeX} ${eyeY+1}q10 ${face==="happy"?-12:10} 20 0`}/>)}</g>:<motion.g
-          animate={animate?{scaleY:[1,1,.09,1,1]}:{scaleY:1}}
-          transition={{duration:5.1,times:[0,.69,.71,.735,1],repeat:animate?Infinity:0}}
-          style={{originX:"160px",originY:`${eyeY}px`}}>
+        {eyesClosed?<g fill="none" stroke="#574447" strokeWidth="4" strokeLinecap="round">{[-1,1].map(k=><path key={k} d={`M${150+k*eyeX} ${eyeY+1}q10 ${face==="happy"?-12:10} 20 0`}/>)}</g>:<g className="buddy-eyes">
           {[-1,1].map(k=>{
             const x=160+k*eyeX+(face==="curious"?3:0),y=eyeY+(face==="studying"?4:0)+(face==="curious"&&k===1?-2:0);
             if(k===1&&waving)return <path key={k} d={`M${x-9} ${y+1}q9-10 18 0`} fill="none" stroke="#574447" strokeWidth="3.5" strokeLinecap="round"/>;
             const large=face==="surprised"||face==="excited"||face==="celebrating";
-            return <g key={k}>
-              <ellipse cx={x} cy={y} rx={large?12:10} ry={large?15:12} fill={`url(#iris-${uid})`}/>
-              {look.eyes==="button"?<path d={`m${x-4} ${y-4} 8 8m-8 0 8-8`} stroke="#e8c5a4" strokeWidth="1.8"/>:
-              <><path d={`M${x-6} ${y+5}q5 8 12-1`} fill="none" stroke="#c09a76" strokeWidth="2.1"/>
-              {look.eyes==="star"||face==="excited"||face==="celebrating"?<path d={`m${x-2} ${y-10} 2 4 4 1-4 2-1 4-2-4-4-2 4-1Z`} fill="#fff5de"/>:<ellipse cx={x-3} cy={y-5} rx="3.5" ry="3" fill="#fff5e6"/>}
-              <circle cx={x+4} cy={y+2} r="1.4" fill="#fff8e8"/></>}
+            return <g key={k} className="buddy-eye" transform={`translate(${x} ${y})`}>
+              <g className="buddy-eye-open">
+                <ellipse cx="0" cy="0" rx={large?12:10} ry={large?15:12} fill={`url(#iris-${uid})`}/>
+                {look.eyes==="button"?<path d="m-4 -4 8 8m-8 0 8-8" stroke="#e8c5a4" strokeWidth="1.8"/>:
+                <><path d="M-6 5q5 8 12-1" fill="none" stroke="#c09a76" strokeWidth="2.1"/>
+                {look.eyes==="star"||face==="excited"||face==="celebrating"?<path d="m-2 -10 2 4 4 1-4 2-1 4-2-4-4-2 4-1Z" fill="#fff5de"/>:<ellipse cx="-3" cy="-5" rx="3.5" ry="3" fill="#fff5e6"/>}
+                <circle cx="4" cy="2" r="1.4" fill="#fff8e8"/></>}
+              </g>
+              {animate&&<path
+                className="buddy-eye-lid"
+                d={large?"M-10.5 2Q0 7 10.5 2":"M-9 2Q0 6.5 9 2"}
+                fill="none"
+                stroke="#574447"
+                strokeWidth="3.2"
+                strokeLinecap="round"
+              />}
             </g>;
           })}
-        </motion.g>}
+        </g>}
         {(face==="surprised"||face==="curious")&&<path d={`M${151-eyeX} ${eyeY-17}q8-7 15-3m${2*eyeX-14} -2q8-7 15-2`} stroke="#81685e" strokeWidth="2.7" fill="none" strokeLinecap="round"/>}
       </g>
       {face==="surprised"||face==="excited"?<ellipse cx="160" cy={eyeY+25} rx="5.5" ry={face==="surprised"?7:4} fill="#845c58"/>:kind === "axolotl" ? (
@@ -269,7 +276,7 @@ export default function Companion({
           repeat: animate ? Infinity : 0,
           ease: "easeInOut",
         }}
-        style={{ originX: "160px", originY: "230px" }}
+        style={{ originX: 0.5, originY: 0.85 }}
       >
         {kind === "fox" && (
           <>

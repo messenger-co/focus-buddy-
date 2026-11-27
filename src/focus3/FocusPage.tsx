@@ -11,7 +11,9 @@ import {
 import { paletteLibrary } from "../foundation/themes";
 import { NavLink } from "react-router-dom";
 import {
+  ArrowDownRight,
   ArrowRight,
+  ArrowUpRight,
   Bell,
   BellOff,
   BookOpen,
@@ -24,6 +26,7 @@ import {
   Leaf,
   Maximize2,
   Minimize2,
+  Minus,
   Pause,
   Play,
   Plus,
@@ -41,6 +44,9 @@ import {
   plannedMs,
   planFor,
   focusModes,
+  isPresetActive,
+  presetPatchForMinutes,
+  QUICK_DURATIONS,
   sessionMinutes,
   studyReward,
   studyWeek,
@@ -592,24 +598,19 @@ export default function FocusPage({
             </div>
             <fieldset disabled={!!active || !!rest}>
               <div className="f3-presets" role="group" aria-label="Chọn nhanh thời lượng">
-                {[15, 20, 25, 45, 60].map((mins) => {
-                  const activePreset =
-                    (mins === 20 && settings.mode === "classic") ||
-                    (mins === 25 && settings.mode === "deep") ||
-                    (mins === 45 && settings.mode === "long") ||
-                    (settings.mode === "custom" && settings.custom === mins);
+                {QUICK_DURATIONS.map((mins) => {
+                  const activePreset = isPresetActive(
+                    settings.mode,
+                    settings.custom,
+                    mins,
+                  );
                   return (
                     <button
                       key={mins}
                       type="button"
                       className={`f3-preset-btn${activePreset ? " active" : ""}`}
                       aria-pressed={activePreset}
-                      onClick={() => {
-                        if (mins === 20) write({ mode: "classic" });
-                        else if (mins === 25) write({ mode: "deep" });
-                        else if (mins === 45) write({ mode: "long" });
-                        else write({ mode: "custom", custom: mins });
-                      }}
+                      onClick={() => write(presetPatchForMinutes(mins))}
                     >
                       {mins} phút
                     </button>
@@ -707,7 +708,35 @@ export default function FocusPage({
           </section>
           <div className="f3-lower">
             <section className="card f3-week">
-              <h2>Bảy ngày học tập</h2>
+              <div className="f3-week-head">
+                <h2>Bảy ngày học tập</h2>
+                <span
+                  className={`weekly-trend trend-${stats.trend}`}
+                  data-trend={stats.trend}
+                  title={
+                    stats.trend === "up"
+                      ? `Tăng ${stats.delta} phút so với tuần trước (${stats.previousTotal} phút)`
+                      : stats.trend === "down"
+                        ? `Giảm ${Math.abs(stats.delta)} phút so với tuần trước (${stats.previousTotal} phút)`
+                        : `Bằng tuần trước (${stats.previousTotal} phút)`
+                  }
+                >
+                  {stats.trend === "up" ? (
+                    <ArrowUpRight size={13} strokeWidth={2.5} aria-hidden="true" />
+                  ) : stats.trend === "down" ? (
+                    <ArrowDownRight size={13} strokeWidth={2.5} aria-hidden="true" />
+                  ) : (
+                    <Minus size={13} strokeWidth={2.5} aria-hidden="true" />
+                  )}
+                  <span>
+                    {stats.trend === "up"
+                      ? `+${stats.delta} phút`
+                      : stats.trend === "down"
+                        ? `−${Math.abs(stats.delta)} phút`
+                        : "Ổn định"}
+                  </span>
+                </span>
+              </div>
               <p>
                 {stats.total} phút trong tuần · {stats.streak} ngày học liên
                 tiếp

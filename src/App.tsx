@@ -48,6 +48,7 @@ import {
   Moon,
   Play,
   Settings,
+  SlidersHorizontal,
   Sparkles,
   Sprout,
   Star,
@@ -63,11 +64,15 @@ import {
   clockText,
   elapsedMs,
   faceMs,
+  isPresetActive,
   latestBreak,
   MINUTE,
   plannedMs,
+  presetPatchForMinutes,
+  QUICK_DURATIONS,
   studyWeek,
   studyReward,
+  tabTitleForFocus,
   type FocusPlan,
 } from "./focus3/model";
 import { useBuddy, vietnamDay } from "./state";
@@ -257,7 +262,8 @@ function App() {
     document.documentElement.dataset.motion = appearance.motion;
     document.documentElement.dataset.palette = dark ? "dark" : "light";
     document.documentElement.dataset.fontScale = appearance.fontScale;
-  }, [appearance.motion, appearance.fontScale, dark]);
+    document.documentElement.dataset.fontStyle = appearance.fontStyle;
+  }, [appearance.motion, appearance.fontScale, appearance.fontStyle, dark]);
   const navigate = useNavigate();
   const location = useLocation();
   const [menu, setMenu] = useState(false);
@@ -410,8 +416,14 @@ function App() {
         (item.to !== "/" && location.pathname.startsWith(item.to + "/")),
     )?.label || "Góc của bạn";
   useEffect(() => {
-    document.title = page + " · Focus Buddy";
-  }, [page]);
+    document.title = tabTitleForFocus({
+      page,
+      active,
+      remaining,
+      restLeft,
+      english: inEnglish,
+    });
+  }, [page, active?.id, active?.mode, active?.paused_at, remaining, restLeft]);
   return (
     <MotionConfig
       reducedMotion={
@@ -427,6 +439,7 @@ function App() {
         data-motion={appearance.motion}
         data-backdrop={appearance.backdrop}
         data-font-scale={appearance.fontScale}
+        data-font-style={appearance.fontStyle}
         style={
           palette(
             buddy.progress.profile.theme,
@@ -789,11 +802,10 @@ function App() {
               </Routes>
             </Boundary>
             <footer className="page-footer">
-              <Sprout size={14} />
+              <Sprout size={14} aria-hidden="true" />
               <span>
                 Không cần hoàn hảo. Chỉ cần tiến bộ hơn một chút mỗi ngày.
               </span>
-              <span className="footer-version">Focus Buddy · 3.0</span>
             </footer>
           </main>
         </div>
@@ -802,8 +814,12 @@ function App() {
           !location.pathname.startsWith("/the-gioi-3d") &&
           location.pathname !== "/thao-luan" &&
           !location.pathname.startsWith("/tro-choi/") && (
-            <button className="chat-launch" onClick={() => setChat(true)}>
-              <Sparkles size={18} />
+            <button
+              className="chat-launch"
+              aria-label="Trò chuyện cùng bạn"
+              onClick={() => setChat(true)}
+            >
+              <Sparkles size={18} aria-hidden="true" />
               <span>Trò chuyện cùng bạn</span>
             </button>
           )}
@@ -892,7 +908,14 @@ function Dashboard({
   );
   const mood = buddy.progress.check_ins.find((c) => c.day === today());
   const visibleWidgets = useAppearance().widgets.join(" ");
-  const [settings] = useFocusSettings();
+  const [settings, writeSettings] = useFocusSettings();
+  const [editingGoals, setEditingGoals] = useState(false);
+  const [dayGoalDraft, setDayGoalDraft] = useState(String(settings.dayGoal));
+  const [weekGoalDraft, setWeekGoalDraft] = useState(String(settings.weekGoal));
+  useEffect(() => {
+    setDayGoalDraft(String(settings.dayGoal));
+    setWeekGoalDraft(String(settings.weekGoal));
+  }, [settings.dayGoal, settings.weekGoal]);
   const plan = selectedPlan(settings);
   const stopwatch = (active?.mode ?? plan.mode) === "stopwatch";
   const plannedReward = studyReward(
@@ -980,23 +1003,12 @@ function Dashboard({
           color="lavender"
         />
       </div>
-      <div className="desk-links">
-        <NavLink to="/the-gioi-3d">
-          <BoxIcon size={18} /> Khám phá phòng 3D <ChevronRight size={15} />
-        </NavLink>
-        <NavLink to="/ban-dong-hanh">
-          <Heart size={18} /> Ghé xưởng Buddy <ChevronRight size={15} />
-        </NavLink>
-        <NavLink to="/giao-dien">
-          <Palette size={18} /> Đổi giao diện <ChevronRight size={15} />
-        </NavLink>
-      </div>
       <section
         className="daily-goal-strip card"
         aria-label="Mục tiêu tập trung hôm nay và trong tuần"
       >
         <div className="goal-strip-grid">
-          <div className="goal-item">
+          <div className={`goal-item${dailyPct >= 100 ? " goal-met" : ""}`}>
             <div className="daily-goal-head">
               <span className="daily-goal-title">
                 <Target size={16} />
@@ -1011,7 +1023,7 @@ function Dashboard({
               <span style={{ width: `${dailyPct}%` }} />
             </div>
           </div>
-          <div className="goal-item">
+          <div className={`goal-item${weeklyPct >= 100 ? " goal-met" : ""}`}>
             <div className="daily-goal-head">
               <span className="daily-goal-title">
                 <TrendingUp size={16} />
@@ -1036,6 +1048,16 @@ function Dashboard({
                   )}
                   <span>{weeklyTrendShort}</span>
                 </span>
+                <button
+                  type="button"
+                  className={`goal-edit-btn${editingGoals ? " active" : ""}`}
+                  aria-expanded={editingGoals}
+                  aria-label="Điều chỉnh mục tiêu tập trung"
+                  title="Điều chỉnh mục tiêu"
+                  onClick={() => setEditingGoals((v) => !v)}
+                >
+                  <SlidersHorizontal size={13} />
+                </button>
               </span>
             </div>
             <div className="progress-track">
@@ -1043,13 +1065,51 @@ function Dashboard({
             </div>
           </div>
         </div>
+        {editingGoals && (
+          <form
+            className="goal-editor-row"
+            onSubmit={(e) => {
+              e.preventDefault();
+              const nextDay = Math.max(1, Math.min(480, Math.round(Number(dayGoalDraft) || settings.dayGoal)));
+              const nextWeek = Math.max(1, Math.min(3360, Math.round(Number(weekGoalDraft) || settings.weekGoal)));
+              writeSettings({ dayGoal: nextDay, weekGoal: nextWeek });
+              setEditingGoals(false);
+            }}
+          >
+            <label>
+              <span>Phút mỗi ngày</span>
+              <input
+                type="number"
+                min={1}
+                max={480}
+                value={dayGoalDraft}
+                onChange={(e) => setDayGoalDraft(e.target.value)}
+              />
+            </label>
+            <label>
+              <span>Phút mỗi tuần</span>
+              <input
+                type="number"
+                min={1}
+                max={3360}
+                value={weekGoalDraft}
+                onChange={(e) => setWeekGoalDraft(e.target.value)}
+              />
+            </label>
+            <button type="submit" className="button primary goal-save-btn">
+              <Check size={14} /> Xong
+            </button>
+          </form>
+        )}
       </section>
       <div className="dashboard-grid" data-widgets={visibleWidgets}>
         <div className="dashboard-main">
           <section className="focus-hero">
             <div className="hero-copy">
               <span className="hero-label">
-                <span className="live-dot" />
+                {active && !active.paused_at && (
+                  <span className="live-dot live-active" aria-hidden="true" />
+                )}
                 {active
                   ? active.paused_at
                     ? "PHIÊN HỌC TẠM DỪNG"
@@ -1095,6 +1155,35 @@ function Dashboard({
                   </>
                 )}
               </p>
+              {!active && !rest && (
+                <div
+                  className="hero-durations"
+                  role="group"
+                  aria-label="Chọn nhanh thời lượng tập trung"
+                >
+                  {QUICK_DURATIONS.map((mins) => {
+                    const chosen = isPresetActive(
+                      settings.mode,
+                      settings.custom,
+                      mins,
+                    );
+                    return (
+                      <button
+                        key={mins}
+                        type="button"
+                        className={`hero-dur-btn${chosen ? " active" : ""}`}
+                        aria-pressed={chosen}
+                        onClick={() =>
+                          writeSettings(presetPatchForMinutes(mins))
+                        }
+                      >
+                        {mins}
+                        {inEnglish ? "m" : "p"}
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
               <button
                 disabled={busy}
                 className="button primary"
@@ -1388,9 +1477,6 @@ function Stat({
           {value} <small>{unit}</small>
         </strong>
       </div>
-      <span className="stat-detail">
-        <TrendingUp size={15} />
-      </span>
     </div>
   );
 }
@@ -1621,18 +1707,43 @@ function MissionsPage({ buddy }: { buddy: Buddy; busy: boolean }) {
   );
 }
 function ProgressPage({ buddy, now }: { buddy: Buddy; now: number }) {
+  const [settings] = useFocusSettings();
   const sessions = buddy.progress.focus_sessions.filter(
     (s) => s.status === "completed",
   );
-  const { days, total, streak } = studyWeek(sessions, now);
+  const { days, total, previousTotal, delta, trend, streak } = studyWeek(
+    sessions,
+    now,
+  );
   const weekday = new Intl.DateTimeFormat(locale, {
     weekday: "short",
     timeZone: "Asia/Ho_Chi_Minh",
   });
   const dayLabel = (date: string) =>
     weekday.format(new Date(date + "T12:00:00Z"));
-  const max = Math.max(20, ...days.map((d) => d.minutes));
+  const max = Math.max(20, settings.dayGoal, ...days.map((d) => d.minutes));
+  const goalLineBottom = Math.min(96, Math.round((settings.dayGoal / max) * 100));
   const avgMinutes = Math.round(total / 7);
+  const trendShort =
+    trend === "up"
+      ? `+${delta} ${inEnglish ? "min" : "phút"}`
+      : trend === "down"
+        ? `−${Math.abs(delta)} ${inEnglish ? "min" : "phút"}`
+        : inEnglish
+          ? "Steady"
+          : "Ổn định";
+  const trendNote =
+    trend === "up"
+      ? inEnglish
+        ? `Up ${delta} min vs last week (${previousTotal} min)`
+        : `Tăng ${delta} phút so với tuần trước (${previousTotal} phút)`
+      : trend === "down"
+        ? inEnglish
+          ? `Down ${Math.abs(delta)} min vs last week (${previousTotal} min)`
+          : `Giảm ${Math.abs(delta)} phút so với tuần trước (${previousTotal} phút)`
+        : inEnglish
+          ? `Same as last week (${previousTotal} min)`
+          : `Bằng tuần trước (${previousTotal} phút)`;
   const recentMoods = buddy.progress.check_ins.slice(0, 7);
   const moodMap = {
     great: { emoji: "☺", label: "Rất vui" },
@@ -1678,32 +1789,73 @@ function ProgressPage({ buddy, now }: { buddy: Buddy; now: number }) {
             <span className="section-kicker">ĐỀU ĐẶN TỪNG NGÀY</span>
             <h2>7 ngày vừa qua</h2>
           </div>
-          <span className="muted">
-            {total}{" "}
-            {inEnglish
-              ? `min · avg ${avgMinutes}/day · ${streak}d streak`
-              : `phút · TB ${avgMinutes} phút/ngày · ${streak} ngày liên tiếp`}
-          </span>
+          <div className="chart-head-meta">
+            <span className="muted">
+              {total}{" "}
+              {inEnglish
+                ? `min · avg ${avgMinutes}/day · ${streak}d streak`
+                : `phút · TB ${avgMinutes} phút/ngày · ${streak} ngày liên tiếp`}
+            </span>
+            <span
+              className={`weekly-trend trend-${trend}`}
+              data-trend={trend}
+              title={trendNote}
+              aria-label={trendNote}
+            >
+              {trend === "up" ? (
+                <ArrowUpRight size={13} strokeWidth={2.5} aria-hidden="true" />
+              ) : trend === "down" ? (
+                <ArrowDownRight size={13} strokeWidth={2.5} aria-hidden="true" />
+              ) : (
+                <Minus size={13} strokeWidth={2.5} aria-hidden="true" />
+              )}
+              <span>{trendShort}</span>
+            </span>
+          </div>
         </div>
-        <div
-          className="bar-chart"
-          role="img"
-          aria-label={days
-            .map(
-              (d) =>
-                `${dayLabel(d.day)}: ${d.minutes} ${inEnglish ? "min" : "phút"}`,
-            )
-            .join(", ")}
-        >
-          {days.map((d) => (
-            <div className="bar-column" key={d.day}>
-              <strong>{d.minutes}</strong>
-              <div className="bar-track">
-                <span style={{ height: `${(d.minutes / max) * 100}%` }} />
-              </div>
-              <span>{dayLabel(d.day)}</span>
-            </div>
-          ))}
+        <div className="bar-chart-wrap">
+          <div
+            className="bar-chart"
+            role="img"
+            aria-label={days
+              .map(
+                (d) =>
+                  `${dayLabel(d.day)}: ${d.minutes} ${inEnglish ? "min" : "phút"}`,
+              )
+              .join(", ")}
+          >
+            {days.map((d) => {
+              const metGoal = d.minutes >= settings.dayGoal;
+              return (
+                <div
+                  className={`bar-column${metGoal ? " goal-met" : ""}`}
+                  key={d.day}
+                >
+                  <strong>{d.minutes}</strong>
+                  <div className="bar-track">
+                    <span
+                      className="bar-goal-mark"
+                      style={{ bottom: `${goalLineBottom}%` }}
+                      aria-hidden="true"
+                    />
+                    <span
+                      className="bar-fill"
+                      style={{ height: `${(d.minutes / max) * 100}%` }}
+                    />
+                  </div>
+                  <span>{dayLabel(d.day)}</span>
+                </div>
+              );
+            })}
+          </div>
+          <div className="chart-goal-caption">
+            <span className="chart-goal-swatch" aria-hidden="true" />
+            <span>
+              {inEnglish
+                ? `Daily goal: ${settings.dayGoal} min`
+                : `Mục tiêu ngày: ${settings.dayGoal} phút`}
+            </span>
+          </div>
         </div>
         {!sessions.length && (
           <p className="chart-empty">

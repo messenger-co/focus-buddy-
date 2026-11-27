@@ -7,6 +7,7 @@ import {
   resetAppearance,
   type Appearance,
   type FontScale,
+  type FontStyle,
 } from "./appearance";
 import { language, switchLanguage } from "./language";
 const widgets = {
@@ -139,6 +140,21 @@ export default function ThemeStudio({
                   {n}
                 </option>
               ))}
+            </select>
+          </label>
+          <label>
+            Kiểu chữ
+            <select
+              value={a.fontStyle}
+              onChange={(e) =>
+                updateAppearance({
+                  fontStyle: e.target.value as FontStyle,
+                })
+              }
+            >
+              <option value="editorial">Báo chí (Inter)</option>
+              <option value="magazine">Tạp chí (Merriweather + Inter)</option>
+              <option value="classic">Mềm mại (Be Vietnam Pro)</option>
             </select>
           </label>
           <label>
