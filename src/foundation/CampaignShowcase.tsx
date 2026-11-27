@@ -214,12 +214,86 @@ export function CampaignFigureCard({
   );
 }
 
+/** Full-clarity institutional campaign banner positioned at the very top of the page. */
+export function TopCampaignBanner() {
+  const [lightboxIdx, setLightboxIdx] = useState<number | null>(null);
+  const banner = getCampaignAsset("banner-yard");
+  const title = inEnglish ? banner.titleEn : banner.titleVi;
+
+  return (
+    <>
+      <section
+        className="site-top-banner"
+        aria-label={
+          inEnglish
+            ? "Dong Giao Secondary School Popcorn Brain Reset Banner"
+            : "Biểu ngữ Chiến dịch Popcorn Brain Reset · Trường THCS Đồng Giao"
+        }
+      >
+        <div className="site-top-banner-inner">
+          <button
+            type="button"
+            className="site-top-banner-media"
+            onClick={() => setLightboxIdx(0)}
+            aria-label={inEnglish ? `View full banner: ${title}` : `Xem toàn màn hình: ${title}`}
+          >
+            <CampaignImage asset={banner} className="site-top-banner-img" eager />
+          </button>
+          <div className="site-top-banner-copy">
+            <span className="site-top-banner-eyebrow">
+              {inEnglish
+                ? "DONG GIAO SECONDARY SCHOOL · DIGITAL FOCUS CAMPAIGN"
+                : "TRƯỜNG THCS ĐỒNG GIAO · CHIẾN DỊCH TẬP TRUNG SỐ"}
+            </span>
+            <p className="site-top-banner-title">
+              {inEnglish
+                ? "Popcorn Brain Reset — Reduce distraction, deepen focus, master technology"
+                : "Popcorn Brain Reset — Giảm sao nhãng, tăng tập trung, làm chủ công nghệ"}
+            </p>
+            <p className="site-top-banner-desc">
+              {inEnglish
+                ? "A calm study workspace helping secondary students replace fragmented scrolling with structured deep-focus habits."
+                : "Không gian rèn luyện nhịp học sâu, giảm thói quen lướt ngắn và xây dựng phương pháp tự học chủ động cho học sinh THCS."}
+            </p>
+            <div className="site-top-banner-actions">
+              <a
+                href={SURVEY_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="site-top-banner-link primary"
+              >
+                <span>{inEnglish ? "Take student survey" : "Tham gia khảo sát"}</span>
+                <ExternalLink size={13} aria-hidden="true" />
+              </a>
+              <button
+                type="button"
+                className="site-top-banner-link"
+                onClick={() => setLightboxIdx(0)}
+              >
+                <Images size={13} aria-hidden="true" />
+                <span>{inEnglish ? "Inspect banner" : "Xem toàn ảnh"}</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
+      {lightboxIdx !== null && (
+        <CampaignLightbox
+          items={CAMPAIGN_MEDIA}
+          index={lightboxIdx}
+          onClose={() => setLightboxIdx(null)}
+          onIndex={setLightboxIdx}
+        />
+      )}
+    </>
+  );
+}
+
 /** Dan Tri inspired editorial gallery strip on Dashboard featuring THCS Dong Giao campaign & student photos. */
 export default function CampaignShowcase() {
   const [filter, setFilter] = useState<"all" | CampaignCategory>("all");
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
 
-  const banner = getCampaignAsset("banner-yard");
   const survey = getCampaignAsset("survey-popcorn");
   const featuredPosters = [
     getCampaignAsset("poster-detox"),
@@ -276,29 +350,6 @@ export default function CampaignShowcase() {
             : `Xem trọn bộ ${CAMPAIGN_MEDIA.length} ảnh & áp phích`}
         </button>
       </div>
-
-      <article className="campaign-banner-hero">
-        <button
-          type="button"
-          className="campaign-banner-media"
-          onClick={() => openAsset(banner)}
-          aria-label={inEnglish ? banner.titleEn : banner.titleVi}
-        >
-          <CampaignImage asset={banner} className="campaign-banner-img" />
-          <div className="campaign-banner-scrim">
-            <span>
-              {inEnglish
-                ? "Reduce distraction · Deepen focus · Master technology"
-                : "Giảm sao nhãng · Tăng tập trung · Làm chủ công nghệ"}
-            </span>
-            <strong>
-              {inEnglish
-                ? "Whole-school launch at Dong Giao Secondary School"
-                : "Lễ phát động chiến dịch Popcorn Brain Reset tại Trường THCS Đồng Giao"}
-            </strong>
-          </div>
-        </button>
-      </article>
 
       <div className="campaign-editorial-grid">
         <div className="campaign-lead-col">

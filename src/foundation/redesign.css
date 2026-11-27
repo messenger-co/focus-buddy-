@@ -1289,10 +1289,291 @@
 }
 
 /* ==========================================================================
+   Top-of-Page School Campaign Banner
+   ========================================================================== */
+
+.site-top-banner {
+  background: linear-gradient(108deg, #f3faf6 0%, #ffffff 54%, #edf6f0 100%);
+  border-bottom: 1px solid var(--line);
+}
+
+.app[data-palette="dark"] .site-top-banner {
+  background: linear-gradient(108deg, #0d1c15 0%, #12241c 56%, #0f1f18 100%);
+}
+
+.site-top-banner-inner {
+  max-width: 1260px;
+  margin: 0 auto;
+  padding: 12px 28px;
+  display: grid;
+  grid-template-columns: minmax(320px, 400px) minmax(0, 1fr);
+  gap: 24px;
+  align-items: center;
+}
+
+.site-top-banner-media {
+  display: block;
+  width: 100%;
+  padding: 0;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  background: var(--study-pale);
+  aspect-ratio: 1169 / 637;
+  box-shadow: 0 6px 20px rgba(15, 42, 28, 0.08);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.site-top-banner-media:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 10px 26px rgba(15, 42, 28, 0.14);
+}
+
+.site-top-banner-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.site-top-banner-copy {
+  display: grid;
+  gap: 7px;
+  min-width: 0;
+}
+
+.site-top-banner-eyebrow {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  color: var(--study-accent);
+  text-transform: uppercase;
+}
+
+.site-top-banner-title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: clamp(17px, 1.85vw, 22px);
+  font-weight: 700;
+  line-height: 1.28;
+  letter-spacing: -0.022em;
+  color: var(--study-ink);
+}
+
+.site-top-banner-desc {
+  margin: 0;
+  font-size: 13.2px;
+  line-height: 1.55;
+  color: var(--subtext);
+  max-width: 640px;
+}
+
+.site-top-banner-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 4px;
+}
+
+.site-top-banner-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 13px;
+  border-radius: 8px;
+  border: 1px solid var(--line);
+  background: var(--panel);
+  color: var(--text);
+  font-size: 12.5px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: border-color 0.16s ease, background-color 0.16s ease, color 0.16s ease;
+}
+
+.site-top-banner-link:hover {
+  border-color: var(--study-accent);
+  color: var(--study-accent);
+  background: var(--study-pale);
+}
+
+.site-top-banner-link.primary {
+  background: var(--study-accent);
+  border-color: var(--study-accent);
+  color: #ffffff;
+}
+
+.site-top-banner-link.primary:hover {
+  filter: brightness(1.06);
+  color: #ffffff;
+  background: var(--study-accent);
+}
+
+/* ==========================================================================
+   Mature Editorial Study Recommendations (Dashboard)
+   ========================================================================== */
+
+.rec-section {
+  margin: 18px 0 22px;
+  display: grid;
+  gap: 14px;
+}
+
+.rec-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+.rec-header h2 {
+  font-size: 18.5px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--study-ink);
+  margin-top: 2px;
+}
+
+.rec-filters {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 3px;
+  border-radius: 9px;
+  border: 1px solid var(--line);
+  background: var(--raised);
+}
+
+.rec-filter-btn {
+  padding: 6px 11px;
+  border-radius: 7px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--subtext);
+  background: transparent;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.rec-filter-btn:hover {
+  color: var(--text);
+}
+
+.rec-filter-btn.active {
+  background: var(--panel);
+  color: var(--study-ink);
+  box-shadow: 0 1px 3px rgba(15, 34, 24, 0.08);
+}
+
+.rec-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+  align-items: stretch;
+}
+
+.rec-card {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 16px 18px 14px;
+  border-radius: 12px;
+  border: 1px solid var(--line);
+  background: var(--panel);
+  transition: border-color 0.18s ease, box-shadow 0.2s ease, transform 0.18s ease;
+}
+
+.rec-card:hover {
+  border-color: var(--study-accent);
+  box-shadow: 0 8px 20px rgba(15, 42, 28, 0.07);
+  transform: translateY(-2px);
+}
+
+.rec-card-lead {
+  border-top: 2px solid var(--study-accent);
+}
+
+.rec-card-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.rec-card-kicker {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: var(--study-accent);
+  text-transform: uppercase;
+}
+
+.rec-card-duration {
+  font-size: 11.5px;
+  font-weight: 500;
+  color: var(--subtext);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.rec-card h3 {
+  font-size: 14.8px;
+  font-weight: 650;
+  line-height: 1.38;
+  letter-spacing: -0.014em;
+  color: var(--study-ink);
+}
+
+.rec-card p {
+  font-size: 12.8px;
+  line-height: 1.54;
+  color: var(--subtext);
+}
+
+.rec-card-foot {
+  margin-top: auto;
+  padding-top: 10px;
+  border-top: 1px solid var(--line);
+}
+
+.rec-action-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12.8px;
+  font-weight: 650;
+  color: var(--study-accent);
+  padding: 2px 0;
+  transition: color 0.15s ease;
+}
+
+.rec-action-btn svg {
+  transition: transform 0.16s ease;
+}
+
+.rec-action-btn:hover {
+  color: var(--study-ink);
+}
+
+.rec-action-btn:hover svg {
+  transform: translateX(3px);
+}
+
+/* ==========================================================================
    Responsive Breakpoints
    ========================================================================== */
 
 @media (max-width: 1080px) {
+  .rec-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .site-top-banner-inner {
+    grid-template-columns: minmax(270px, 340px) minmax(0, 1fr);
+    gap: 18px;
+  }
   .campaign-editorial-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
@@ -1323,6 +1604,11 @@
     height: 56px;
     padding: 0 14px;
   }
+  .site-top-banner-inner {
+    padding: 10px 14px;
+    grid-template-columns: minmax(220px, 280px) minmax(0, 1fr);
+    gap: 14px;
+  }
   .masthead-brand-copy small,
   .masthead-account-meta,
   .masthead-account-gear,
@@ -1342,6 +1628,20 @@
 }
 
 @media (max-width: 760px) {
+  .site-top-banner-inner {
+    grid-template-columns: 1fr;
+    gap: 10px;
+    padding: 10px 14px 12px;
+  }
+  .site-top-banner-desc {
+    display: none;
+  }
+  .site-top-banner-title {
+    font-size: 15.5px;
+  }
+  .rec-grid {
+    grid-template-columns: 1fr;
+  }
   .campaign-editorial-grid,
   .campaign-pair-grid,
   .game-hub-featured,
@@ -1378,8 +1678,54 @@
   }
 }
 
+@media (max-width: 520px) {
+  .masthead-inner {
+    padding: 0 10px;
+    gap: 6px;
+  }
+  .masthead-left {
+    gap: 6px;
+  }
+  .masthead-brand {
+    gap: 6px;
+  }
+  .masthead-brand .brand-mark {
+    width: 30px;
+    height: 30px;
+    border-radius: 9px;
+  }
+  .masthead-brand-copy strong {
+    font-size: 13.5px;
+  }
+  .masthead-tools {
+    gap: 5px;
+  }
+  .masthead-ai-btn {
+    padding: 6px 9px;
+    gap: 4px;
+    font-size: 11.5px;
+  }
+  .masthead-tools .topbar-tool {
+    min-width: 32px;
+    height: 32px;
+    padding: 0 7px;
+  }
+  .masthead-tools .topbar-lang {
+    font-size: 11.5px;
+    padding: 0 8px;
+  }
+  .masthead-tools .topbar-lang svg {
+    display: none;
+  }
+  .app .mobile-menu {
+    width: 32px;
+    height: 32px;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .music-eq i {
     animation: none;
   }
 }
+

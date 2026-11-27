@@ -108,7 +108,12 @@ import Boundary from "./foundation/Boundary";
 import StudyNook from "./foundation/StudyNook";
 import LocalBackup from "./foundation/LocalBackup";
 import SiteStatus from "./foundation/SiteStatus";
-import CampaignShowcase, { CampaignFigureCard } from "./foundation/CampaignShowcase";
+import CampaignShowcase, {
+  CampaignFigureCard,
+  TopCampaignBanner,
+} from "./foundation/CampaignShowcase";
+import RecommendationsSection from "./foundation/RecommendationsSection";
+import type { StudyRecommendation } from "./foundation/recommendations";
 import { checkSupabaseConnection, cloudCheckText, type CloudCheck } from "./cloudHealth";
 import "./cloudHealth.css";
 import { russianShortcut } from "./easterEgg/russianShortcut";
@@ -541,6 +546,7 @@ function App() {
           </>
         )}
         <div className="workspace workspace-topnav" inert={menu}>
+          <TopCampaignBanner />
           <header className="site-header">
             <div className="masthead-bar">
               <div className="masthead-inner">
@@ -1260,6 +1266,42 @@ function Dashboard({
           </form>
         )}
       </section>
+      <RecommendationsSection
+        context={{
+          todayMinutes,
+          dayGoal: settings.dayGoal,
+          weekMinutes: weekStats.total,
+          weekGoal: settings.weekGoal,
+          weekTrend: weekStats.trend,
+          completedExercises: buddy.progress.completed_exercises.length,
+          totalExercises: EXERCISES.length,
+          habitsDone: habitsDoneToday,
+          totalHabits: DAILY_HABITS.length,
+          mood: mood?.mood,
+          hasActiveSession: Boolean(active),
+          hour: Number(
+            new Intl.DateTimeFormat("en-GB", {
+              hour: "numeric",
+              hour12: false,
+              timeZone: "Asia/Ho_Chi_Minh",
+            }).format(new Date(now)),
+          ),
+        }}
+        onSelect={(rec: StudyRecommendation) => {
+          if (rec.action.type === "focus") {
+            start({
+              ...plan,
+              mode: "custom",
+              minutes: rec.action.minutes,
+              goal: rec.action.goal,
+            });
+          } else if (rec.action.type === "route") {
+            navigate(rec.action.to);
+          } else {
+            openChat();
+          }
+        }}
+      />
       <div className="dashboard-grid" data-widgets={visibleWidgets}>
         <div className="dashboard-main">
           <section className="focus-hero">
